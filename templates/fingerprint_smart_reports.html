@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.smart_fp_reports') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div><h4 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        {{ _('x.smart_fp_reports') }}
+                    </h4><div class="report-desc">{{ _('x.rdesc_fp_hub') }}</div></div>
+                    <small>{{ _('x.time_based_not_checktype') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- المتأخرون (رابط سريع) -->
+                        <div class="col-md-12">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-bell-exclamation me-2"></i>
+                                        {{ _('x.late_today') }}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">{{ _('x.late_over_grace_today') }}</p>
+                                    <a href="{{ url_for('report.late_two_days') }}"
+                                        class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-eye me-1"></i>{{ _('x.view_page') }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- تقرير يومي -->
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-calendar-day me-2"></i>
+                                        {{ _('x.smart_daily_report') }}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        {{ _('x.daily_report_based_on') }}
+                                    </p>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-clock text-success me-2"></i>{{ _('x.first_punch_in') }}</li>
+                                        <li><i class="fas fa-clock text-danger me-2"></i>{{ _('x.last_punch_out') }}</li>
+                                        <li><i class="fas fa-users text-info me-2"></i>{{ _('x.shifts_from_shifts_page') }}</li>
+                                        <li><i class="fas fa-calculator text-warning me-2"></i>{{ _('x.late_early_calc_part1') }}
+                                            {{ _('x.late_early_calc_part2') }}</li>                                    </ul>
+
+                                    <form action="{{ url_for('report.smart_reports_daily') }}" method="GET"
+                                        class="mb-3">
+                                        <div class="input-group">
+                                            <input type="date" class="form-control" name="date" value="" required>
+                                            <button type="submit" class="btn btn-info">
+                                                <i class="fas fa-search me-1"></i>{{ _('x.view_report') }}
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <a href="{{ url_for('report.smart_reports_daily') }}"
+                                        class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-eye me-1"></i>{{ _('x.today_report') }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تقرير شهري -->
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-calendar-alt me-2"></i>
+                                        {{ _('x.smart_monthly_report') }}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        {{ _('x.monthly_report_includes') }}
+                                    </p>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-chart-bar text-primary me-2"></i>{{ _('x.comprehensive_stats') }}</li>
+                                        <li><i class="fas fa-users text-success me-2"></i>{{ _('x.per_employee_details') }}</li>
+                                        <li><i class="fas fa-clock text-warning me-2"></i>{{ _('x.total_work_hours') }}</li>
+                                        <li><i class="fas fa-exclamation-triangle text-danger me-2"></i>{{ _('x.total_lateness') }}
+                                        </li>
+                                    </ul>
+
+                                    <form action="{{ url_for('report.smart_reports_monthly') }}" method="GET"
+                                        class="mb-3">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <select name="month" class="form-select form-select-sm" required>
+                                                    {% for i in range(1, 13) %}
+                                                    <option value="{{ i }}" {% if i==8 %}selected{% endif %}>
+                                                        {% set months = ['', _('x.january'), _('x.february'), _('x.march'), _('x.april'), _('x.may'), _('x.june'), _('x.july'), _('x.august'), _('x.september'), _('x.october'), _('x.november'), _('x.december')] %}
+                                                        {{ months[i] }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <select name="year" class="form-select form-select-sm" required>
+                                                    {% for year in range(2023, 2027) %}
+                                                    <option value="{{ year }}" {% if year==2025 %}selected{% endif %}>
+                                                        {{ year }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-success btn-sm mt-2 w-100">
+                                            <i class="fas fa-chart-line me-1"></i>{{ _('x.view_monthly_report') }}
+                                        </button>
+                                    </form>
+
+                                    <a href="{{ url_for('report.smart_reports_monthly') }}"
+                                        class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-calendar me-1"></i>{{ _('x.current_month') }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تقرير نطاق تاريخ جديد -->
+                        <div class="col-md-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>{{ _('x.monthly_attendance_reports') }}
+                                        {{ _('x.date_range_paren') }}</h5>                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">{{ _('x.range_report_desc1') }}
+                                        {{ _('x.range_report_desc2') }}</p>                                    <form action="{{ url_for('report.smart_reports_range') }}" method="GET"
+                                        class="row g-2 align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label">{{ _('x.from_date') }}</label>
+                                            <input type="date" name="start" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">{{ _('x.to_date') }}</label>
+                                            <input type="date" name="end" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button type="submit" class="btn btn-primary w-100"><i
+                                                    class="fas fa-search me-1"></i>{{ _('x.view_report') }}</button>
+                                        </div>
+                                    </form>
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('report.smart_reports_range') }}"
+                                            class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-calendar-check me-1"></i>{{ _('x.current_month_default') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- معلومات إضافية -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>{{ _('x.how_smart_system_works') }}</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="mb-0">
+                                            <li><strong>{{ _('x.check_in_colon') }}</strong> {{ _('x.first_punch_of_day') }}</li>
+                                            <li><strong>{{ _('x.check_out_colon') }}</strong> {{ _('x.last_punch_of_day') }}</li>
+                                            <li><strong>{{ _('x.shifts_colon') }}</strong> {{ _('x.from_shift_management_page') }}</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="mb-0">
+                                            <li><strong>{{ _('x.lateness_colon') }}</strong> {{ _('x.compare_in_to_shift') }}</li>
+                                            <li><strong>{{ _('x.early_departure_colon') }}</strong> {{ _('x.compare_out_to_shift') }}</li>
+                                            <li><strong>{{ _('x.not_based_on_checktype') }}</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أزرار سريعة -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{{ url_for('attendance.fingerprint') }}"
+                                    class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-arrow-left me-1"></i>{{ _('x.back_to_fp_system') }}
+                                </a>
+                                <a href="{{ url_for('salary.shift_types') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-business-time me-1"></i>{{ _('x.shift_types') }}
+                                </a>
+                                <a href="{{ url_for('report.fingerprint_attendance') }}"
+                                    class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-fingerprint me-1"></i>{{ _('x.detailed_fp_logs') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // تحديث التاريخ تلقائياً
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.querySelector('input[type="date"]');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+    });
+</script>
+{% endblock %}

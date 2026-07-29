@@ -1,0 +1,72 @@
+{#
+  Reusable table filter — a single search box that hides non-matching rows in
+  an existing server-rendered table. Deliberately client-side: these tables are
+  already fully rendered on the page, so filtering locally is instant and adds
+  no round-trip. For lists that are paginated or fetched from the server, use
+  the searchable employee picker or a server-side query instead.
+
+  Usage: import the macro from this file, then call table_filter('<tableId>')
+  just above the table. The table element must carry that id. An optional
+  second argument overrides the placeholder text.
+#}
+
+{% macro table_filter(table_id, placeholder='') -%}
+<div class="table-filter mb-2" data-table="{{ table_id }}">
+    <div class="position-relative" style="max-width:340px">
+        <input type="search" class="form-control form-control-sm table-filter-input"
+               placeholder="{{ placeholder or _('x.filter_placeholder') }}"
+               aria-label="{{ placeholder or _('x.filter_placeholder') }}">
+    </div>
+    <div class="form-text table-filter-count d-none"></div>
+</div>
+{%- endmacro %}
+
+
+{% macro table_filter_assets() -%}
+<script>
+(function () {
+    const COUNT_TPL = {{ _('x.filter_showing')|tojson }};
+    const NONE = {{ _('x.picker_no_results')|tojson }};
+
+    function initFilter(box) {
+        if (box.dataset.ready) return;
+        box.dataset.ready = '1';
+        const table = document.getElementById(box.dataset.table);
+        if (!table) return;
+        const input = box.querySelector('.table-filter-input');
+        const note = box.querySelector('.table-filter-count');
+
+        function apply() {
+            const q = input.value.trim().toLowerCase();
+            const rows = table.querySelectorAll('tbody > tr');
+            let shown = 0;
+            rows.forEach(tr => {
+                if (tr.dataset.noFilter !== undefined) return;
+                const hit = !q || tr.textContent.toLowerCase().includes(q);
+                tr.classList.toggle('d-none', !hit);
+                if (hit) shown++;
+            });
+            if (q) {
+                note.textContent = shown
+                    ? COUNT_TPL.replace('%s', shown).replace('%d', shown)
+                    : NONE;
+                note.classList.remove('d-none');
+            } else {
+                note.classList.add('d-none');
+            }
+        }
+
+        let t = null;
+        input.addEventListener('input', () => {
+            clearTimeout(t);
+            t = setTimeout(apply, 120);
+        });
+    }
+
+    function initAll() { document.querySelectorAll('.table-filter').forEach(initFilter); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+    else initAll();
+    window.initTableFilters = initAll;
+})();
+</script>
+{%- endmacro %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}{{ _('x.hourly_perms_menu') }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="mb-0"><i class="fas fa-stopwatch me-2"></i>{{ _('x.hourly_perms_menu') }}</h4>
+        <span class="badge bg-secondary" id="hpPeriod"></span>
+        <span class="badge bg-light text-dark border">{{ _('x.hp_limits_now') }}:
+            {{ max_h }} {{ _('x.hp_h_unit') }} / {{ _('x.day_unit') }} —
+            {{ max_d }} {{ _('x.day_unit_pl') }} / {{ _('x.month_unit') }}</span>
+        <div class="ms-auto d-flex gap-2">
+            <input type="number" min="1" max="12" class="form-control form-control-sm" style="width:80px"
+                   id="hpMonth" value="{{ month }}">
+            <input type="number" min="2000" max="2100" class="form-control form-control-sm" style="width:100px"
+                   id="hpYear" value="{{ year }}">
+            <button class="btn btn-sm btn-outline-secondary" onclick="hpLoad()">
+                <i class="fas fa-sync"></i></button>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><i class="fas fa-plus-circle me-2"></i>{{ _('x.hp_add_title') }}</div>
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('x.hp_employee') }}</label>
+                    <select class="form-select" id="hpEmp">
+                        {% for e in employees %}
+                        <option value="{{ e.id }}">{{ e.employee_number }} — {{ e.arabic_name or e.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ _('x.hp_date') }}</label>
+                    <input type="date" class="form-control" id="hpDate">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ _('x.hp_from') }}</label>
+                    <input type="time" class="form-control" id="hpFrom">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ _('x.hp_to') }}</label>
+                    <input type="time" class="form-control" id="hpTo">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ _('x.p_reason') }}</label>
+                    <input type="text" class="form-control" id="hpReason">
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-primary w-100" onclick="hpAdd()">
+                        <i class="fas fa-save"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <i class="fas fa-list me-2"></i>{{ _('x.hp_register') }}
+            <span class="badge bg-dark ms-2" id="hpTotals"></span>
+            <input type="text" class="form-control form-control-sm ms-auto" style="max-width:240px"
+                   id="hpSearch" placeholder="{{ _('x.search') }}" oninput="hpFilter()">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ _('x.hp_date') }}</th>
+                        <th>{{ _('x.hp_employee') }}</th>
+                        <th>{{ _('x.hp_from') }}</th>
+                        <th>{{ _('x.hp_to') }}</th>
+                        <th>{{ _('x.ds_hours') }}</th>
+                        <th class="text-start">{{ _('x.p_reason') }}</th>
+                        <th>{{ _('x.hp_by') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="hpBody">
+                    <tr><td colspan="8" class="text-center text-muted py-3">{{ _('x.hp_none') }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const HPT = {
+        confirmBtn: {{ _('x.pm_confirm_btn')|tojson }},
+        cancelBtn: {{ _('x.cancel')|tojson }},
+        delConfirm: {{ _('x.hp_del_confirm')|tojson }},
+        delTitle: {{ _('x.hp_delete')|tojson }},
+        okTitle: {{ _('x.success')|tojson }},
+        errTitle: {{ _('x.error')|tojson }},
+        none: {{ _('x.hp_none')|tojson }},
+        totalsFmt: {{ _('x.hp_totals')|tojson }},
+        reasonRequired: {{ _('x.err_reason_required')|tojson }},
+        errMap: {
+            reason_required: {{ _('x.err_reason_required')|tojson }},
+            hp_bad_times: {{ _('x.err_hp_times')|tojson }},
+            hp_hours: {{ _('x.err_hp_hours')|tojson }},
+            hp_limit: {{ _('x.err_hp_limit')|tojson }},
+            hp_dup: {{ _('x.err_hp_dup')|tojson }},
+            hp_nopunch: {{ _('x.err_hp_nopunch')|tojson }},
+            leave_exists: {{ _('x.err_leave_exists')|tojson }},
+            leave_type_missing: {{ _('x.err_leave_type_missing')|tojson }}
+        }
+    };
+    const API_LIST = {{ url_for('payroll.api_hourly_perms_list')|tojson }};
+    const API_ADD = {{ url_for('payroll.day_action_hourly_perm')|tojson }};
+    const API_DEL = {{ url_for('payroll.api_hourly_perm_delete')|tojson }};
+    let hpRows = [];
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function hpLoad() {
+        const m = document.getElementById('hpMonth').value;
+        const y = document.getElementById('hpYear').value;
+        fetch(`${API_LIST}?month=${m}&year=${y}`,
+              { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) { Swal.fire(HPT.errTitle, res.message || '', 'error'); return; }
+                hpRows = res.rows;
+                document.getElementById('hpPeriod').innerText =
+                    res.period.start + ' \u2190 ' + res.period.end;
+                document.getElementById('hpTotals').innerText =
+                    HPT.totalsFmt + ': ' + res.totals.count + ' / ' + res.totals.hours;
+                hpRender();
+            });
+    }
+
+    function hpRender() {
+        const q = (document.getElementById('hpSearch').value || '').trim();
+        const rows = hpRows.filter(r => !q ||
+            (r.employee_number + ' ' + (r.arabic_name || '') + ' ' + (r.name || '')).includes(q));
+        const body = document.getElementById('hpBody');
+        if (!rows.length) {
+            body.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">${esc(HPT.none)}</td></tr>`;
+            return;
+        }
+        body.innerHTML = rows.map(r => `
+            <tr>
+                <td>${esc(r.date)}</td>
+                <td>${esc(r.employee_number)} — ${esc(r.arabic_name || r.name)}</td>
+                <td>${esc(r.from)}</td>
+                <td>${esc(r.to)}</td>
+                <td><b>${r.hours}</b></td>
+                <td class="text-start">${esc(r.reason)}</td>
+                <td>${esc(r.by || '\u2014')}</td>
+                <td><button class="btn btn-sm btn-outline-danger" onclick="hpDel(${r.id})">
+                        <i class="fas fa-trash"></i></button></td>
+            </tr>`).join('');
+    }
+
+    function hpFilter() { hpRender(); }
+
+    function hpAdd() {
+        const payload = {
+            employee_id: parseInt(document.getElementById('hpEmp').value),
+            date: document.getElementById('hpDate').value,
+            from: document.getElementById('hpFrom').value,
+            to: document.getElementById('hpTo').value,
+            reason: (document.getElementById('hpReason').value || '').trim()
+        };
+        if (!payload.date || !payload.from || !payload.to) {
+            Swal.fire(HPT.errTitle, HPT.errMap.hp_bad_times, 'error'); return;
+        }
+        if (payload.reason.length < 3) {
+            Swal.fire(HPT.errTitle, HPT.reasonRequired, 'error'); return;
+        }
+        fetch(API_ADD, { method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload) })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    document.getElementById('hpReason').value = '';
+                    Swal.fire(HPT.okTitle, '', 'success');
+                    hpLoad();
+                } else {
+                    const msg = (HPT.errMap[res.code] || res.message || '') +
+                                (res.limit ? ' (' + res.limit + ')' : '');
+                    Swal.fire(HPT.errTitle, msg, 'error');
+                }
+            });
+    }
+
+    function hpDel(id) {
+        Swal.fire({ title: HPT.delTitle, text: HPT.delConfirm, icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: HPT.confirmBtn, cancelButtonText: HPT.cancelBtn })
+            .then(res => {
+                if (!res.isConfirmed) return;
+                fetch(API_DEL, { method: 'POST',
+                                 headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify({ id: id }) })
+                    .then(r => r.json())
+                    .then(out => {
+                        if (out.success) hpLoad();
+                        else Swal.fire(HPT.errTitle, out.message || '', 'error');
+                    });
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', hpLoad);
+</script>
+{% endblock %}

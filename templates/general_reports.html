@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.general_reports') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <div><h4 class="mb-0"><i class="fas fa-chart-pie me-2"></i>{{ _('header.general_reports') }}</h4><div class="report-desc">{{ _('x.rdesc_reports_hub') }}</div></div>
+                    <small>{{ _('desc.general_reports') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="list-group">
+                                <a href="{{ url_for('report.smart_reports_page') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-brain me-2"></i> {{ _('report.smart_reports') }}
+                                </a>
+                                <a href="{{ url_for('report.late_two_days') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-bell-exclamation me-2"></i> {{ _('report.late_employees') }}
+                                </a>
+                                <a href="{{ url_for('report.employee_report_page') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-chart me-2"></i> {{ _('report.employee_detailed') }}
+                                </a>
+                                <a href="{{ url_for('report.smart_reports_daily') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-calendar-day me-2"></i> {{ _('report.smart_daily') }}
+                                </a>
+                                <a href="{{ url_for('report.salary_reports') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-chart-line me-2"></i> {{ _('report.salary_detailed_old') }}
+                                </a>
+                                <a href="{{ url_for('report.detailed_salary_report') }}"
+                                    class="list-group-item list-group-item-action fw-bold text-success">
+                                    <i class="fas fa-file-invoice me-2"></i> {{ _('report.salary_deductions_new') }}
+                                </a>
+                                <a href="{{ url_for('leave.official_holidays') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-calendar-check me-2"></i> {{ _('report.official_holidays') }}
+                                </a>
+                                <a href="{{ url_for('salary.salary_settings_v2_route') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-cogs me-2"></i> {{ _('report.salary_settings_enhanced') }}
+                                </a>
+                                <a href="{{ url_for('report.fingerprint_attendance') }}"
+                                    class="list-group-item list-group-item-action">
+                                    <i class="fas fa-th me-2"></i> {{ _('report.network_attendance_old') }}
+                                </a>
+                                <a href="{{ url_for('report.monthly_employees_report_page') }}"
+                                    class="list-group-item list-group-item-action fw-bold text-primary">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i> {{
+                                    _('report.monthly_comprehensive_new') }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {{ _('msg.suggest_reports') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

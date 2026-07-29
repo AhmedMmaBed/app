@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% from "components/table_filter.html" import table_filter, table_filter_assets %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+
+{% block title %}{{ _('x.payroll_tx') }}{% endblock %}
+
+{% block content %}
+{% set L = get_locale()|string %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2"><i class="fas fa-exchange-alt me-2"></i>{{ _('x.payroll_tx') }}</h1>
+            <div class="report-desc">{{ _('x.rdesc_payroll_tx') }}</div>
+        </div>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTxModal">
+            <i class="fas fa-plus me-2"></i>{{ _('x.add_transaction') }}
+        </button>
+    </div>
+
+    <form method="GET" class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label class="form-label small text-muted mb-1">{{ _('x.p_month') }}</label>
+            <select class="form-select" name="month">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small text-muted mb-1">{{ _('x.p_year') }}</label>
+            <input type="number" class="form-control" name="year" value="{{ year }}" style="width:110px">
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-primary"><i class="fas fa-filter me-1"></i>{{ _('x.show') }}</button>
+        </div>
+        <div class="col"></div>
+        <div class="col-auto">
+            <div class="card text-center px-4 py-2">
+                <div class="text-muted small">{{ _('x.total_earnings_tx') }}</div>
+                <div class="h5 mb-0 text-success">{{ format_currency(totals.earning) }}</div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="card text-center px-4 py-2">
+                <div class="text-muted small">{{ _('x.total_deductions_tx') }}</div>
+                <div class="h5 mb-0" style="color: var(--debit);">{{ format_currency(totals.deduction) }}</div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="table-responsive">
+            {{ table_filter('txTable') }}
+            <table id="txTable" class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ _('tbl.header.employee') }}</th>
+                        <th>{{ _('x.p_item') }}</th>
+                        <th>{{ _('x.p_amount') }}</th>
+                        <th>{{ _('x.p_reason') }}</th>
+                        <th>{{ _('x.p_date') }}</th>
+                        <th>{{ _('x.p_status') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr class="{{ 'opacity-50' if r.status == 'cancelled' else '' }}">
+                        <td>
+                            <span class="fw-semibold">{{ r.arabic_name or r.employee_name }}</span>
+                            <span class="text-muted small">#{{ r.employee_number }}</span>
+                        </td>
+                        <td>
+                            {% if r.kind == 'earning' %}
+                            <span class="badge bg-success bg-opacity-25 text-success">{{ _('x.tx_kind_earning') }}</span>
+                            {% else %}
+                            <span class="badge" style="background: rgba(168,64,47,.15); color: var(--debit);">{{ _('x.tx_kind_deduction') }}</span>
+                            {% endif %}
+                            {{ r.item_name_ar if L == 'ar' else r.item_name_en }}
+                        </td>
+                        <td class="fw-bold {{ 'text-decoration-line-through' if r.status == 'cancelled' else '' }}">{{ format_currency(r.amount) }}</td>
+                        <td class="small">{{ r.reason or '—' }}</td>
+                        <td class="small text-muted">{{ r.created_at.split(' ')[0] if r.created_at else '' }}</td>
+                        <td>
+                            {% if r.status == 'cancelled' %}
+                            <span class="badge bg-secondary">{{ _('x.p_cancelled') }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ _('x.p_active') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if r.status == 'active' %}
+                            <form method="POST" action="{{ url_for('payroll.cancel_transaction', id=r.id) }}" class="d-inline"
+                                onsubmit="return confirm('{{ _('x.confirm_cancel_tx') }}');">
+                                <button class="btn btn-sm btn-outline-danger" title="{{ _('x.p_cancel') }}">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">{{ _('x.no_items') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addTxModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('payroll.add_transaction') }}">
+                <input type="hidden" name="month" value="{{ month }}">
+                <input type="hidden" name="year" value="{{ year }}">
+                <div class="modal-header" style="background: var(--ledger);">
+                    <h5 class="modal-title text-white">{{ _('x.add_transaction') }} — {{ '%02d'|format(month) }}/{{ year }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('tbl.header.employee') }}</label>
+                        {{ employee_picker('employee_id', scope='active', required=true) }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.p_item') }}</label>
+                        <select class="form-select" name="item_type_id" required>
+                            <option value="">--</option>
+                            <optgroup label="{{ _('x.tx_kind_earning') }}">
+                                {% for t in item_types if t.kind == 'earning' %}
+                                <option value="{{ t.id }}">{{ t.name_ar if L == 'ar' else t.name_en }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="{{ _('x.tx_kind_deduction') }}">
+                                {% for t in item_types if t.kind == 'deduction' %}
+                                <option value="{{ t.id }}">{{ t.name_ar if L == 'ar' else t.name_en }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.p_amount') }}</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control" name="amount" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ _('x.p_reason') }}</label>
+                        <textarea class="form-control" name="reason" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-success">{{ _('x.save_data') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{ employee_picker_assets() }}
+{{ table_filter_assets() }}
+{% endblock %}

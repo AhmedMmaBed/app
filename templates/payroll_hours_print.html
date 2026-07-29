@@ -1,0 +1,180 @@
+{% set L = get_locale()|string %}
+<!DOCTYPE html>
+<html dir="{{ 'rtl' if L == 'ar' else 'ltr' }}" lang="{{ L }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('x.pr_title') }} — {{ '%02d'|format(month) }}/{{ year }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Arial', 'Tahoma', sans-serif; margin: 0; padding: 12px;
+               color: #111; background: #f2f2f2; font-size: 12px; }
+        .toolbar { text-align: center; margin-bottom: 10px; }
+        .toolbar button { padding: 8px 22px; font-size: 14px; cursor: pointer;
+                          border: 1px solid #444; background: #fff; border-radius: 6px; }
+        .emp-block { background: #fff; max-width: 900px; margin: 0 auto 14px;
+                     padding: 14px 18px; border: 1px solid #ccc; }
+        .hdr { display: flex; justify-content: space-between; align-items: flex-start;
+               border-bottom: 2px solid #222; padding-bottom: 6px; margin-bottom: 8px; }
+        .hdr .co { font-weight: bold; font-size: 14px; }
+        .hdr .co small { display: block; font-weight: normal; color: #555; font-size: 10px; }
+        .hdr .ttl { text-align: center; }
+        .hdr .ttl h1 { margin: 0; font-size: 16px; }
+        .hdr .ttl .prd { font-size: 11px; color: #333; margin-top: 2px; }
+        .hdr .meta { font-size: 10px; color: #555; text-align: {{ 'left' if L == 'ar' else 'right' }}; }
+        .info { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .info .box { flex: 1; min-width: 140px; border: 1px solid #999; padding: 4px 8px;
+                     background: #fafafa; font-size: 11px; }
+        .info .box b { color: #333; }
+        table.days { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+        table.days th, table.days td { border: 1px solid #888; padding: 2px 4px; text-align: center; }
+        table.days th { background: #333; color: #fff; padding: 4px; }
+        table.days td.notes { text-align: {{ 'right' if L == 'ar' else 'left' }}; font-size: 10px; }
+        tr.r-off td { background: #e6e6e6; color: #555; }
+        tr.r-holiday td { background: #ececec; }
+        tr.r-leave td { background: #f3f3f3; }
+        tr.r-absent td.st { color: #a30000; font-weight: bold; }
+        tr.r-partial td.st { font-weight: bold; }
+        .sum { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+        .sum .s { flex: 1; min-width: 86px; border: 1px solid #999; text-align: center;
+                  padding: 3px 2px; background: #fafafa; }
+        .sum .s .v { font-size: 14px; font-weight: bold; }
+        .sum .s .l { font-size: 9px; color: #444; }
+        .attn { margin-top: 8px; font-size: 11px; }
+        .attn .ok { color: #0a5c1a; font-weight: bold; }
+        .attn .no { color: #a30000; font-weight: bold; }
+        .signs { display: flex; justify-content: space-between; margin-top: 26px; font-size: 11px; }
+        .signs .sg { width: 40%; text-align: center; }
+        .signs .sg .line { border-top: 1px solid #333; margin-top: 26px; padding-top: 3px; }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .toolbar { display: none; }
+            .emp-block { border: none; max-width: none; margin: 0; padding: 6px 2px;
+                         page-break-after: always; }
+            .emp-block:last-child { page-break-after: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="window.print()">🖨 {{ _('x.pr_print_all') }}</button>
+    </div>
+
+    {% for b in blocks %}
+    <div class="emp-block">
+        <div class="hdr">
+            <div class="co">{{ settings.company_name or settings.app_name or '' }}
+                <small>{{ settings.app_name or '' }}</small></div>
+            <div class="ttl">
+                <h1>{{ _('x.pr_title') }}</h1>
+                <div class="prd">{{ _('x.pp_period_label') }}: {{ period.start }} &larr; {{ period.end }}
+                    &nbsp;|&nbsp; {{ '%02d'|format(month) }}/{{ year }}</div>
+            </div>
+            <div class="meta">{{ _('x.pr_print_date') }}: {{ printed_at }}</div>
+        </div>
+
+        <div class="info">
+            <div class="box"><b>{{ _('tbl.header.name') }}:</b>
+                {{ b.employee.arabic_name if L == 'ar' and b.employee.arabic_name else b.employee.name }}</div>
+            <div class="box"><b>{{ _('tbl.header.file_number') }}:</b> {{ b.employee.employee_number }}</div>
+            <div class="box"><b>{{ _('tbl.header.department') }}:</b> {{ b.employee.department }}</div>
+            <div class="box"><b>{{ _('tbl.header.position') }}:</b> {{ b.employee.position }}</div>
+        </div>
+
+        <table class="days">
+            <thead>
+                <tr>
+                    <th style="width:70px">{{ _('x.p_date') }}</th>
+                    <th style="width:60px">{{ _('x.pr_day') }}</th>
+                    <th style="width:95px">{{ _('x.p_status') }}</th>
+                    <th style="width:55px">{{ _('x.ds_in') }}</th>
+                    <th style="width:55px">{{ _('x.ds_out') }}</th>
+                    {% if b.presence_required %}<th style="width:70px">{{ _('x.n_presence_ok') }}</th>{% endif %}
+                    <th style="width:55px">{{ _('x.ds_hours') }}</th>
+                    <th>{{ _('x.pr_notes') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in b.days %}
+                {% set rcls = 'r-off' if d.status == 'weekly_off'
+                              else ('r-holiday' if d.status == 'holiday'
+                              else ('r-leave' if d.status.startswith('leave') or d.status == 'excused'
+                              else ('r-absent' if d.status == 'absent'
+                              else ('r-partial' if d.status == 'partial' else '')))) %}
+                <tr class="day-row {{ rcls }}">
+                    <td>{{ d.date }}</td>
+                    <td>{{ day_names[d.weekday] }}</td>
+                    <td class="st">
+                        {% if d.status.startswith('leave') and d.leave_type %}{{ d.leave_type }}
+                        {% else %}{{ status_labels[d.status] }}{% endif %}
+                    </td>
+                    <td>{{ d.check_in }}</td>
+                    <td>{{ d.check_out }}</td>
+                    {% if b.presence_required %}
+                    <td>
+                        {%- if d.presence_in -%}
+                            <span style="color:#0a5c1a;font-weight:bold">{{ d.presence_in }}{% if d.presence_out %} - {{ d.presence_out }}{% endif %}</span>
+                        {%- elif d.presence_missing -%}
+                            <span style="color:#a30000;font-weight:bold">{{ _('x.n_pres_missing_short') }}</span>
+                        {%- else -%}—{%- endif -%}
+                    </td>
+                    {% endif %}
+                    <td>{{ d.hours if d.hours else '--' }}</td>
+                    <td class="notes">
+                        {%- if d.status == 'holiday' and d.holiday_name %}{{ d.holiday_name }}{% endif -%}
+                        {%- if d.excuse %}
+                            {{ _('x.exc_in') if d.excuse.side == 'in'
+                               else (_('x.exc_out') if d.excuse.side == 'out' else _('x.ds_excused')) }}:
+                            {{ d.excuse.reason or '' }}
+                            {%- if d.excuse.by %} ({{ d.excuse.by }}){% endif -%}
+                        {%- elif d.leave_reason %}{{ d.leave_reason }}{% endif -%}
+                        {%- if d.late_mins %} | {{ _('x.n_late') }} {{ d.late_mins }} {{ _('x.min_unit') }}{% endif -%}
+                        {%- if d.early_mins %} | {{ _('x.n_early') }} {{ d.early_mins }} {{ _('x.min_unit') }}{% endif -%}
+                        {%- if d.hourly_perm %} | {{ _('x.n_hperm') }} {{ d.hourly_perm.hours }} ({{ d.hourly_perm.from }}-{{ d.hourly_perm.to }}){% endif -%}
+                        {%- if d.ot_mins %} | {{ _('x.n_ot') }} {{ d.ot_mins }} {{ _('x.min_unit') }}{% endif -%}
+                        {%- if d.rest_unpaid %} | {{ _('x.n_rest_unpaid') }}{% endif -%}
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="sum">
+            <div class="s"><div class="v">{{ b.metrics.required_days or 0 }}</div><div class="l">{{ _('x.ha_req_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.actual_days or 0 }}</div><div class="l">{{ _('x.ha_act_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.required_hours or 0 }}</div><div class="l">{{ _('x.pm_required_hours') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.actual_hours or 0 }}</div><div class="l">{{ _('x.pm_actual_hours') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.partial_days or 0 }}</div><div class="l">{{ _('x.ha_partial_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.absent_days or 0 }}</div><div class="l">{{ _('x.ha_absent_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.sick_days or 0 }}</div><div class="l">{{ _('x.ha_sick_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.unpaid_days or 0 }}</div><div class="l">{{ _('x.ha_unpaid_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.excuse_days or 0 }}</div><div class="l">{{ _('x.ha_excuse_days') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.late_mins or 0 }}</div><div class="l">{{ _('x.ha_late_mins') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.early_mins or 0 }}</div><div class="l">{{ _('x.ha_early_mins') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.presence_missing or 0 }}</div><div class="l">{{ _('x.ha_presence_missing') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.hourly_perm_hours or 0 }}</div><div class="l">{{ _('x.ha_hperm_hours') }}</div></div>
+            <div class="s"><div class="v">{{ '%.2f'|format(((b.metrics.ot_weekday_mins or 0) + (b.metrics.ot_weekend_mins or 0) + (b.metrics.ot_holiday_mins or 0)) / 60) }}</div><div class="l">{{ _('x.ha_ot_hours') }}</div></div>
+            <div class="s"><div class="v">{{ b.metrics.unentitled_rest_days or 0 }}</div><div class="l">{{ _('x.ha_rest_unpaid') }}</div></div>
+        </div>
+
+        {% set abs_dates = b.days | selectattr('status', 'equalto', 'absent') | map(attribute='date') | list %}
+        {% if abs_dates %}
+        <div class="attn"><b>{{ _('x.pr_absent_dates') }}:</b> {{ abs_dates | join(' ، ') }}</div>
+        {% endif %}
+        <div class="attn">
+            {% if b.state == 'approved' and b.approval %}
+                <span class="ok">&#10003; {{ _('x.pr_attested') }} {{ b.approval.by or '' }} — {{ b.approval.at }}</span>
+                {% if b.approval.notes %} | {{ _('x.ha_note') }}: {{ b.approval.notes }}{% endif %}
+            {% else %}
+                <span class="no">{{ _('x.pr_not_attested') }}</span>
+            {% endif %}
+        </div>
+
+        <div class="signs">
+            <div class="sg"><div class="line">{{ _('x.pr_sign_emp') }}</div></div>
+            <div class="sg"><div class="line">{{ _('x.pr_sign_hr') }}</div></div>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

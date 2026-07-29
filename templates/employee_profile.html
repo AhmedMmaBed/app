@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+{% block title %}{{ _('nav.employee_profile') }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="mb-0"><i class="fas fa-id-card me-2"></i>{{ _('nav.employee_profile') }}</h4>
+        {{ employee_picker('epEmp', scope='all', selected=selected, on_change='epSwitch()') }}
+    </div>
+    <div id="epBody" class="text-muted">{{ _('x.eh_pick') }}</div>
+</div>
+
+<script>
+    const EPT = {
+        dept: {{ _('x.department')|tojson }},
+        position: {{ _('x.position')|tojson }},
+        hireTo: {{ _('x.hp_date')|tojson }},
+        basic: {{ _('x.pm_basic')|tojson }},
+        active: {{ _('x.status_active')|tojson }},
+        ended: {{ _('x.ds_ended')|tojson }},
+        balanceCard: {{ _('x.leave_balance_menu')|tojson }},
+        serviceMonths: {{ _('x.lb_service_months')|tojson }},
+        accrual: {{ _('x.lb_accrual')|tojson }},
+        accrued: {{ _('x.lb_accrued')|tojson }},
+        taken: {{ _('x.lb_taken')|tojson }},
+        adjusted: {{ _('x.lb_adjusted')|tojson }},
+        balance: {{ _('x.lb_balance')|tojson }},
+        attendance: {{ _('x.ep_attendance')|tojson }},
+        leaveHistory: {{ _('x.ep_leave_history')|tojson }},
+        openLoans: {{ _('x.ep_open_loans')|tojson }},
+        monthlyTotal: {{ _('x.ep_monthly_total')|tojson }},
+        noLoans: {{ _('x.eh_no_loans')|tojson }},
+        eosLink: {{ _('x.ep_eos_link')|tojson }},
+        historyLink: {{ _('x.ep_history_link')|tojson }},
+        colType: {{ _('x.ep_col_type')|tojson }},
+        colPeriod: {{ _('x.pp_period_label')|tojson }},
+        colDays: {{ _('x.ep_col_days')|tojson }},
+        colStatus: {{ _('x.eh_status')|tojson }},
+        colReason: {{ _('x.p_reason')|tojson }},
+        stApproved: {{ _('x.st_approved')|tojson }},
+        stPending: {{ _('x.st_pending')|tojson }},
+        stRejected: {{ _('x.st_rejected')|tojson }},
+        stCancelled: {{ _('x.st_cancelled')|tojson }},
+        noLeaves: {{ _('x.ep_no_leaves')|tojson }},
+        colDate: {{ _('x.hp_date')|tojson }},
+        colIn: {{ _('x.col_in')|tojson }}, colOut: {{ _('x.col_out')|tojson }},
+        colHours: {{ _('x.ha_actual_hours')|tojson }},
+        dayStatus: {
+            present: {{ _('x.ds_present')|tojson }}, absent: {{ _('x.ds_absent')|tojson }},
+            weekly_off: {{ _('x.ds_weekly_off')|tojson }}, holiday: {{ _('x.ds_holiday')|tojson }},
+            excused: {{ _('x.ds_excused')|tojson }}, leave_sick: {{ _('x.ds_leave_sick')|tojson }},
+            leave_paid: {{ _('x.ds_leave_paid')|tojson }}, leave_unpaid: {{ _('x.ds_leave_unpaid')|tojson }},
+            not_hired: {{ _('x.ds_not_hired')|tojson }}, ended: {{ _('x.ds_ended')|tojson }},
+            partial: {{ _('x.ds_missing_punch')|tojson }}
+        },
+        months: [{{ _('x.m1')|tojson }},{{ _('x.m2')|tojson }},{{ _('x.m3')|tojson }},{{ _('x.m4')|tojson }},
+                 {{ _('x.m5')|tojson }},{{ _('x.m6')|tojson }},{{ _('x.m7')|tojson }},{{ _('x.m8')|tojson }},
+                 {{ _('x.m9')|tojson }},{{ _('x.m10')|tojson }},{{ _('x.m11')|tojson }},{{ _('x.m12')|tojson }}]
+    };
+    const API_BUNDLE = {{ url_for('employee.api_employee_profile')|tojson }};
+    const API_ATT = {{ url_for('employee.api_employee_profile_attendance')|tojson }};
+    const HIST_URL = {{ url_for('payroll.employee_history_page')|tojson }};
+    const EOS_URL_BASE = "/eos/print/";
+    const CAN_SALARY = {{ 'true' if has_permission('salary.view') else 'false' }};
+    let EP_MONTH = new Date().getMonth() + 1, EP_YEAR = new Date().getFullYear();
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const num = v => (Math.round((v ?? 0) * 100) / 100).toLocaleString();
+
+    function epSwitch() {
+        const id = document.getElementById('epEmp').value;
+        const u = new URL(window.location);
+        if (id) u.searchParams.set('employee_id', id); else u.searchParams.delete('employee_id');
+        window.location = u.toString();
+    }
+
+    function statusBadge(st) {
+        const map = { approved: ['bg-success', EPT.stApproved], pending: ['bg-warning text-dark', EPT.stPending],
+                     rejected: ['bg-danger', EPT.stRejected], cancelled: ['bg-secondary', EPT.stCancelled] };
+        const pair = map[st] || ['bg-secondary', st];
+        return `<span class="badge ${pair[0]}">${esc(pair[1])}</span>`;
+    }
+
+    function renderLeaves(leaves, byType) {
+        let h = '';
+        if (byType.length) {
+            h += `<div class="d-flex flex-wrap gap-2 mb-2">` + byType.map(t =>
+                `<span class="badge bg-light text-dark border">${esc(t.name)}: <b>${num(t.days)}</b></span>`).join('') + `</div>`;
+        }
+        if (!leaves.length) {
+            h += `<div class="text-muted small">${esc(EPT.noLeaves)}</div>`;
+            return h;
+        }
+        h += `<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>${esc(EPT.colType)}</th><th>${esc(EPT.colPeriod)}</th>
+                <th>${esc(EPT.colDays)}</th><th>${esc(EPT.colStatus)}</th>
+                <th class="text-start">${esc(EPT.colReason)}</th></tr></thead><tbody>` +
+            leaves.map(l => `
+                <tr>
+                    <td>${esc(l.type_name)}${l.leave_duration_type === 'hourly' ? ' <span class="badge bg-info text-dark">⏱</span>' : ''}</td>
+                    <td class="small">${esc(l.start_date)}${l.end_date !== l.start_date ? ' ← ' + esc(l.end_date) : ''}</td>
+                    <td>${num(l.days_count)}</td>
+                    <td>${statusBadge(l.status)}</td>
+                    <td class="text-start small text-muted">${esc(l.reason || '')}</td>
+                </tr>`).join('') + `</tbody></table></div>`;
+        return h;
+    }
+
+    function renderAttendanceTable(days) {
+        return `<div class="table-responsive" style="max-height:48vh;overflow:auto">
+            <table class="table table-sm table-bordered text-center mb-0">
+            <thead><tr><th>${esc(EPT.colDate)}</th><th></th><th>${esc(EPT.colIn)}</th>
+                <th>${esc(EPT.colOut)}</th><th>${esc(EPT.colHours)}</th></tr></thead>
+            <tbody>` + days.map(d => {
+                let label = EPT.dayStatus[d.status] || d.status;
+                if (d.status === 'holiday' && d.holiday_name) label += ': ' + d.holiday_name;
+                const warn = d.rest_unpaid ? ' <span class="badge bg-danger">!</span>' : '';
+                return `<tr>
+                    <td class="small">${esc(d.date)}</td>
+                    <td class="small text-muted">${esc(label)}${warn}</td>
+                    <td>${esc(d.check_in || '--')}</td>
+                    <td>${esc(d.check_out || '--')}</td>
+                    <td>${d.hours != null ? num(d.hours) : '--'}</td>
+                </tr>`;
+            }).join('') + `</tbody></table></div>`;
+    }
+
+    function loadAttendance(id) {
+        const box = document.getElementById('epAttBox');
+        if (!box) return;
+        box.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+        fetch(`${API_ATT}?employee_id=${id}&month=${EP_MONTH}&year=${EP_YEAR}`)
+            .then(r => r.json())
+            .then(res => {
+                box.innerHTML = res.success ? renderAttendanceTable(res.days)
+                                            : `<div class="text-muted small">—</div>`;
+            });
+    }
+
+    function epLoad() {
+        const id = document.getElementById('epEmp').value;
+        const box = document.getElementById('epBody');
+        if (!id) { box.innerHTML = ''; return; }
+        fetch(`${API_BUNDLE}?employee_id=${id}`)
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) { box.innerHTML = esc(res.message || ''); return; }
+                const e = res.employee, b = res.leave_balance, eos = res.eos;
+                const ss = res.salary_structure;
+                const openLoans = (res.loans || []).filter(l => l.status === 'active');
+                const ol = { count: openLoans.length,
+                             total: openLoans.reduce((s, l) => s + (l.remaining || 0), 0) };
+                let h = `
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="card h-100"><div class="card-body">
+                            <h5 class="mb-1">${esc(e.arabic_name || e.name)}
+                                ${e.is_active ? `<span class="badge bg-success">${esc(EPT.active)}</span>`
+                                              : `<span class="badge bg-secondary">${esc(EPT.ended)}</span>`}
+                            </h5>
+                            <div class="text-muted small mb-2">#${esc(e.employee_number)}</div>
+                            <div class="row small g-2">
+                                <div class="col-6"><b>${esc(EPT.dept)}:</b> ${esc(e.department || '—')}</div>
+                                <div class="col-6"><b>${esc(EPT.position)}:</b> ${esc(e.position || '—')}</div>
+                                <div class="col-6"><b>${esc(EPT.hireTo)}:</b> ${esc(e.hire_date)} ←
+                                    ${e.end_of_service_date ? esc(e.end_of_service_date) : '...'}</div>
+                                <div class="col-6"><b>${esc(EPT.basic)}:</b> ${num(e.basic)}</div>
+                            </div>
+                            ${ss.fixed_earnings.length ? `
+                            <div class="small text-muted mt-2">
+                                ${ss.fixed_earnings.map(f => `${esc(f.name_ar || f.name_en)}: ${num(f.amount)}`).join(' • ')}
+                                — <b>${esc(EPT.monthlyTotal)}: ${num(ss.monthly_total)}</b>
+                            </div>` : ''}
+                            <div class="mt-3 d-flex flex-wrap gap-2">
+                                ${CAN_SALARY ? `<a class="btn btn-sm btn-outline-primary" target="_blank"
+                                    href="${HIST_URL}?employee_id=${id}">
+                                    <i class="fas fa-file-invoice-dollar me-1"></i>${esc(EPT.historyLink)}</a>` : ''}
+                                ${CAN_SALARY && eos ? `<a class="btn btn-sm btn-outline-secondary" target="_blank"
+                                    href="${EOS_URL_BASE}${eos.id}">
+                                    <i class="fas fa-print me-1"></i>${esc(EPT.eosLink)}</a>` : ''}
+                            </div>
+                            <div class="mt-2 small ${ol.count ? 'text-danger' : 'text-muted'}">
+                                <i class="fas fa-hand-holding-usd me-1"></i>${esc(EPT.openLoans)}:
+                                ${ol.count ? num(ol.total) + ` (${ol.count})` : esc(EPT.noLoans)}
+                            </div>
+                        </div></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100"><div class="card-body">
+                            <h6 class="mb-2"><i class="fas fa-umbrella-beach me-1"></i>${esc(EPT.balanceCard)}</h6>
+                            <div class="row small g-2">
+                                <div class="col-6">${esc(EPT.serviceMonths)}: <b>${num(b.service_months)}</b></div>
+                                <div class="col-6">${esc(EPT.accrual)}: ${num(b.accrual_per_month)}</div>
+                                <div class="col-6 text-success">${esc(EPT.accrued)}: <b>${num(b.accrued)}</b></div>
+                                <div class="col-6 text-danger">${esc(EPT.taken)}: <b>${num(b.taken)}</b></div>
+                                <div class="col-6">${esc(EPT.adjusted)}: ${num(b.adjusted)}</div>
+                                <div class="col-6 fs-5">${esc(EPT.balance)}: <b>${num(b.balance)}</b></div>
+                            </div>
+                        </div></div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card"><div class="card-header d-flex align-items-center gap-2">
+                            <b><i class="fas fa-calendar-check me-1"></i>${esc(EPT.attendance)}</b>
+                            <select class="form-select form-select-sm w-auto ms-auto" id="epMonth"></select>
+                            <select class="form-select form-select-sm w-auto" id="epYear"></select>
+                        </div><div class="card-body" id="epAttBox"></div></div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card"><div class="card-header">
+                            <b><i class="fas fa-list me-1"></i>${esc(EPT.leaveHistory)}</b>
+                        </div><div class="card-body">${renderLeaves(res.leaves, res.leave_type_summary)}</div></div>
+                    </div>
+                </div>`;
+                box.innerHTML = h;
+
+                const mSel = document.getElementById('epMonth'), ySel = document.getElementById('epYear');
+                mSel.innerHTML = EPT.months.map((m, i) => `<option value="${i+1}">${esc(m)}</option>`).join('');
+                const thisYear = new Date().getFullYear();
+                ySel.innerHTML = [thisYear-1, thisYear, thisYear+1].map(y => `<option value="${y}">${y}</option>`).join('');
+                mSel.value = String(EP_MONTH); ySel.value = String(EP_YEAR);
+                mSel.onchange = ySel.onchange = () => {
+                    EP_MONTH = parseInt(mSel.value); EP_YEAR = parseInt(ySel.value);
+                    loadAttendance(id);
+                };
+                if (res.attendance && res.attendance.days) {
+                    document.getElementById('epAttBox').innerHTML =
+                        renderAttendanceTable(res.attendance.days);
+                } else {
+                    loadAttendance(id);
+                }
+            });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('epEmp').value) epLoad();
+    });
+</script>
+{{ employee_picker_assets() }}
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+{% block title %}{{ _('x.emp_history_menu') }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="mb-0"><i class="fas fa-user-clock me-2"></i>{{ _('x.emp_history_menu') }}</h4>
+        {{ employee_picker('ehEmp', scope='all', selected=selected, on_change='ehLoad()') }}
+        <a class="btn btn-sm btn-outline-secondary" id="ehPrint" target="_blank" style="display:none">
+            <i class="fas fa-print me-1"></i>{{ _('x.eh_print') }}</a>
+    </div>
+
+    <div id="ehBody" class="text-muted">{{ _('x.eh_pick') }}</div>
+</div>
+
+<script>
+    const EHT = {
+        basic: {{ _('x.pm_basic')|tojson }},
+        allow: {{ _('x.pm_allowances')|tojson }},
+        ded: {{ _('x.pm_deductions')|tojson }},
+        net: {{ _('x.pm_net')|tojson }},
+        period: {{ _('x.pp_period_label')|tojson }},
+        posted: {{ _('x.eh_posted')|tojson }},
+        draft: {{ _('x.eh_draft')|tojson }},
+        totals: {{ _('x.eh_totals')|tojson }},
+        monthsN: {{ _('x.eh_months_n')|tojson }},
+        loans: {{ _('x.eh_loans')|tojson }},
+        principal: {{ _('x.eh_principal')|tojson }},
+        installment: {{ _('x.eh_installment')|tojson }},
+        paid: {{ _('x.eh_paid')|tojson }},
+        remaining: {{ _('x.eh_remaining')|tojson }},
+        noLoans: {{ _('x.eh_no_loans')|tojson }},
+        none: {{ _('x.eh_none')|tojson }},
+        lines: {{ _('x.lg_lines')|tojson }}
+    };
+    const API = {{ url_for('payroll.api_employee_history')|tojson }};
+    const PRINT_URL = {{ url_for('payroll.employee_history_print')|tojson }};
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const money = v => (Math.round((v ?? 0) * 1000) / 1000).toLocaleString();
+
+    function detailList(items) {
+        if (!items || !items.length) return '';
+        return '<ul class="mb-0 small">' + items.map(i =>
+            `<li>${esc(i.name_ar || i.name_en)} : <b>${money(i.amount)}</b></li>`).join('') + '</ul>';
+    }
+
+    function ehLoad() {
+        const id = document.getElementById('ehEmp').value;
+        const box = document.getElementById('ehBody');
+        const pbtn = document.getElementById('ehPrint');
+        if (!id) { box.innerHTML = ''; pbtn.style.display = 'none'; return; }
+        pbtn.href = PRINT_URL + '?employee_id=' + id;
+        pbtn.style.display = '';
+        fetch(`${API}?employee_id=${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) { box.innerHTML = esc(res.message || ''); return; }
+                const d = res.data, e = d.employee, t = d.totals;
+                let h = `
+                <div class="card mb-3"><div class="card-body py-2 d-flex flex-wrap gap-3 align-items-center">
+                    <b>${esc(e.employee_number)} — ${esc(e.arabic_name || e.name)}</b>
+                    <span class="text-muted small">${esc(e.department || '')} • ${esc(e.position || '')}</span>
+                    <span class="badge bg-light text-dark border">${esc(e.hire_date)} ←
+                        ${e.end_of_service_date ? esc(e.end_of_service_date) : '...'}</span>
+                    <span class="ms-auto"></span>
+                    <span class="badge bg-dark">${esc(EHT.monthsN)}: ${t.months}</span>
+                    <span class="badge bg-success">${esc(EHT.allow)}: ${money(t.allow)}</span>
+                    <span class="badge bg-danger">${esc(EHT.ded)}: ${money(t.ded)}</span>
+                    <span class="badge bg-primary">${esc(EHT.totals)}: ${money(t.net)}</span>
+                </div></div>`;
+                if (!d.months.length) {
+                    h += `<div class="text-center text-muted py-4">${esc(EHT.none)}</div>`;
+                } else {
+                    h += `<div class="card mb-3"><div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                    <thead><tr>
+                        <th></th><th>${esc(EHT.period)}</th>
+                        <th class="text-end">${esc(EHT.basic)}</th>
+                        <th class="text-end">${esc(EHT.allow)}</th>
+                        <th class="text-end">${esc(EHT.ded)}</th>
+                        <th class="text-end">${esc(EHT.net)}</th><th></th>
+                    </tr></thead><tbody>` + d.months.map((m, i) => `
+                        <tr>
+                            <td><b>${String(m.month).padStart(2,'0')}/${m.year}</b></td>
+                            <td class="small text-muted">${esc(m.period_start)} ← ${esc(m.period_end)}</td>
+                            <td class="text-end">${money(m.basic)}</td>
+                            <td class="text-end text-success">${money(m.allow)}</td>
+                            <td class="text-end text-danger">${money(m.ded)}</td>
+                            <td class="text-end"><b>${money(m.net)}</b></td>
+                            <td>${m.source === 'ledger'
+                                ? `<span class="badge bg-success">${esc(EHT.posted)} #${m.posting_id}</span>`
+                                : `<span class="badge bg-warning text-dark">${esc(EHT.draft)}</span>`}
+                                <button class="btn btn-sm btn-outline-secondary ms-1"
+                                        onclick="document.getElementById('ehd-${i}').classList.toggle('d-none')">
+                                    <i class="fas fa-list"></i></button>
+                            </td>
+                        </tr>
+                        <tr id="ehd-${i}" class="d-none"><td colspan="7" class="bg-body-tertiary">
+                            <div class="row"><div class="col-md-6">
+                                <div class="fw-bold text-success small">${esc(EHT.allow)}</div>
+                                ${detailList(m.details.allowances) || '<span class="text-muted small">—</span>'}
+                            </div><div class="col-md-6">
+                                <div class="fw-bold text-danger small">${esc(EHT.ded)}</div>
+                                ${detailList(m.details.deductions) || '<span class="text-muted small">—</span>'}
+                            </div></div>
+                        </td></tr>`).join('') + `</tbody></table></div></div>`;
+                }
+                h += `<div class="card"><div class="card-header">
+                        <i class="fas fa-hand-holding-usd me-2"></i>${esc(EHT.loans)}</div>
+                    <div class="card-body py-2">` +
+                    (d.loans.length ? d.loans.map(l => `
+                        <div class="d-flex flex-wrap gap-3 border-bottom py-2 small align-items-center">
+                            <span>${esc(EHT.principal)}: <b>${money(l.principal)}</b></span>
+                            <span>${esc(EHT.installment)}: ${money(l.installment)}</span>
+                            <span class="text-success">${esc(EHT.paid)}: ${money(l.paid)}</span>
+                            <span class="text-danger">${esc(EHT.remaining)}: <b>${money(l.remaining)}</b></span>
+                            <span class="badge bg-light text-dark border">${esc(l.start)}</span>
+                            <span class="text-muted">${esc(l.reason || '')}</span>
+                        </div>`).join('')
+                    : `<span class="text-muted">${esc(EHT.noLoans)}</span>`) +
+                    `</div></div>`;
+                box.innerHTML = h;
+            });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('ehEmp').value) ehLoad();
+    });
+</script>
+{{ employee_picker_assets() }}
+{% endblock %}

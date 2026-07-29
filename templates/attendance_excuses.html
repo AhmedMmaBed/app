@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+
+{% block title %}{{ _('attendance.excuses_title') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        {{ _('attendance.excuses_header') }}
+                    </h4>
+                    <div>
+                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addExcuseModal">
+                            <i class="fas fa-plus me-1"></i> {{ _('btn.add_manual_excuse') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <!-- فلاتر البحث -->
+                    <form method="GET" action="{{ url_for('attendance_excuses.index') }}"
+                        class="row g-3 mb-4 p-3 bg-light rounded border align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('label.start_date') }}</label>
+                            <input type="date" class="form-control" name="start_date"
+                                value="{{ request.args.get('start_date', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('label.end_date') }}</label>
+                            <input type="date" class="form-control" name="end_date"
+                                value="{{ request.args.get('end_date', '') }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('label.employee') }}</label>
+                            <input class="form-control" list="datalistOptions" id="empDataList"
+                                placeholder="{{ _('search.placeholder_employee') }}" autocomplete="off">
+                            <datalist id="datalistOptions">
+                                {% for emp in employees %}
+                                <option data-value="{{ emp.id }}" value="{{ emp.name }} - {{ emp.employee_number }}">
+                                </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="emp_id" id="empIdHidden"
+                                value="{{ request.args.get('emp_id', '') }}">
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>
+                                {{ _('btn.filter') }}</button>
+                        </div>
+                        <div class="col-12 text-end mt-2">
+                            <a href="{{ url_for('attendance_excuses.index') }}" class="btn btn-sm btn-secondary">{{
+                                _('btn.reset_all') }}</a>
+                        </div>
+                    </form>
+
+                    <script>
+                        // Script to handle Datalist Selection -> Hidden ID
+                        document.getElementById('empDataList').addEventListener('input', function (e) {
+                            var input = e.target;
+                            var list = input.getAttribute('list');
+                            var options = document.getElementById(list).childNodes;
+                            var hiddenInput = document.getElementById('empIdHidden');
+
+                            // Reset if empty
+                            if (input.value === "") hiddenInput.value = "";
+
+                            for (var i = 0; i < options.length; i++) {
+                                var current = options[i];
+                                if (current.value === input.value) {
+                                    hiddenInput.value = current.getAttribute('data-value');
+                                    break;
+                                }
+                            }
+                        });
+
+                        // Pre-fill input if ID exists (On Load)
+                        window.addEventListener('DOMContentLoaded', (event) => {
+                            var hiddenId = document.getElementById('empIdHidden').value;
+                            if (hiddenId) {
+                                var options = document.getElementById('datalistOptions').options;
+                                for (var i = 0; i < options.length; i++) {
+                                    if (options[i].getAttribute('data-value') == hiddenId) {
+                                        document.getElementById('empDataList').value = options[i].value;
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                    </script>
+
+                    <script>
+                        // Script to handle Datalist Selection -> Hidden ID
+                        document.getElementById('empDataList').addEventListener('input', function (e) {
+                            var input = e.target;
+                            var list = input.getAttribute('list');
+                            var options = document.getElementById(list).childNodes;
+                            var hiddenInput = document.getElementById('empIdHidden');
+
+                            // Reset if empty
+                            if (input.value === "") hiddenInput.value = "";
+
+                            for (var i = 0; i < options.length; i++) {
+                                var current = options[i];
+                                if (current.value === input.value) {
+                                    hiddenInput.value = current.getAttribute('data-value');
+                                    break;
+                                }
+                            }
+                        });
+
+                        // Pre-fill input if ID exists (On Load)
+                        window.addEventListener('DOMContentLoaded', (event) => {
+                            var hiddenId = document.getElementById('empIdHidden').value;
+                            if (hiddenId) {
+                                var options = document.getElementById('datalistOptions').options;
+                                for (var i = 0; i < options.length; i++) {
+                                    if (options[i].getAttribute('data-value') == hiddenId) {
+                                        document.getElementById('empDataList').value = options[i].value;
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                    </script>
+
+                    <!-- قسم البصمات الناقصة (التقرير المطلوب) -->
+                    <div class="alert alert-warning mb-4">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-circle me-2"></i> {{
+                            _('attendance.invalid_punches_title') }}</h5>
+                        <p class="mb-0">{{ _('attendance.invalid_punches_desc') }}</p>
+                    </div>
+
+                    <div class="table-responsive mb-5">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ _('label.date') }}</th>
+                                    <th>{{ _('attendance.employee') }}</th>
+                                    <th>{{ _('label.department') }}</th>
+                                    <th>{{ _('attendance.punch_status') }}</th>
+                                    <th>{{ _('attendance.available_punches') }}</th>
+                                    <th>{{ _('label.quick_action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if invalid_days %}
+                                {% for item in invalid_days %}
+                                <tr>
+                                    <td>{{ item.date }}</td>
+                                    <td>
+                                        <div class="fw-bold">{{ item.employee_name }}</div>
+                                        <small class="text-muted">{{ item.employee_number }}</small>
+                                    </td>
+                                    <td>{{ item.department }}</td>
+                                    <td><span class="badge bg-danger">{{ _('attendance.incomplete_punch') }}</span></td>
+                                    <td dir="ltr" class="text-end">
+                                        {{ item.punches_str }}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick="quickExcuse('{{ item.employee_id }}', '{{ item.date }}', '{{ item.employee_name }}')">
+                                            <i class="fas fa-check me-1"></i> {{ _('attendance.mark_as_mission') }}
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">{{ _('attendance.no_invalid_punches')
+                                        }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <!-- سجل الأعذار الحالية -->
+                    <h5 class="mb-3 text-secondary"><i class="fas fa-history me-2"></i> {{
+                        _('attendance.excuses_history_title') }}
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('label.date') }}</th>
+                                    <th>{{ _('attendance.employee') }}</th>
+                                    <th>{{ _('label.type') }}</th>
+                                    <th>{{ _('label.reason_notes') }}</th>
+                                    <th>{{ _('label.added_date') }}</th>
+                                    <th>{{ _('label.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if excuses %}
+                                {% for excuse in excuses %}
+                                <tr>
+                                    <td>{{ excuse.date }}</td>
+                                    <td>{{ excuse.employee_name }}</td>
+                                    <td>
+                                        {% if excuse.type == 'mission' %}
+                                        <span class="badge bg-success">{{ _('leave.mission') }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ _('leave.manual_excuse') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ excuse.reason }}</td>
+                                    <td>{{ excuse.created_at[:10] }}</td>
+                                    <td>
+                                        <form action="{{ url_for('attendance_excuses.delete_excuse') }}" method="POST"
+                                            data-confirm="{{ _('msg.confirm_delete_excuse') }}"
+                                            onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                            <input type="hidden" name="excuse_id" value="{{ excuse.id }}">
+                                            <button type="submit" class="btn btn-sm btn-danger"><i
+                                                    class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">{{ _('attendance.no_excuses_records') }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Add Manual Excuse -->
+<div class="modal fade" id="addExcuseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('attendance_excuses.add_excuse') }}" method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ _('modal.add_excuse_title') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('attendance.employee') }}</label>
+                        {{ employee_picker('employee_id', scope='active', required=true) }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.date') }}</label>
+                        <input type="date" class="form-control" name="date" required value="{{ today_date }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.type') }}</label>
+                        <select class="form-select" name="type">
+                            <option value="mission">{{ _('leave.mission_full_attendance') }}</option>
+                            <option value="manual_override">{{ _('leave.other_excuse_cancel_deduction') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.reason_notes') }}</label>
+                        <textarea class="form-control" name="reason" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('btn.save') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script>
+    function quickExcuse(empId, dateStr, empName) {
+        if (!confirm(`{{ _("msg.confirm_mission_for") }} ${empName} {{ _("msg.on_date") }} ${dateStr}?\n{{ _("msg.mission_explanation") }}`)) return;
+
+        // Create hidden form to submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('attendance_excuses.add_excuse') }}";
+
+        const f_emp = document.createElement('input'); f_emp.type = 'hidden'; f_emp.name = 'employee_id'; f_emp.value = empId;
+        const f_date = document.createElement('input'); f_date.type = 'hidden'; f_date.name = 'date'; f_date.value = dateStr;
+        const f_type = document.createElement('input'); f_type.type = 'hidden'; f_type.name = 'type'; f_type.value = 'mission';
+        const f_reason = document.createElement('input'); f_reason.type = 'hidden'; f_reason.name = 'reason'; f_reason.value = '{{ _("reason.quick_excuse_auto") }}';
+
+        form.appendChild(f_emp);
+        form.appendChild(f_date);
+        form.appendChild(f_type);
+        form.appendChild(f_reason);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+{{ employee_picker_assets() }}
+{% endblock %}

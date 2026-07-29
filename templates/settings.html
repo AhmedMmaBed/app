@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('header.system_settings') }}{% endblock %}
+
+{% block content %}
+<style>
+.stg-page .card { border: 1px solid var(--paper-line); border-radius: 14px; margin-bottom: 1.25rem; }
+.stg-page .card-header { background: var(--paper); border-bottom: 1px solid var(--paper-line); font-weight: 700; color: var(--ledger-dark); }
+.stg-page .card-header i { color: var(--ledger); }
+.stg-page .form-label { font-size: .8rem; font-weight: 600; color: var(--ink-muted); }
+.stg-page .form-control, .stg-page .form-select { background: var(--paper-raised); border: 1px solid var(--paper-line); border-radius: 10px; padding: .55rem .8rem; }
+.stg-page .form-control:focus, .stg-page .form-select:focus { border-color: var(--ledger); box-shadow: 0 0 0 .2rem rgba(31,92,74,.12); }
+.stg-page .row.g-3 > div { margin-bottom: .25rem; }
+.stg-actions { position: sticky; bottom: 0; z-index: 5; background: color-mix(in srgb, var(--paper-raised) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--paper-line); padding: .9rem 0; display: flex; justify-content: flex-end; }
+.stg-actions .btn-success { background: var(--ledger); border-color: var(--ledger); font-weight: 600; padding: .6rem 1.6rem; border-radius: 10px; }
+.stg-live { color: var(--ledger-dark); font-size: .78rem; font-weight: 600; }
+</style>
+<div class="container-fluid stg-page">
+    <div class="pt-3 pb-2 mb-3 border-bottom">
+        <div><h1 class="h2"><i class="fas fa-sliders-h me-2"></i>{{ _('header.system_settings') }}</h1>
+        <div class="report-desc">{{ _('x.settings_page_desc') }}</div></div>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.update_settings') }}">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-building me-2"></i>{{ _('header.app_info') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-6"><label class="form-label">{{ _('label.app_name') }}</label>
+                            <input type="text" class="form-control" name="app_name" value="{{ settings.app_name or '' }}"></div>
+                        <div class="col-md-6"><label class="form-label">{{ _('label.company_name') }}</label>
+                            <input type="text" class="form-control" name="company_name" value="{{ settings.company_name or '' }}"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-calendar-alt me-2"></i>{{ _('x.set_period_header') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4"><label class="form-label">{{ _('x.set_period_day') }}</label>
+                            <input type="number" min="1" max="28" class="form-control" name="payroll_period_start_day"
+                                   value="{{ settings.payroll_period_start_day or 1 }}"></div>
+                        <div class="col-md-8 align-self-end">
+                            <div class="text-muted small">{{ _('x.set_period_day_hint') }}</div>
+                            <div class="small mt-1"><b>{{ _('x.set_period_now') }} ({{ '%02d'|format(pp_now.month) }}/{{ pp_now.year }}):</b>
+                                <span class="badge bg-secondary">{{ pp_now.start }} &#8592; {{ pp_now.end }}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-address-card me-2"></i>{{ _('header.contact_info') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-12"><label class="form-label">{{ _('label.company_address') }}</label>
+                            <input type="text" class="form-control" name="company_address" value="{{ settings.company_address or '' }}"></div>
+                        <div class="col-md-6"><label class="form-label">{{ _('label.company_phone') }}</label>
+                            <input type="text" class="form-control" name="company_phone" value="{{ settings.company_phone or '' }}"></div>
+                        <div class="col-md-6"><label class="form-label">{{ _('label.company_email') }}</label>
+                            <input type="email" class="form-control" name="company_email" value="{{ settings.company_email or '' }}"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-coins me-2"></i>{{ _('header.currency_settings') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4"><label class="form-label">{{ _('label.base_currency') }}</label>
+                            <input type="text" class="form-control" name="currency_name" value="{{ settings.currency_name or '' }}"></div>
+                        <div class="col-md-3"><label class="form-label">{{ _('label.currency_symbol') }}</label>
+                            <input type="text" class="form-control" name="currency_symbol" value="{{ settings.currency_symbol or '' }}"></div>
+                        <div class="col-md-2"><label class="form-label">{{ _('x.currency_code') }}</label>
+                            <input type="text" class="form-control" name="currency_code" value="{{ settings.currency_code or '' }}"></div>
+                        <div class="col-md-3"><label class="form-label">{{ _('label.currency_position') }}</label>
+                            <select class="form-select" name="currency_position">
+                                    <option value="right" {% if settings.get('currency_position')=='right' %}selected{%
+                                        endif %}>{{ _('option.right_of_amount') }}</option>
+                                    <option value="left" {% if settings.get('currency_position')=='left' %}selected{%
+                                        endif %}>{{ _('option.left_of_amount') }}</option>
+                                </select></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-umbrella-beach me-2"></i>{{ _('header.leave_settings_basic') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-6"><label class="form-label">{{ _('label.leave_earned_per_month') }}</label>
+                            <input type="number" step="0.5" class="form-control" name="leave_earned_per_month" value="{{ sal.get('leave_earned_per_month', '2.5') }}">
+                            <div class="stg-live mt-1"><i class="fas fa-bolt me-1"></i>{{ _('x.leave_accrual_live_note') }}</div></div>
+                        <div class="col-md-6"><label class="form-label">{{ _('label.leave_migration_cutoff') }}</label>
+                            <input type="date" class="form-control" name="leave_migration_cutoff_date" value="{{ sal.get('leave_migration_cutoff_date', '') }}">
+                            <div class="form-text">{{ _('hint.leave_migration_cutoff') }}</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-user-clock me-2"></i>{{ _('header.attendance_settings') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4"><label class="form-label">{{ _('label.attendance_grace_minutes') }}</label><input type="number" step="1" class="form-control" name="grace_late_minutes" value="{{ sal.get('grace_late_minutes', '10') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.grace_early_minutes') }}</label><input type="number" step="1" class="form-control" name="grace_early_minutes" value="{{ sal.get('grace_early_minutes', '5') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.early_departure_grace_minutes') }}</label><input type="number" step="1" class="form-control" name="early_departure_grace_minutes" value="{{ sal.get('early_departure_grace_minutes', '5') }}"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-business-time me-2"></i>{{ _('header.overtime_settings') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4"><label class="form-label">{{ _('label.weekday_ot_multiplier') }}</label><input type="number" step="0.05" class="form-control" name="weekday_ot_multiplier" value="{{ sal.get('weekday_ot_multiplier', '1.25') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.weekend_ot_multiplier') }}</label><input type="number" step="0.05" class="form-control" name="weekend_ot_multiplier" value="{{ sal.get('weekend_ot_multiplier', '1.5') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.holiday_ot_multiplier') }}</label><input type="number" step="0.05" class="form-control" name="holiday_ot_multiplier" value="{{ sal.get('holiday_ot_multiplier', '2.0') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.overtime_round_to_minutes') }}</label><input type="number" step="1" class="form-control" name="overtime_round_to_minutes" value="{{ sal.get('overtime_round_to_minutes', '15') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.overtime_cap_monthly_hours') }}</label><input type="number" step="1" class="form-control" name="overtime_cap_monthly_hours" value="{{ sal.get('overtime_cap_monthly_hours', '60') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.rounding_display_decimals') }}</label><input type="number" step="1" class="form-control" name="rounding_display_decimals" value="{{ sal.get('rounding_display_decimals', '2') }}"></div><div class="col-md-4"><label class="form-label">{{ _('label.daily_rate_basis') }}</label><select class="form-select" name="daily_rate_basis">
+<option value="30" {% if sal.get('daily_rate_basis','30')=='30' %}selected{% endif %}>{{ _('opt.basis_30') }}</option>
+<option value="26" {% if sal.get('daily_rate_basis','30')=='26' %}selected{% endif %}>{{ _('opt.basis_26') }}</option>
+<option value="working" {% if sal.get('daily_rate_basis','30')=='working' %}selected{% endif %}>{{ _('opt.basis_working') }}</option>
+</select><div class="form-text">{{ _('hint.daily_rate_basis') }}</div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-gavel me-2"></i>{{ _('x.policies_section') }}</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4"><label class="form-label">{{ _('label.late_arrival_policy') }}</label>
+                            <select class="form-select" name="late_arrival_policy">
+                                    <option value="warning" {% if sal.get('late_arrival_policy')=='warning'
+                                        %}selected{% endif %}>
+                                        {{ _('option.warning_only') }}
+                                    </option>
+                                    <option value="actual_time" {% if sal.get('late_arrival_policy', 'actual_time'
+                                        )=='actual_time' %}selected{% endif %}>
+                                        {{ _('option.deduct_actual_time') }}
+                                    </option>
+                                    <option value="quarter_day" {% if sal.get('late_arrival_policy')=='quarter_day'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_quarter_day') }}
+                                    </option>
+                                    <option value="half_day" {% if sal.get('late_arrival_policy')=='half_day'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_half_day') }}
+                                    </option>
+                                    <option value="full_day" {% if sal.get('late_arrival_policy')=='full_day'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_full_day') }}
+                                    </option>
+                                </select></div>
+                        <div class="col-md-4"><label class="form-label">{{ _('label.early_departure_policy') }}</label>
+                            <select class="form-select" name="early_departure_policy">
+                                    <option value="warning" {% if sal.get('early_departure_policy')=='warning'
+                                        %}selected{% endif %}>
+                                        {{ _('option.warning_only') }}
+                                    </option>
+                                    <option value="actual_time" {% if
+                                        sal.get('early_departure_policy', 'actual_time' )=='actual_time'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_actual_time') }}
+                                    </option>
+                                    <option value="quarter_day" {% if
+                                        sal.get('early_departure_policy')=='quarter_day' %}selected{% endif %}>
+                                        {{ _('option.deduct_quarter_day') }}
+                                    </option>
+                                    <option value="half_day" {% if sal.get('early_departure_policy')=='half_day'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_half_day') }}
+                                    </option>
+                                    <option value="full_day" {% if sal.get('early_departure_policy')=='full_day'
+                                        %}selected{% endif %}>
+                                        {{ _('option.deduct_full_day') }}
+                                    </option>
+                                </select></div>
+                        <div class="col-md-4"><label class="form-label">{{ _('label.missing_punch_policy') }}</label>
+                            <select class="form-select" name="missing_punch_policy" id="mpPolicySel">
+                                    <option value="invalid" {% if sal.get('missing_punch_policy')=='invalid'
+                                        %}selected{% endif %}>
+                                        {{ _('option.mark_as_invalid') }}
+                                    </option>
+                                    <option value="zero_hours" {% if sal.get('missing_punch_policy')=='zero_hours'
+                                        %}selected{% endif %}>
+                                        {{ _('option.zero_work_hours') }}
+                                    </option>
+                                    <option value="penalty_tiered" {% if
+                                        sal.get('missing_punch_policy')=='penalty_tiered' %}selected{% endif %}>
+                                        {{ _('option.tiered_penalty_system') }}
+                                    </option>
+                                </select></div>
+                        <div class="col-12" id="mpTiersBox" style="display:none">
+                            <div class="border rounded p-2 bg-light">
+                                <div class="small fw-bold mb-2">{{ _('x.set_mp_tiers_h') }}</div>
+                                <div class="row g-2">
+                                    <div class="col-md-4"><label class="form-label small">{{ _('x.set_mp_p1') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="missing_punch_penalty_1" value="{{ sal.get('missing_punch_penalty_1', '0') }}"></div>
+                                    <div class="col-md-4"><label class="form-label small">{{ _('x.set_mp_p2') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="missing_punch_penalty_2" value="{{ sal.get('missing_punch_penalty_2', '0.25') }}"></div>
+                                    <div class="col-md-4"><label class="form-label small">{{ _('x.set_mp_p3') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="missing_punch_penalty_3" value="{{ sal.get('missing_punch_penalty_3', '1.0') }}"></div>
+                                </div>
+                                <div class="text-muted small mt-1">{{ _('x.set_mp_tiers_hint') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">{{ _('x.set_presence_policy') }}</label>
+                            <select class="form-select" name="presence_missing_policy" id="ppPolicySel">
+                                <option value="warning" {% if sal.get('presence_missing_policy','warning')=='warning' %}selected{% endif %}>{{ _('x.pp_warn') }}</option>
+                                <option value="deduct_fraction" {% if sal.get('presence_missing_policy')=='deduct_fraction' %}selected{% endif %}>{{ _('x.pp_frac') }}</option>
+                                <option value="penalty_tiered" {% if sal.get('presence_missing_policy')=='penalty_tiered' %}selected{% endif %}>{{ _('option.tiered_penalty_system') }}</option>
+                            </select></div>
+                        <div class="col-12" id="ppExtraBox" style="display:none">
+                            <div class="border rounded p-2 bg-light">
+                                <div class="row g-2">
+                                    <div class="col-md-3" id="ppFracCol"><label class="form-label small">{{ _('x.set_presence_frac') }}</label>
+                                        <input type="number" step="0.05" min="0" max="1" class="form-control"
+                                               name="presence_penalty_day_fraction" value="{{ sal.get('presence_penalty_day_fraction', '0.25') }}"></div>
+                                    <div class="col-md-3 pp-tier"><label class="form-label small">{{ _('x.set_mp_p1') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="presence_penalty_1" value="{{ sal.get('presence_penalty_1', '0') }}"></div>
+                                    <div class="col-md-3 pp-tier"><label class="form-label small">{{ _('x.set_mp_p2') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="presence_penalty_2" value="{{ sal.get('presence_penalty_2', '0.25') }}"></div>
+                                    <div class="col-md-3 pp-tier"><label class="form-label small">{{ _('x.set_mp_p3') }}</label>
+                                        <input type="number" step="0.05" min="0" max="5" class="form-control"
+                                               name="presence_penalty_3" value="{{ sal.get('presence_penalty_3', '0.5') }}"></div>
+                                    <div class="col-md-3"><label class="form-label small">{{ _('x.set_presence_cap') }}</label>
+                                        <input type="number" step="0.5" min="0" max="30" class="form-control"
+                                               name="presence_penalty_monthly_cap_days" value="{{ sal.get('presence_penalty_monthly_cap_days', '5') }}"></div>
+                                </div>
+                                <div class="text-muted small mt-1">{{ _('x.set_presence_cap_hint') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">{{ _('x.set_hp_hours') }}</label>
+                            <input type="number" step="0.5" min="0.5" max="8" class="form-control"
+                                   name="hourly_perm_max_hours_per_day" value="{{ sal.get('hourly_perm_max_hours_per_day', '2') }}"></div>
+                        <div class="col-md-4"><label class="form-label">{{ _('x.set_hp_days') }}</label>
+                            <input type="number" step="1" min="0" max="31" class="form-control"
+                                   name="hourly_perm_max_days_per_month" value="{{ sal.get('hourly_perm_max_days_per_month', '4') }}"></div>
+                        <div class="col-md-4"><label class="form-label">{{ _('x.set_sick_basis') }}</label>
+                            <select class="form-select" name="sick_tier_year_basis">
+                                <option value="calendar" {% if sal.get('sick_tier_year_basis','calendar')=='calendar' %}selected{% endif %}>{{ _('x.sb_calendar') }}</option>
+                                <option value="hire" {% if sal.get('sick_tier_year_basis')=='hire' %}selected{% endif %}>{{ _('x.sb_hire') }}</option>
+                            </select></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stg-actions">
+            <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>{{ _('btn.save_settings') }}</button>
+        </div>
+    </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var sel = document.getElementById('mpPolicySel');
+    var box = document.getElementById('mpTiersBox');
+    if (!sel || !box) return;
+    var sync = function () { box.style.display = (sel.value === 'penalty_tiered') ? '' : 'none'; };
+    sel.addEventListener('change', sync);
+    sync();
+
+    var ps = document.getElementById('ppPolicySel');
+    var pbox = document.getElementById('ppExtraBox');
+    if (ps && pbox) {
+        var fracCol = document.getElementById('ppFracCol');
+        var tierCols = pbox.querySelectorAll('.pp-tier');
+        var psync = function () {
+            var v = ps.value;
+            pbox.style.display = (v === 'warning') ? 'none' : '';
+            if (fracCol) fracCol.style.display = (v === 'deduct_fraction') ? '' : 'none';
+            tierCols.forEach(function (c) { c.style.display = (v === 'penalty_tiered') ? '' : 'none'; });
+        };
+        ps.addEventListener('change', psync);
+        psync();
+    }
+});
+</script>
+{% endblock %}

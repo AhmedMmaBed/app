@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('page.title.salary_slip') }} - {{ employee.name }}</title>
+    <style>
+        @media print {
+            body {
+                font-family: 'Arial', sans-serif;
+                margin: 10px;
+                direction: rtl;
+                font-size: 10px;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+
+            .print-container {
+                max-width: none;
+                margin: 0;
+                padding: 5px;
+                box-shadow: none;
+            }
+
+            .header {
+                margin-bottom: 5px;
+                padding-bottom: 3px;
+            }
+
+            .employee-info {
+                margin-bottom: 5px;
+                padding: 3px;
+            }
+
+            .salary-section {
+                margin-bottom: 5px;
+            }
+
+            .summary-section {
+                margin-bottom: 5px;
+            }
+
+            .signature-section {
+                margin-top: 5px;
+            }
+
+            .footer {
+                margin-top: 5px;
+                padding-top: 3px;
+            }
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 15px;
+            direction: rtl;
+            background-color: #FAFAF7;
+            font-size: 11px;
+        }
+
+        .print-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-size: 11px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1F5C4A;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .company-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1F5C4A;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .header h1 {
+            color: #1F5C4A;
+            margin-bottom: 3px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .header h3 {
+            font-size: 12px;
+            margin-bottom: 3px;
+            color: #333;
+        }
+
+        .header p {
+            font-size: 10px;
+            margin: 0;
+            color: #666;
+        }
+
+        .employee-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background-color: #FAFAF7;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 10px;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item span:first-child {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .info-item span:last-child {
+            color: #1F5C4A;
+        }
+
+        .salary-section {
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            background-color: #1F5C4A;
+            color: white;
+            padding: 5px 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
+
+        .salary-table th {
+            background-color: #FAFAF7;
+            border: 1px solid #DAD7CB;
+            padding: 4px 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .salary-table td {
+            border: 1px solid #DAD7CB;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .salary-table .total-row {
+            background-color: #E3E0D3;
+            font-weight: bold;
+        }
+
+        .net-amount {
+            background-color: #1F5C4A;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 8px 0;
+            border-radius: 4px;
+        }
+
+        .summary-section {
+            margin-bottom: 12px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .summary-card {
+            border: 1px solid #DAD7CB;
+            padding: 6px;
+            border-radius: 4px;
+            background-color: #FAFAF7;
+        }
+
+        .summary-card h4 {
+            margin: 0 0 4px 0;
+            font-size: 11px;
+            color: #1F5C4A;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 9px;
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            gap: 20px;
+        }
+
+        .signature-box {
+            flex: 1;
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .signature-box h4 {
+            margin: 0 0 20px 0;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 9px;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #1F5C4A;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .print-btn:hover {
+            background-color: #163F32;
+        }
+
+        @media (max-width: 768px) {
+            .employee-info {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .signature-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button class="print-btn no-print" onclick="window.print()">
+        <i class="fas fa-print"></i> {{ _('btn.print') }}
+    </button>
+
+    <div class="print-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-logo">
+                {{ _('company.name_formatted')|safe }}
+            </div>
+            <h1>{{ _('header.monthly_salary_slip') }}</h1>
+            <h3>{{ employee.name }} - {{ month }}/{{ year }}</h3>
+            <p>{{ _('label.print_date') }}: {{ current_date }}</p>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="employee-info">
+            <div class="info-item">
+                <span>{{ _('label.employee_number') }}:</span>
+                <span>{{ employee.employee_number }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.employee_name') }}:</span>
+                <span>{{ employee.name }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.job_title') }}:</span>
+                <span>{{ employee.position }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.join_date') }}:</span>
+                <span>{{ employee.hire_date }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.bank_name') }}:</span>
+                <span>-</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.bank_account') }}:</span>
+                <span>-</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.department') }}:</span>
+                <span>{{ employee.department }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.grade') }}:</span>
+                <span>{{ employee.position }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.job_position') }}:</span>
+                <span>{{ employee.position }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.compensation_start_date') }}:</span>
+                <span>{{ employee.hire_date }}</span>
+            </div>
+            <div class="info-item">
+                <span>{{ _('label.passport_expiry') }}:</span>
+                <span>-</span>
+            </div>
+        </div>
+
+        <!-- Earnings Section -->
+        <div class="salary-section">
+            <div class="section-title">{{ _('header.earnings') }}</div>
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('tbl.header.type') }}</th>
+                        <th>{{ _('tbl.header.count') }}</th>
+                        <th>{{ _('tbl.header.rate') }}</th>
+                        <th>{{ _('tbl.header.amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if salary_data %}
+                    <tr>
+                        <td>{{ _('label.basic_salary') }}</td>
+                        <td>{{ "%.2f"|format(salary_data.total_working_days) }}</td>
+                        <td>{{ "%.2f"|format(salary_data.daily_salary) }}</td>
+                        <td>{{ "%.2f"|format(salary_data.basic_salary) }}</td>
+                    </tr>
+                    {% if salary_data.attendance_allowance and salary_data.attendance_allowance.total > 0 %}
+                    <tr>
+                        <td>{{ _('label.attendance_allowance') }}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>{{ "%.2f"|format(salary_data.attendance_allowance.total) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if leave_data and leave_data|sum(attribute='days_count') > 0 %}
+                    <tr>
+                        <td>{{ _('label.paid_annual_leave') }}</td>
+                        <td>{{ "%.2f"|format(leave_data|sum(attribute='days_count')) }}</td>
+                        <td>{{ "%.2f"|format(salary_data.daily_salary) }}</td>
+                        <td>{{ "%.2f"|format((leave_data|sum(attribute='days_count')) * salary_data.daily_salary) }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td colspan="3"><strong>{{ _('label.total_earnings') }}</strong></td>
+                        <td><strong>{{ "%.2f"|format(salary_data.basic_salary + (salary_data.attendance_allowance.total
+                                if salary_data.attendance_allowance else 0) + (leave_data|sum(attribute='days_count') *
+                                salary_data.daily_salary if leave_data else 0)) }} {{ currency_settings.symbol
+                                }}</strong></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Deductions Section -->
+        <div class="salary-section">
+            <div class="section-title">{{ _('header.deductions') }}</div>
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('tbl.header.type') }}</th>
+                        <th>{{ _('tbl.header.count') }}</th>
+                        <th>{{ _('tbl.header.rate') }}</th>
+                        <th>{{ _('tbl.header.amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if salary_data and salary_data.leave_deductions and salary_data.leave_deductions.total > 0 %}
+                    {% for detail in salary_data.leave_deductions.details %}
+                    {% if not detail.is_paid_leave %}
+                    <tr>
+                        <td>{{ _('label.deduction_type') }} {{ detail.leave_type }}</td>
+                        <td>{{ detail.days_in_month }}</td>
+                        <td>{{ "%.2f"|format(salary_data.daily_salary) }}</td>
+                        <td>{{ "%.2f"|format(detail.deduction_amount) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    <tr>
+                        <td>{{ _('label.loan_deduction') }}</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0.00</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="3"><strong>{{ _('label.total_deductions') }}</strong></td>
+                        <td><strong>{{ "%.2f"|format(salary_data.leave_deductions.total if salary_data and
+                                salary_data.leave_deductions else 0) }} {{ currency_settings.symbol }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Net Amount -->
+        {% if salary_data %}
+        <div class="net-amount">
+            {{ _('label.net_salary_paid') }}: {{ "%.3f"|format(salary_data.net_salary) }} {{ currency_settings.symbol }}
+        </div>
+        {% endif %}
+
+        <!-- Summary Sections -->
+        <div class="summary-section">
+            <div class="summary-grid">
+                <!-- Leave Summary -->
+                <div class="summary-card">
+                    <h4>{{ _('header.leave_summary') }}</h4>
+                    <div class="summary-item">
+                        <span>{{ _('label.paid_annual_leave_days') }}:</span>
+                        <span>{{ "%.2f"|format(leave_data|sum(attribute='days_count') if leave_data else 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.unpaid_leave_days') }}:</span>
+                        <span>{{ "%.2f"|format(salary_data.leave_deductions.details|selectattr('is_paid_leave',
+                            'equalto', false)|sum(attribute='days_in_month') if salary_data and
+                            salary_data.leave_deductions else 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.days_earned_month') }}:</span>
+                        <span>{{ "%.2f"|format(leave_balance.earned_days if leave_balance else 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.opening_balance') }}:</span>
+                        <span>{{ "%.2f"|format(leave_balance.opening_balance if leave_balance else 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.closing_balance') }}:</span>
+                        <span>{{ "%.2f"|format(leave_balance.closing_balance if leave_balance else 0) }}</span>
+                    </div>
+                </div>
+
+                <!-- Indemnity Summary -->
+                <div class="summary-card">
+                    <h4>{{ _('header.indemnity_summary') }}</h4>
+                    <div class="summary-item">
+                        <span>{{ _('label.indemnity_days') }}:</span>
+                        <span>1.23</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.indemnity_balance') }}:</span>
+                        <span>11.18</span>
+                    </div>
+                </div>
+
+                <!-- Working Days Summary -->
+                <div class="summary-card">
+                    <h4>{{ _('header.work_days_summary') }}</h4>
+                    <div class="summary-item">
+                        <span>{{ _('label.official_holidays') }}:</span>
+                        <span>6.0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.weekly_leaves') }}:</span>
+                        <span>{{ salary_data.weekly_leave_days if salary_data else 8 }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.rest_days') }}:</span>
+                        <span>3.0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.active_days') }}:</span>
+                        <span>30.0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>{{ _('label.attendance_days') }}:</span>
+                        <span>{{ salary_data.total_working_days if salary_data else 22 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <h4>{{ _('label.approved_by') }}</h4>
+                <br><br><br>
+                <span>{{ _('label.signature_name') }}</span>
+            </div>
+            <div class="signature-box">
+                <h4>{{ _('label.reviewed_by') }}</h4>
+                <br><br><br>
+                <span>{{ _('label.signature_name') }}</span>
+            </div>
+        </div>
+
+        <!-- Remarks -->
+        <div class="signature-section">
+            <div class="signature-box" style="flex: 2;">
+                <h4>{{ _('label.notes') }}</h4>
+                <br><br><br>
+                <span>{{ _('label.additional_notes') }}</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>{{ _('footer.user') }}: {{ employee.employee_number }} | {{ _('footer.date_time') }}: {{ current_date }}
+                {{ current_year }}</p>
+            <p>{{ _('footer.generated_by') }}</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+    function renderTable(rows) {
+        const tbody = document.getElementById('pbody');
+        tbody.innerHTML = '';
+
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="100%">{{ _('msg.no_data') }}</td></tr>`;
+            return;
+        }
+
+        rows.forEach(r => {
+            let daysHtml = '';
+            r.daily_hours.forEach((h, index) => {
+                let cellContent = '';
+                let cellClass = '';
+                let val = h;
+                let tooltip = '';
+
+                if (typeof h === 'object' && h !== null) {
+                    if (h.is_mission) {
+                        val = h.hours;
+                        cellClass = 'bg-primary bg-opacity-10 text-primary fw-bold';
+                    } else {
+                        val = h.code;
+                    }
+                    tooltip = h.tooltip || '';
+                }
+
+                let dayNum = index + 1;
+                const urlParams = new URLSearchParams(window.location.search);
+                const rYear = urlParams.get('year') || new Date().getFullYear();
+                const rMonth = urlParams.get('month') || (new Date().getMonth() + 1);
+                const dateStr = `${rYear}-${String(rMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+
+                let clickAction = '';
+                let cellStyle = '';
+
+                if (val === 'H') {
+                    cellContent = {{ _("symbol.holiday") | tojson }};
+                    cellClass = 'bg-warning bg-opacity-25 text-warning fw-bold';
+                } else if (val === 'L') {
+                    cellContent = {{ _("symbol.leave") | tojson }};
+                    cellClass = 'bg-info bg-opacity-25 text-info fw-bold';
+                } else if (val === 'W') {
+                    cellContent = {{ _("symbol.weekend") | tojson }};
+                    cellClass = 'bg-secondary bg-opacity-10 text-muted fw-bold';
+                } else if (val === 'A') {
+                    cellContent = {{ _("symbol.absent") | tojson }};
+                    cellClass = 'bg-danger bg-opacity-25 text-danger fw-bold';
+                    clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${dateStr}', 'absent')"`;
+                    cellStyle = 'cursor:pointer;';
+                } else if (val === 'I') {
+                    cellContent = {{ _("symbol.invalid") | tojson }};
+                    cellClass = 'bg-danger text-white fw-bold';
+                    tooltip += ' ({{ _("tooltip.missing_punch") }})';
+                    clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${dateStr}', 'invalid')"`;
+                    cellStyle = 'cursor:pointer;';
+                } else if (val > 0) {
+                    cellContent = val;
+                } else if (typeof val === 'number') {
+                    cellContent = val > 0 ? val : '<span class="text-muted opacity-25">-</span>';
+                } else {
+                    cellContent = '<span class="text-muted opacity-25">-</span>';
+                }
+
+                daysHtml += `<td class="${cellClass}" title="${tooltip}" style="${cellStyle}" ${clickAction}>${cellContent}</td>`;
+            });
+
+            let deductionTooltip = `{{ _("tooltip.total_deductions") }}: ${r.total_deduction}`;
+            if (r.deduction_details) {
+                const d = r.deduction_details;
+                deductionTooltip += `\n{{ _("tooltip.late") }}: ${d.late || 0}`;
+                deductionTooltip += `\n{{ _("tooltip.early_leave") }}: ${d.early || 0}`;
+                deductionTooltip += `\n{{ _("tooltip.absent") }}: ${d.absent || 0}`;
+                if (d.penalties) deductionTooltip += `\n{{ _("tooltip.penalties") }}: ${d.penalties}`;
+
+                Object.keys(d).forEach(k => {
+                    if (k.startsWith('penalty_')) {
+                        deductionTooltip += `\n${k.replace('penalty_', '{{ _("tooltip.penalty") }} ')}: ${d[k]}`;
+                    }
+                });
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-bold text-muted">${r.file_number || ''}</td>
+                <td class="text-start fw-bold" style="position:sticky; left:0; background:#fff; z-index:1;">
+                    ${r.name}
+                    ${r.arabic_name ? `<div class="text-dark fw-bold small">${r.arabic_name}</div>` : ''}
+                </td>
+                <td>${r.department || ''}</td>
+                <td><small>${r.position || ''}</small></td>
+                
+                <!-- New Columns -->
+                <td class="align-middle fw-bold text-primary">${r.expected_work_days || 0}</td>
+                <td class="align-middle fw-bold text-danger">${r.sick_emergency_leaves || 0}</td>
+                
+                ${daysHtml}
+                <td class="fw-bold text-muted bg-light border-end">${r.required_hours}</td>
+                <td class="fw-bold text-secondary">${r.basic_work_hours}</td>
+                <td class="fw-bold text-danger">${r.missing_hours}</td>
+                <td class="fw-bold text-success">${r.ot_hours}</td>
+                <td class="fw-bold text-dark border-start">${r.total_work_hours}</td>
+                <td class="text-danger">${r.total_late_hours}</td>
+                <td class="text-success">${r.present_days}</td>
+                <td class="text-danger">${r.absent_days}</td>
+                
+                <td class="text-info fw-bold">${r.salary}</td>
+                <td class="text-success fw-bold">${r.ot_amount || 0}</td>
+                <td class="text-danger fw-bold" title="${deductionTooltip}" data-bs-toggle="tooltip">${r.total_deduction}</td>
+                <td class="text-primary fw-bold text-decoration-underline">${r.net_salary}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }

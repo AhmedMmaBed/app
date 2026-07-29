@@ -1,0 +1,1235 @@
+{% extends "base.html" %}
+{% block title %}{{ _('page.title.edit_employee') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('x.edit_employee_data') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('employee.employees') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-2"></i>{{ _('x.back_to_list') }}
+        </a>
+    </div>
+</div>
+
+<style>
+/* ===== Modern SaaS form shell ===== */
+.emp-form-page > .col-lg-12 > .card { border: 1px solid var(--paper-line); border-radius: 18px; box-shadow: 0 14px 40px -24px rgba(22,63,50,.28); overflow: visible; }
+.emp-form-page .card-body { padding: 1.9rem; }
+.emp-shell { display: flex; gap: 1.75rem; align-items: flex-start; }
+.emp-shell > form { flex: 1; min-width: 0; }
+
+/* side rail */
+.emp-rail { flex: 0 0 236px; position: sticky; top: 96px; display: flex; flex-direction: column; gap: .3rem; padding: .45rem; background: var(--paper); border: 1px solid var(--paper-line); border-radius: 14px; }
+.emp-rail .nav-item { width: 100%; }
+.emp-rail .nav-link { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .72rem .95rem; border: 0; border-radius: 10px; color: var(--ink-muted); font-weight: 600; font-size: .92rem; text-align: start; transition: all .15s; }
+.emp-rail .nav-link i { width: 1.2rem; text-align: center; opacity: .7; }
+.emp-rail .nav-link:hover { background: var(--ledger-light); color: var(--ledger-dark); }
+.emp-rail .nav-link.active { background: var(--ledger); color: #fff; box-shadow: 0 8px 18px -8px rgba(22,63,50,.5); }
+.emp-rail .nav-link.active i { opacity: 1; }
+
+/* identity hero (edit) */
+.emp-hero { display: flex; align-items: center; gap: 1rem; padding: 1.05rem 1.35rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--ledger-light), var(--paper-raised) 70%); border: 1px solid var(--paper-line); border-radius: 14px; }
+.emp-avatar { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 50%; background: var(--ledger); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.3rem; }
+.emp-hero-name { font-weight: 700; font-size: 1.06rem; color: var(--ink); }
+.emp-hero-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .3rem; }
+.emp-hero-meta .badge { font-weight: 600; padding: .38em .7em; border-radius: 999px; }
+.emp-badge-num { background: var(--paper-raised); color: var(--ink); border: 1px solid var(--paper-line); font-family: var(--font-mono); }
+.emp-pill-on { background: var(--ledger-light); color: var(--ledger-dark); }
+.emp-pill-off { background: #F7E4E0; color: var(--debit); }
+.emp-pill-soft { background: var(--paper); color: var(--ink-muted); border: 1px solid var(--paper-line); }
+
+/* sections */
+.emp-form-page .tab-pane { padding-top: .35rem; }
+.emp-form-page .tab-pane h5, .emp-form-page .tab-pane h6 { display: flex; align-items: center; gap: .6rem; margin: 1.7rem 0 1rem; font-size: .8rem; font-weight: 700; letter-spacing: .05em; color: var(--ink-muted); border: 0; padding: 0; }
+.emp-form-page .tab-pane h5::after, .emp-form-page .tab-pane h6::after { content: ""; flex: 1; height: 1px; background: var(--paper-line); }
+
+/* fields */
+.emp-form-page .form-label { font-size: .8rem; font-weight: 600; color: var(--ink-muted); margin-bottom: .32rem; }
+.emp-form-page .form-control, .emp-form-page .form-select { background: var(--paper-raised); border: 1px solid var(--paper-line); border-radius: 10px; padding: .6rem .85rem; transition: border-color .15s, box-shadow .15s; }
+.emp-form-page .form-control:hover, .emp-form-page .form-select:hover { border-color: color-mix(in srgb, var(--ledger) 35%, var(--paper-line)); }
+.emp-form-page .form-control:focus, .emp-form-page .form-select:focus { border-color: var(--ledger); box-shadow: 0 0 0 .22rem rgba(31,92,74,.12); }
+.emp-form-page input[readonly] { background: var(--paper); color: var(--ink-muted); }
+
+/* weekly day chips */
+.emp-form-page #weekly_leave_checkboxes .form-check { border: 1px solid var(--paper-line); border-radius: 999px; padding: .5rem .95rem .5rem 2.3rem; background: var(--paper-raised); transition: all .15s; }
+[dir="rtl"] .emp-form-page #weekly_leave_checkboxes .form-check { padding: .5rem 2.3rem .5rem .95rem; }
+.emp-form-page #weekly_leave_checkboxes .form-check:hover { border-color: var(--ledger); }
+.emp-form-page #weekly_leave_checkboxes .form-check:has(input:checked) { border-color: var(--ledger); background: var(--ledger-light); box-shadow: inset 0 0 0 1px var(--ledger); }
+.emp-form-page #weekly_leave_checkboxes .form-check-label { font-weight: 600; color: var(--ink); }
+.emp-form-page .form-check-input:checked { background-color: var(--ledger); border-color: var(--ledger); }
+
+.emp-form-page .form-switch .form-check-input { width: 2.7em; height: 1.4em; }
+
+/* sticky actions */
+.emp-form-page .emp-actions { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; align-items: center; gap: .75rem; margin: 1.7rem -1.9rem -1.9rem; padding: 1rem 1.9rem; background: color-mix(in srgb, var(--paper-raised) 90%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--paper-line); border-radius: 0 0 18px 18px; }
+.emp-form-page .emp-actions .btn-success { background: var(--ledger); border-color: var(--ledger); font-weight: 600; padding: .62rem 1.7rem; border-radius: 10px; }
+.emp-form-page .emp-actions .btn-success:hover { background: var(--ledger-dark); border-color: var(--ledger-dark); }
+.emp-form-page .emp-cancel { color: var(--ink-muted); text-decoration: none; font-weight: 600; }
+.emp-form-page .emp-cancel:hover { color: var(--debit); }
+
+/* required + invalid marking */
+.emp-form-page div:has(> input[required]) > .form-label::after,
+.emp-form-page div:has(> select[required]) > .form-label::after { content: " *"; color: var(--debit); font-weight: 700; }
+.emp-form-page .form-control.is-invalid, .emp-form-page .form-select.is-invalid { border-color: var(--debit) !important; box-shadow: 0 0 0 .2rem rgba(168,64,47,.14); }
+.emp-form-page div:has(> .is-invalid) > .form-label { color: var(--debit); }
+.emp-rail .emp-tab-error { background: var(--debit); color: #fff; border-radius: 999px; font-size: .68rem; min-width: 1.2rem; height: 1.2rem; padding: 0 .3rem; display: inline-flex; align-items: center; justify-content: center; margin-inline-start: auto; font-weight: 700; }
+
+@media (max-width: 991.98px) {
+  .emp-shell { flex-direction: column; }
+  .emp-rail { position: static; width: 100%; flex-direction: row; overflow-x: auto; }
+  .emp-rail .nav-item { width: auto; }
+  .emp-rail .nav-link { white-space: nowrap; }
+}
+</style>
+<div class="row emp-form-page">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="emp-hero">
+                    <div class="emp-avatar">{{ (employee.name or '?')|first|upper }}</div>
+                    <div>
+                        <div class="emp-hero-name">{{ employee.name }}{% if employee.arabic_name %} <span class="text-muted fw-normal">&middot; {{ employee.arabic_name }}</span>{% endif %}</div>
+                        <div class="emp-hero-meta">
+                            <span class="badge emp-badge-num">#{{ employee.employee_number }}</span>
+                            {% if employee.is_active %}<span class="badge emp-pill-on">{{ _('x.active') }}</span>{% else %}<span class="badge emp-pill-off">{{ _('status.inactive') }}</span>{% endif %}
+                            <span class="badge emp-pill-soft"><i class="fas fa-fingerprint me-1"></i>{{ fingerprints_count }}</span>
+                            {% if has_face %}<span class="badge emp-pill-soft"><i class="fas fa-user-circle me-1"></i>{{ _('x.face') }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+<div class="emp-shell">
+                <!-- TABS NAV -->
+                <ul class="nav nav-pills flex-column emp-rail" id="employeeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab"><i class="fas fa-id-card me-2"></i>{{ _('x.personal_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work" type="button" role="tab"><i class="fas fa-briefcase me-2"></i>{{ _('x.job_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab"><i class="fas fa-coins me-2"></i>{{ _('x.financial_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="structure-tab" data-bs-toggle="tab" data-bs-target="#structure" type="button" role="tab"><i class="fas fa-layer-group me-2"></i>{{ _('x.salary_structure') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab"><i class="fas fa-sliders-h me-2"></i>{{ _('x.shift_fp_settings') }}</button>
+                    </li>
+
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="dependents-tab" data-bs-toggle="tab" data-bs-target="#dependents" type="button" role="tab">{{ _('x.dependents_family') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">{{ _('x.custody_assets') }}</button>
+                    </li>
+
+                </ul>
+
+                <form method="POST" id="editEmployeeForm_Safe"
+
+                    data-leave-start="{{ employee.weekly_leave_start if employee.weekly_leave_start is not none else 5 }}"
+                    data-leave-days="{{ employee.weekly_leave_days if employee.weekly_leave_days is not none else 2 }}"
+                    data-leave-selected="{{ employee.weekly_leave_selected_days if employee.weekly_leave_selected_days is not none else '5,6' }}"
+
+                >
+                    <div class="tab-content" id="employeeTabsContent">
+                        
+                        <!-- TAB: PERSONAL -->
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.full_name') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="name" value="{{ employee.name }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.name_arabic') }}</label>
+                                    <input type="text" class="form-control" name="arabic_name" value="{{ employee.arabic_name or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.national_id_residency') }}</label>
+                                    <input type="text" class="form-control" name="national_id" value="{{ employee.national_id or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.id_issue_date') }}</label>
+                                    <input type="date" class="form-control" name="national_id_issue_date" value="{{ employee.national_id_issue_date or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.id_expiry_date') }}</label>
+                                    <input type="date" class="form-control" name="national_id_expiry_date" value="{{ employee.national_id_expiry_date or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.issue_place') }}</label>
+                                    <input type="text" class="form-control" name="national_id_place" value="{{ employee.national_id_place or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.passport_number') }}</label>
+                                    <input type="text" class="form-control" name="passport_number" value="{{ employee.passport_number or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('label.passport_expiry') }}</label>
+                                    <input type="date" class="form-control" name="passport_expiry_date" value="{{ employee.passport_expiry_date or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.birth_date') }}</label>
+                                    <input type="date" class="form-control" name="dob" value="{{ employee.dob or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.birth_place') }}</label>
+                                    <input type="text" class="form-control" name="pob" value="{{ employee.pob or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.nationality') }}</label>
+                                    <input type="text" class="form-control" name="nationality" value="{{ employee.nationality or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.religion') }}</label>
+                                    <input type="text" class="form-control" name="religion" value="{{ employee.religion or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.gender') }}</label>
+                                    <select class="form-select" name="gender">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="male" {{ 'selected' if employee.gender == 'male' else '' }}>{{ _('x.male') }}</option>
+                                        <option value="female" {{ 'selected' if employee.gender == 'female' else '' }}>{{ _('x.female') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.marital_status') }}</label>
+                                    <select class="form-select" name="marital_status">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="single" {{ 'selected' if employee.marital_status == 'single' else '' }}>{{ _('x.single') }}</option>
+                                        <option value="married" {{ 'selected' if employee.marital_status == 'married' else '' }}>{{ _('x.married') }}</option>
+                                        <option value="divorced" {{ 'selected' if employee.marital_status == 'divorced' else '' }}>{{ _('x.divorced') }}</option>
+                                        <option value="widowed" {{ 'selected' if employee.marital_status == 'widowed' else '' }}>{{ _('x.widowed') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.military_status') }}</label>
+                                    <input type="text" class="form-control" name="military_status" value="{{ employee.military_status or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.personal_phone') }}</label>
+                                    <input type="tel" class="form-control" name="phone" value="{{ employee.phone or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.personal_email') }}</label>
+                                    <input type="email" class="form-control" name="email" value="{{ employee.email or '' }}">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">{{ _('x.address') }}</label>
+                                    <textarea class="form-control" name="address" rows="2">{{ employee.address or '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <h5 class="mb-3">{{ _('x.emergency_education') }}</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.emergency_contact') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_name" value="{{ employee.emergency_contact_name or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.relationship') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_relation" value="{{ employee.emergency_contact_relation or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.emergency_phone') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_phone" value="{{ employee.emergency_contact_phone or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.education_level') }}</label>
+                                    <input type="text" class="form-control" name="education_level" value="{{ employee.education_level or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.university_institute') }}</label>
+                                    <input type="text" class="form-control" name="university" value="{{ employee.university or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.graduation_year') }}</label>
+                                    <input type="number" class="form-control" name="graduation_year" value="{{ employee.graduation_year or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: WORK -->
+                        <div class="tab-pane fade" id="work" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.job_number') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="employee_number" id="employee_number" value="{{ employee.employee_number }}" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.hire_date') }} <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="hire_date" value="{{ employee.hire_date }}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.department') }} <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">{{ _('x.choose_department') }}</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.name }}" {% if employee.department == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" onclick="addDepartment()"
+                                    data-bs-toggle="tooltip" title="{{ _('x.add_new_department') }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.position') }} <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                <select class="form-select" id="position" name="position" required>
+                                    <option value="">{{ _('x.choose_position') }}</option>
+                                    {% for pos in positions %}
+                                    <option value="{{ pos.name }}" {% if employee.position == pos.name %}selected{% endif %}>{{ pos.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" onclick="addPosition()"
+                                    data-bs-toggle="tooltip" title="{{ _('x.add_new_position') }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.direct_manager') }}</label>
+                                    {% set current_manager_val = '' %}
+                                    {% for mgr in managers %}
+                                        {% if employee.manager_id == mgr.id %}
+                                            {% set current_manager_val = mgr.employee_number ~ ' - ' ~ mgr.name %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <input class="form-control" list="managers_list" id="manager_search" placeholder="{{ _('x.search_name_or_number_optional') }}" value="{{ current_manager_val }}">
+                                    <datalist id="managers_list">
+                                        {% for mgr in managers %}
+                                        <option data-id="{{ mgr.id }}" value="{{ mgr.employee_number }} - {{ mgr.name }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                    <input type="hidden" name="manager_id" id="manager_id_hidden" value="{{ employee.manager_id or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_type') }}</label>
+                                    <select class="form-select" name="contract_type">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="full_time" {{ 'selected' if employee.contract_type == 'full_time' else '' }}>{{ _('x.full_time') }}</option>
+                                        <option value="part_time" {{ 'selected' if employee.contract_type == 'part_time' else '' }}>{{ _('x.part_time') }}</option>
+                                        <option value="fixed_term" {{ 'selected' if employee.contract_type == 'fixed_term' else '' }}>{{ _('x.fixed_term') }}</option>
+                                        <option value="open_ended" {{ 'selected' if employee.contract_type == 'open_ended' else '' }}>{{ _('x.open_ended') }}</option>
+                                        <option value="freelance" {{ 'selected' if employee.contract_type == 'freelance' else '' }}>{{ _('x.freelance') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_start_date') }}</label>
+                                    <input type="date" class="form-control" name="contract_start_date" value="{{ employee.contract_start_date or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_end_date') }}</label>
+                                    <input type="date" class="form-control" name="contract_end_date" value="{{ employee.contract_end_date or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.employee_status') }}</label>
+                                    <select class="form-select" name="employment_status">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="probation" {{ 'selected' if employee.employment_status == 'probation' else '' }}>{{ _('x.probation') }}</option>
+                                        <option value="active" {{ 'selected' if employee.employment_status == 'active' else '' }}>{{ _('x.active') }}</option>
+                                        <option value="suspended" {{ 'selected' if employee.employment_status == 'suspended' else '' }}>{{ _('x.suspended') }}</option>
+                                        <option value="resigned" {{ 'selected' if employee.employment_status == 'resigned' else '' }}>{{ _('x.resigned') }}</option>
+                                        <option value="terminated" {{ 'selected' if employee.employment_status == 'terminated' else '' }}>{{ _('x.terminated') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.job_grade') }}</label>
+                                    <input type="text" class="form-control" name="grade_level" value="{{ employee.grade_level or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.branch') }}</label>
+                                    <input type="text" class="form-control" name="branch_location" value="{{ employee.branch_location or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_email') }}</label>
+                                    <input type="email" class="form-control" name="work_email" value="{{ employee.work_email or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_phone') }}</label>
+                                    <input type="tel" class="form-control" name="work_phone" value="{{ employee.work_phone or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_ext') }}</label>
+                                    <input type="tel" class="form-control" name="work_ext" value="{{ employee.work_ext or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: FINANCIAL -->
+                        <div class="tab-pane fade" id="financial" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.basic_salary') }}</label>
+                                    <input type="number" class="form-control" name="salary" step="0.01" min="0" value="{{ employee.salary }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.cost_center') }}</label>
+                                    <input type="text" class="form-control" name="cost_center" value="{{ employee.cost_center or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.bank_name') }}</label>
+                                    <input type="text" class="form-control" name="bank_name" value="{{ employee.bank_name or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.account_number') }}</label>
+                                    <input type="text" class="form-control" name="bank_account_number" value="{{ employee.bank_account_number or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">IBAN</label>
+                                    <input type="text" class="form-control" name="bank_iban" value="{{ employee.bank_iban or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.bank_swift') }}</label>
+                                    <input type="text" class="form-control" name="bank_swift" value="{{ employee.bank_swift or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.social_security_no') }}</label>
+                                    <input type="text" class="form-control" name="social_security_number" value="{{ employee.social_security_number or '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.tax_id') }}</label>
+                                    <input type="text" class="form-control" name="tax_id" value="{{ employee.tax_id or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: SETTINGS -->
+                        <div class="tab-pane fade" id="structure" role="tabpanel">
+                            <h5><i class="fas fa-layer-group"></i>{{ _('x.salary_structure') }}</h5>
+                            <div class="alert alert-info py-2 small">{{ _('x.fixed_items_note') }}</div>
+                            <div id="salaryItemsList" class="mb-3"></div>
+                            <div class="row g-2 align-items-end mb-2">
+                                <div class="col-md-5" id="si_type_wrap">
+                                    <label class="form-label">{{ _('x.p_item') }}</label>
+                                    <select class="form-select" id="si_type" onchange="siTypeChanged()"></select>
+                                </div>
+                                <div class="col-md-5 d-none" id="si_newtype_wrap">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label">{{ _('x.si_name_ar') }}</label>
+                                            <input type="text" class="form-control" id="si_new_name_ar">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">{{ _('x.si_name_en') }}</label>
+                                            <input type="text" class="form-control" id="si_new_name_en">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ _('x.si_start_date') }}</label>
+                                    <input type="date" class="form-control" id="si_start_date">
+                                </div>
+                            </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ _('x.calc_method') }}</label>
+                                    <select class="form-select" id="si_method">
+                                        <option value="fixed">{{ _('x.calc_fixed') }}</option>
+                                        <option value="percent_of_basic">{{ _('x.calc_percent') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" id="si_amount_label">{{ _('x.p_amount') }}</label>
+                                    <input type="number" step="0.001" min="0" class="form-control" id="si_value">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-success w-100" onclick="addSalaryItem()">
+                                        <i class="fas fa-plus me-1"></i>{{ _('x.add_item') }}
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="tab-pane fade" id="settings" role="tabpanel">
+                            <h6 class="mb-3"><i class="fas fa-fingerprint me-2"></i>{{ _('x.fingerprint_data') }}</h6>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.card_number') }}</label>
+                                    <input type="text" class="form-control" name="card_number" value="{{ employee.card_number or '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.privilege') }}</label>
+                                    <select class="form-select" name="privilege">
+                                        <option value="0" {{ 'selected' if employee.privilege == 0 else '' }}>{{ _('x.normal_user') }}</option>
+                                        <option value="14" {{ 'selected' if employee.privilege == 14 else '' }}>{{ _('x.admin') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.device_password') }}</label>
+                                    <input type="text" class="form-control" name="password" value="{{ employee.password or '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.group_id') }}</label>
+                                    <input type="text" class="form-control" name="group_id" value="{{ employee.group_id or '' }}">
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <div class="alert alert-secondary d-flex align-items-center flex-wrap gap-4 justify-content-center">
+                                        <div class="text-center">
+                                            <i class="fas fa-fingerprint fa-2x mb-2 text-primary"></i>
+                                            <div class="fw-bold">{{ _('x.registered_fingerprints') }}</div>
+                                            <div class="fs-5">{{ fingerprints_count }}</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <i class="fas fa-user-circle fa-2x mb-2 {{ 'text-success' if has_face else 'text-muted' }}"></i>
+                                            <div class="fw-bold">{{ _('x.face_template') }}</div>
+                                            <div class="fs-5">
+                                                {% if has_face %}
+                                                    <span class="badge bg-success">{{ _('x.registered') }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ _('x.not_registered') }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="text-center">
+                                            <i class="fas fa-camera fa-2x mb-2 {{ 'text-success' if has_photo else 'text-muted' }}"></i>
+                                            <div class="fw-bold">{{ _('x.employee_photo') }}</div>
+                                            <div class="fs-5">
+                                                {% if has_photo and photo_data %}
+                                                    <img src="data:image/jpeg;base64,{{ photo_data }}" width="40" height="40" class="rounded-circle border object-fit-cover" alt="Photo">
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ _('x.not_available_f') }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+<!-- إعدادات الإجازة الأسبوعية -->
+                    <hr class="my-4">
+                    <h6 class="mb-3"><i class="fas fa-calendar-week me-2"></i>{{ _('x.weekly_off_settings') }}</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {% set wl = employee.weekly_leave_selected_days or ('5,6' if employee.weekly_leave_days == 2 else ('5' if employee.weekly_leave_days == 1 else '')) %}
+{% set wl_list = wl.split(',') if wl else [] %}
+{% set wl_preset = 'friday_saturday' if wl == '5,6' else ('friday_only' if wl == '5' else ('saturday_sunday' if wl == '0,6' else ('sunday_monday' if wl == '0,1' else ('none' if not wl else 'custom')))) %}
+<label for="weekly_leave_preset" class="form-label">{{ _('x.weekly_off_type') }}</label>
+                            <select class="form-select" id="weekly_leave_preset" onchange="updateWeeklyLeaveSettings()">
+                                <option value="custom" {{ 'selected' if wl_preset == 'custom' else '' }}>{{ _('x.custom') }}</option>
+                                <option value="friday_saturday" {{ 'selected' if wl_preset == 'friday_saturday' else '' }}>{{ _('x.fri_sat') }}</option>
+                                <option value="friday_only" {{ 'selected' if wl_preset == 'friday_only' else '' }}>{{ _('x.fri_only') }}</option>
+                                <option value="saturday_sunday" {{ 'selected' if wl_preset == 'saturday_sunday' else '' }}>{{ _('x.sat_sun') }}</option>
+                                <option value="sunday_monday" {{ 'selected' if wl_preset == 'sunday_monday' else '' }}>{{ _('x.sun_mon') }}</option>
+                                <option value="none" {{ 'selected' if wl_preset == 'none' else '' }}>{{ _('x.no_days') }}</option>
+                            </select>
+                            <div class="form-text">{{ _('x.choose_weekly_off_or_custom') }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="weekly_leave_days" class="form-label">{{ _('x.weekly_off_details') }}</label>
+                            <input type="hidden" id="weekly_leave_days" name="weekly_leave_days" value="{{ employee.weekly_leave_days if employee.weekly_leave_days is not none else 2 }}">
+                            <div class="alert alert-info py-2" id="weekly_leave_details">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                <span id="leave_details_text">{{ _('x.fri_sat_two_days') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">{{ _('x.weekly_off_days') }}</label>
+                            <div class="row g-2" id="weekly_leave_checkboxes">
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="0" id="leave_sunday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '0' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_sunday">
+                                            <i class="fas fa-sun me-1"></i>{{ _('x.sunday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="leave_monday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '1' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_monday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.monday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="2" id="leave_tuesday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '2' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_tuesday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.tuesday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="3" id="leave_wednesday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '3' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_wednesday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.wednesday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="4" id="leave_thursday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '4' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_thursday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.thursday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="5" id="leave_friday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '5' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_friday">
+                                            <i class="fas fa-mosque me-1"></i>{{ _('x.friday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="6" id="leave_saturday"
+                                            name="weekly_leave_days_checkboxes" {{ 'checked' if '6' in wl_list else '' }}>
+                                        <label class="form-check-label" for="leave_saturday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.saturday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">{{ _('x.choose_weekly_off_days') }}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="weekly_leave_start" class="form-label">{{ _('x.weekly_off_start') }}</label>
+                            <select class="form-select" id="weekly_leave_start" name="weekly_leave_start">
+                                <option value="0" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 0 else '' }}>{{ _('x.sunday') }}</option>
+                                <option value="1" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 1 else '' }}>{{ _('x.monday') }}</option>
+                                <option value="2" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 2 else '' }}>{{ _('x.tuesday') }}</option>
+                                <option value="3" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 3 else '' }}>{{ _('x.wednesday') }}</option>
+                                <option value="4" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 4 else '' }}>{{ _('x.thursday') }}</option>
+                                <option value="5" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 5 else '' }}>{{ _('x.friday') }}</option>
+                                <option value="6" {{ 'selected' if (employee.weekly_leave_start if employee.weekly_leave_start is not none else 5)|int == 6 else '' }}>{{ _('x.saturday') }}</option>
+                            </select>
+                            <div class="form-text">{{ _('x.auto_updated_by_days') }}</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="previous_leave_balance" class="form-label">{{ _('x.opening_leave_balance') }}</label>
+                            <input type="number" class="form-control" id="previous_leave_balance"
+                                name="previous_leave_balance" step="0.5" min="0" value="0" placeholder="0">
+                            <div class="form-text">{{ _('x.accumulated_leave_days') }}</div>
+                        </div>
+                    </div>
+
+                    
+                            
+                            <hr class="my-4">
+                            <h6 class="mb-3"><i class="fas fa-clock me-2"></i>{{ _('x.shift_settings') }}</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.shift_type') }} <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="shift_type" id="shift_type" required>
+                                        {% for shift in shift_types %}
+                                        <option value="{{ shift.name }}" {{ 'selected' if shift.name == (employee.shift_type or 'صباحي') else '' }}>{{ shift.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.opening_leave_balance') }}</label>
+                                    <input type="number" class="form-control" name="previous_leave_balance" value="{{ employee.previous_leave_balance or 0 }}">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.account_status') }}</label>
+                                    <div class="form-check form-switch pt-2">
+                                        <input class="form-check-input" type="checkbox" name="is_active" value="1" {% if employee.is_active != 0 %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold">{{ _('x.active') }}</label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <!-- TAB: DEPENDENTS -->
+                        <div class="tab-pane fade" id="dependents" role="tabpanel">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>{{ _('x.dependents_family') }}</h5>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addDependent()"><i class="fas fa-plus"></i> {{ _('x.add_dependent') }}</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dependentsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ _('x.name') }}</th>
+                                            <th>{{ _('x.relationship') }}</th>
+                                            <th>{{ _('x.birth_date') }}</th>
+                                            <th>{{ _('x.gender') }}</th>
+                                            <th>{{ _('x.actions_short') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="5" class="text-center">{{ _('x.loading') }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB: ASSETS -->
+                        <div class="tab-pane fade" id="assets" role="tabpanel">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>{{ _('x.deposited_custody_assets') }}</h5>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addAsset()"><i class="fas fa-plus"></i> {{ _('x.add_custody_item') }}</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="assetsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ _('x.custody_item_name') }}</th>
+                                            <th>{{ _('x.code_serial') }}</th>
+                                            <th>{{ _('x.handover_date') }}</th>
+                                            <th>{{ _('x.return_date') }}</th>
+                                            <th>{{ _('x.status') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="5" class="text-center">{{ _('x.loading') }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div> <!-- End Tab Content -->
+                    
+                    <div class="emp-actions d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('employee.employees') }}" class="emp-cancel">{{ _('x.cancel') }}</a>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>{{ _('x.save_data') }}</button>
+                    </div>
+                </form>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('manager_search');
+        const hiddenInput = document.getElementById('manager_id_hidden');
+        const datalist = document.getElementById('managers_list');
+
+        searchInput.addEventListener('input', function() {
+            const val = this.value;
+            let foundId = '';
+            
+            for (let option of datalist.options) {
+                if (option.value === val) {
+                    foundId = option.getAttribute('data-id');
+                    break;
+                }
+            }
+            // If empty, clear hidden input
+            if (val.trim() === '') {
+                hiddenInput.value = '';
+            } else if (foundId) {
+                hiddenInput.value = foundId;
+            }
+        });
+    });
+</script>
+<script>
+    // Dependents & Assets JS
+    const employeeId = {{ employee.id }};
+
+    function loadDependents() {
+        fetch(`/api/employees/dependents?employee_id=${employeeId}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#dependentsTable tbody');
+                tbody.innerHTML = '';
+                if(data.data.length === 0) tbody.innerHTML = {{ _('x.no_dependents_row_html')|tojson }};
+                data.data.forEach(d => {
+                    tbody.innerHTML += `<tr>
+                        <td>${d.name}</td>
+                        <td>${d.relation}</td>
+                        <td>${d.dob || '-'}</td>
+                        <td>${d.gender === 'male' ? {{ _('x.male')|tojson }} : (d.gender === 'female' ? {{ _('x.female')|tojson }} : '-')}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteDependent(${d.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            });
+    }
+
+    function deleteDependent(id) {
+        if(confirm({{ _('x.confirm_delete')|tojson }})) {
+            fetch(`/api/employees/dependents/${id}`, {method:'DELETE'}).then(()=>loadDependents());
+        }
+    }
+
+    function addDependent() {
+        const name = prompt({{ _('x.dependent_name_colon')|tojson }});
+        if(!name) return;
+        const relation = prompt({{ _('x.relationship_example_colon')|tojson }});
+        if(!relation) return;
+        fetch('/api/employees/dependents', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({employee_id: employeeId, name: name, relation: relation})
+        }).then(()=>loadDependents());
+    }
+
+    function loadAssets() {
+        fetch(`/api/employees/assets?employee_id=${employeeId}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#assetsTable tbody');
+                tbody.innerHTML = '';
+                if(data.data.length === 0) tbody.innerHTML = {{ _('x.no_custody_row_html')|tojson }};
+                data.data.forEach(a => {
+                    tbody.innerHTML += `<tr>
+                        <td>${a.asset_name}</td>
+                        <td>${a.asset_code || '-'}</td>
+                        <td>${a.issue_date || '-'}</td>
+                        <td>${a.return_date || '-'}</td>
+                        <td><span class="badge bg-info">${a.status}</span></td>
+                    </tr>`;
+                });
+            });
+    }
+
+    function addAsset() {
+        const name = prompt({{ _('x.custody_name_example_colon')|tojson }});
+        if(!name) return;
+        const code = prompt({{ _('x.code_or_serial_optional_colon')|tojson }});
+        fetch('/api/employees/assets', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({employee_id: employeeId, asset_name: name, asset_code: code})
+        }).then(()=>loadAssets());
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDependents();
+        loadAssets();
+    });
+
+
+    // إضافة قسم جديد
+    function addDepartment() {
+        Swal.fire({
+            title: {{ _('x.add_new_department')|tojson }},
+            input: 'text',
+            inputLabel: {{ _('x.department_name')|tojson }},
+            inputPlaceholder: {{ _('x.enter_new_department_name')|tojson }},
+            showCancelButton: true,
+            confirmButtonText: {{ _('x.add')|tojson }},
+            cancelButtonText: {{ _('x.cancel')|tojson }},
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage({{ _('x.name_required')|tojson }});
+                    return false;
+                }
+                return fetch('/api/departments/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || {{ _('x.add_department_failed')|tojson }});
+                        }
+                        return { name: name, message: data.message };
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _('x.error_colon_space') }}${error.message}`);
+                    });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const select = document.getElementById('department');
+                const option = document.createElement('option');
+                option.value = result.value.name;
+                option.textContent = result.value.name;
+                option.selected = true;
+                select.appendChild(option);
+                sortSelectOptions(select);
+                Swal.fire({
+                    title: {{ _('x.added')|tojson }},
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    // إضافة منصب جديد
+    function addPosition() {
+        Swal.fire({
+            title: {{ _('x.add_new_position')|tojson }},
+            input: 'text',
+            inputLabel: {{ _('x.position_name')|tojson }},
+            inputPlaceholder: {{ _('x.enter_new_position_name')|tojson }},
+            showCancelButton: true,
+            confirmButtonText: {{ _('x.add')|tojson }},
+            cancelButtonText: {{ _('x.cancel')|tojson }},
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage({{ _('x.name_required')|tojson }});
+                    return false;
+                }
+                return fetch('/api/positions/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || {{ _('x.add_position_failed')|tojson }});
+                        }
+                        return { name: name, message: data.message };
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _('x.error_colon_space') }}${error.message}`);
+                    });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const select = document.getElementById('position');
+                const option = document.createElement('option');
+                option.value = result.value.name;
+                option.textContent = result.value.name;
+                option.selected = true;
+                select.appendChild(option);
+                sortSelectOptions(select);
+                Swal.fire({
+                    title: {{ _('x.added')|tojson }},
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    // دالة مساعدة لترتيب الخيارات
+    function sortSelectOptions(select) {
+        const options = Array.from(select.options);
+        const header = options[0];
+        const others = options.slice(1);
+        others.sort((a, b) => a.text.localeCompare(b.text, 'ar'));
+        select.innerHTML = '';
+        select.appendChild(header);
+        others.forEach(opt => select.appendChild(opt));
+        if (select.value) { select.value = select.value; }
+    }
+
+    // تحديث إعدادات الإجازة الأسبوعية
+    function updateWeeklyLeaveSettings() {
+        const preset = document.getElementById('weekly_leave_preset').value;
+        const daysInput = document.getElementById('weekly_leave_days');
+        const startSelect = document.getElementById('weekly_leave_start');
+        const detailsText = document.getElementById('leave_details_text');
+
+        // إلغاء تحديد جميع الـ checkboxes أولاً
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+
+        switch (preset) {
+            case 'friday_saturday':
+                daysInput.value = '2';
+                startSelect.value = '5'; // الجمعة
+                detailsText.textContent = {{ _('x.fri_sat_two_days')|tojson }};
+                document.getElementById('leave_friday').checked = true;
+                document.getElementById('leave_saturday').checked = true;
+                break;
+            case 'friday_only':
+                daysInput.value = '1';
+                startSelect.value = '5'; // الجمعة
+                detailsText.textContent = {{ _('x.fri_only_one_day')|tojson }};
+                document.getElementById('leave_friday').checked = true;
+                break;
+            case 'saturday_sunday':
+                daysInput.value = '2';
+                startSelect.value = '6'; // السبت
+                detailsText.textContent = {{ _('x.sat_sun_two_days')|tojson }};
+                document.getElementById('leave_saturday').checked = true;
+                document.getElementById('leave_sunday').checked = true;
+                break;
+            case 'sunday_monday':
+                daysInput.value = '2';
+                startSelect.value = '0'; // الأحد
+                detailsText.textContent = {{ _('x.sun_mon_two_days')|tojson }};
+                document.getElementById('leave_sunday').checked = true;
+                document.getElementById('leave_monday').checked = true;
+                break;
+            case 'none':
+                daysInput.value = '0';
+                startSelect.value = '5'; // الجمعة (افتراضي)
+                detailsText.textContent = {{ _('x.no_weekly_off_zero_days')|tojson }};
+                break;
+            case 'custom':
+                // في حالة المخصص، لا نغير أي شيء - المستخدم يختار من الـ checkboxes
+                updateFromCheckboxes();
+                return;
+        }
+
+        // تحديث عدد الأيام بناءً على الـ checkboxes المحددة
+        updateFromCheckboxes();
+    }
+
+    // تحديث الإعدادات من الـ checkboxes
+    function updateFromCheckboxes() {
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]:checked');
+        const daysInput = document.getElementById('weekly_leave_days');
+        const startSelect = document.getElementById('weekly_leave_start');
+        const detailsText = document.getElementById('leave_details_text');
+
+        const selectedDays = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort();
+        const daysCount = selectedDays.length;
+
+        daysInput.value = daysCount;
+
+        if (daysCount > 0) {
+            startSelect.value = selectedDays[0];
+
+            const dayNames = [{{ _('x.sunday')|tojson }}, {{ _('x.monday')|tojson }}, {{ _('x.tuesday')|tojson }}, {{ _('x.wednesday')|tojson }}, {{ _('x.thursday')|tojson }}, {{ _('x.friday')|tojson }}, {{ _('x.saturday')|tojson }}];
+            const selectedDayNames = selectedDays.map(day => dayNames[day]);
+
+            if (daysCount === 1) {
+                detailsText.textContent = `${selectedDayNames[0]} {{ _('x.only_one_day_suffix') }}`;
+            } else {
+                detailsText.textContent = `${selectedDayNames.join({{ _('x.and_spaced')|tojson }})} (${daysCount} {{ _('x.days_unit') }})`;
+            }
+        } else {
+            startSelect.value = '5';
+            detailsText.textContent = {{ _('x.no_weekly_off_zero_days')|tojson }};
+        }
+    }
+
+    // إضافة مستمعي الأحداث للـ checkboxes
+    document.addEventListener('DOMContentLoaded', function () {
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                // تغيير الـ preset إلى مخصص عند تغيير أي checkbox
+                document.getElementById('weekly_leave_preset').value = 'custom';
+                updateFromCheckboxes();
+            });
+        });
+
+        // تحديث الإعدادات الأولية
+        updateFromCheckboxes();
+    });
+
+
+    // ===== required-fields navigator: jump to first missing field, mark tabs =====
+    (function () {
+        const form = document.getElementById('editEmployeeForm_Safe');
+        if (!form) return;
+        form.setAttribute('novalidate', 'novalidate');
+        function tabBtnFor(pane) {
+            return document.querySelector('#employeeTabs [data-bs-target="#' + pane.id + '"]');
+        }
+        function refreshBadge(pane) {
+            const btn = tabBtnFor(pane); if (!btn) return;
+            const remaining = pane.querySelectorAll('.is-invalid').length;
+            let badge = btn.querySelector('.emp-tab-error');
+            if (remaining === 0) { if (badge) badge.remove(); return; }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'emp-tab-error'; btn.appendChild(badge); }
+            badge.textContent = remaining;
+        }
+        form.addEventListener('submit', function (e) {
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('#employeeTabs .emp-tab-error').forEach(b => b.remove());
+            const invalid = Array.from(form.querySelectorAll('input, select, textarea'))
+                .filter(el => !el.disabled && !el.checkValidity());
+            if (invalid.length === 0) return;
+            e.preventDefault();
+            const panes = new Set();
+            invalid.forEach(el => {
+                el.classList.add('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) panes.add(pane);
+            });
+            panes.forEach(refreshBadge);
+            const first = invalid[0];
+            const pane = first.closest('.tab-pane');
+            const go = () => { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); first.focus({ preventScroll: true }); };
+            if (pane && !pane.classList.contains('active')) {
+                const btn = tabBtnFor(pane);
+                if (btn && window.bootstrap) bootstrap.Tab.getOrCreateInstance(btn).show();
+                setTimeout(go, 220);
+            } else { go(); }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: {{ _('x.missing_required_title')|tojson }},
+                            text: {{ _('x.missing_required_text')|tojson }}, timer: 2600, showConfirmButton: false });
+            }
+        });
+        form.addEventListener('input', function (ev) {
+            const el = ev.target;
+            if (el.classList && el.classList.contains('is-invalid') && el.checkValidity()) {
+                el.classList.remove('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) refreshBadge(pane);
+            }
+        });
+        form.addEventListener('change', function (ev) {
+            const el = ev.target;
+            if (el.classList && el.classList.contains('is-invalid') && el.checkValidity()) {
+                el.classList.remove('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) refreshBadge(pane);
+            }
+        });
+    })();
+
+    // ===== salary structure tab =====
+    const SI_EMP = {{ employee.id }};
+    const SI_API = {{ url_for('payroll.get_salary_items')|tojson }};
+    const SI_TYPE_API = {{ url_for('payroll.create_item_type')|tojson }};
+    const SI_END_API = {{ url_for('payroll.delete_salary_item', id=0)|tojson }}.replace('/0', '');
+    const SI_LANG_AR = {{ (get_locale()|string == 'ar')|tojson }};
+    const SI_K_EARN = {{ _('x.tx_kind_earning')|tojson }};
+    const SI_K_DED = {{ _('x.tx_kind_deduction')|tojson }};
+    const SI_NEW_OPT = '__new__';
+    function siName(o) { return SI_LANG_AR ? o.name_ar : o.name_en; }
+    function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+    function siTypeChanged() {
+        const isNew = document.getElementById('si_type').value === SI_NEW_OPT;
+        document.getElementById('si_newtype_wrap').classList.toggle('d-none', !isNew);
+        document.getElementById('si_type_wrap').classList.toggle('d-none', isNew);
+    }
+
+    function loadSalaryItems() {
+        fetch(SI_API + '?employee_id=' + SI_EMP)
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) { document.getElementById('salaryItemsList').innerHTML = '<div class="text-danger small">' + (d.message || 'Error') + '</div>'; return; }
+                const sel = document.getElementById('si_type');
+                sel.innerHTML = '<option value="">--</option>' + d.types.map(t =>
+                    `<option value="${t.id}">${siName(t)}</option>`).join('') +
+                    `<option value="${SI_NEW_OPT}">+ ${ {{ _('x.si_new_type')|tojson }} }</option>`;
+                document.getElementById('si_start_date').value = todayStr();
+                const list = document.getElementById('salaryItemsList');
+                if (!d.items.length) {
+                    list.innerHTML = '<div class="text-muted small">' + {{ _("x.no_items")|tojson }} + '</div>';
+                    return;
+                }
+                list.innerHTML = d.items.map(i => `
+                    <div class="d-flex align-items-center gap-2 border rounded-3 px-3 py-2 mb-2">
+                        <span class="badge" style="background: ${i.kind === 'earning' ? 'var(--ledger)' : 'var(--debit)'};">${i.kind === 'earning' ? SI_K_EARN : SI_K_DED}</span>
+                        <span class="fw-semibold">${siName(i)}</span>
+                        <span class="fw-bold">${i.calc_method === 'percent_of_basic' ? i.percent_value + '%' : i.amount}</span>
+                        <span class="badge bg-light text-dark border small">${i.start_date || '—'} ${i.end_date ? ('← ' + i.end_date) : ''}</span>
+                        ${i.end_date ? `<span class="badge bg-secondary">{{ _('x.si_ended') }}</span>` : `
+                        <button type="button" class="btn btn-sm btn-outline-warning ms-auto" onclick="endSalaryItem(${i.id})">
+                            <i class="fas fa-stop-circle"></i> {{ _('x.si_end_btn') }}</button>`}
+                    </div>`).join('');
+            });
+    }
+
+    function addSalaryItem() {
+        const isNew = document.getElementById('si_type').value === SI_NEW_OPT;
+        const method = document.getElementById('si_method').value;
+        const val = parseFloat(document.getElementById('si_value').value || '0');
+        const startDate = document.getElementById('si_start_date').value;
+        if (!startDate) {
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'warning', title: {{ _('x.f_start_date_required')|tojson }}, timer: 2200, showConfirmButton: false });
+            return;
+        }
+        if (val <= 0) return;
+
+        const proceed = (typeId) => {
+            fetch(SI_API, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    employee_id: SI_EMP, item_type_id: typeId, calc_method: method,
+                    amount: method === 'fixed' ? val : 0, percent_value: method === 'percent_of_basic' ? val : 0,
+                    start_date: startDate
+                })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    document.getElementById('si_value').value = '';
+                    document.getElementById('si_new_name_ar').value = '';
+                    document.getElementById('si_new_name_en').value = '';
+                    loadSalaryItems();
+                } else if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: d.message || 'Error', timer: 2200, showConfirmButton: false });
+            });
+        };
+
+        if (isNew) {
+            const nameAr = document.getElementById('si_new_name_ar').value.trim();
+            const nameEn = document.getElementById('si_new_name_en').value.trim();
+            if (nameAr.length < 2 || nameEn.length < 2) {
+                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'warning', title: {{ _('x.f_name_required')|tojson }}, timer: 2200, showConfirmButton: false });
+                return;
+            }
+            fetch(SI_TYPE_API, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name_ar: nameAr, name_en: nameEn })
+            }).then(r => r.json()).then(d => {
+                if (d.success) proceed(d.id);
+                else if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: d.message || 'Error', timer: 2200, showConfirmButton: false });
+            });
+        } else {
+            const typeId = document.getElementById('si_type').value;
+            if (!typeId) return;
+            proceed(typeId);
+        }
+    }
+
+    function endSalaryItem(id) {
+        if (typeof Swal === 'undefined') return;
+        Swal.fire({
+            title: {{ _('x.si_end_btn')|tojson }},
+            html: `<input id="swalEndDate" type="date" class="swal2-input" value="${todayStr()}">
+                   <input id="swalEndReason" type="text" class="swal2-input" placeholder="${ {{ _('x.p_reason')|tojson }} }">`,
+            showCancelButton: true,
+            confirmButtonText: {{ _('x.confirm')|tojson }},
+            cancelButtonText: {{ _('x.cancel')|tojson }},
+            preConfirm: () => {
+                const d = document.getElementById('swalEndDate').value;
+                const r = document.getElementById('swalEndReason').value;
+                if (!d || r.trim().length < 3) {
+                    Swal.showValidationMessage({{ _('x.f_reason_required')|tojson }});
+                    return false;
+                }
+                return { end_date: d, reason: r.trim() };
+            }
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            fetch(`${SI_END_API}/${id}/end`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(res.value)
+            }).then(r => r.json()).then(d => {
+                if (d.success) loadSalaryItems();
+                else Swal.fire({ icon: 'error', title: d.message || 'Error', timer: 2200, showConfirmButton: false });
+            });
+        });
+    }
+
+    function delSalaryItem(id) {
+        fetch(SI_API + '/' + id, { method: 'DELETE' }).then(r => r.json()).then(d => { if (d.success) loadSalaryItems(); });
+    }
+    var _stab = document.getElementById('structure-tab');
+    if (_stab) _stab.addEventListener('shown.bs.tab', loadSalaryItems);
+
+</script>
+{% endblock %}

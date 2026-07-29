@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="{{ get_locale() }}" dir="{{ get_direction() }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if session.username %}{{ settings.app_name if settings and settings.app_name else
+        _('app.name') }}{% else %}{{ _('app.name') }}{% endif %}{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    {% if get_direction() == 'rtl' %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.rtl.min.css">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ============================================================
+           الهوية البصرية: دفتر أستاذ + سطح زجاجي  (Ledger + Glass)
+           ورق فاتح بسطور، حبر أخضر/أحمر، أرقام mono، زجاج للأسطح العائمة فقط
+           ============================================================ */
+        :root {
+            color-scheme: light;
+            --paper: #FAFAF7;
+            --paper-raised: #FFFFFF;
+            --paper-line: #E3E0D3;
+            --ink: #1A2420;
+            --ink-muted: #5F6B62;
+            --ink-faint: #98A199;
+            --ledger: #1F5C4A;
+            --ledger-dark: #163F32;
+            --ledger-light: #E7F1EC;
+            --debit: #A8402F;
+            --debit-light: #F5E6E2;
+            --border: #DAD7CB;
+            /* لون واحد مشتق من نفس العائلة الترابية لحالات "تحذير/معلّق" */
+            --accrual: #8A6420;
+            --accrual-light: #F4EBD6;
+            --font-sans: -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+            --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+            --glass-bg-fallback: rgba(255, 255, 255, 0.72);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 12px 28px -8px rgba(22, 63, 50, 0.22), 0 2px 6px rgba(22, 63, 50, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--ink);
+            background-color: var(--paper);
+            /* سطور دفتر الأستاذ */
+            background-image: repeating-linear-gradient(to bottom, transparent 0 38px, var(--paper-line) 38px 39px);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* بقعتان لونيتان خافتتان تظهران خلف الزجاج */
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: -1;
+        }
+        body::before { background: rgba(31, 92, 74, 0.20); top: -80px; inset-inline-start: -60px; }
+        body::after  { background: rgba(168, 64, 47, 0.14); bottom: -120px; inset-inline-end: 4%; }
+
+        a { color: var(--ledger); }
+        a:hover { color: var(--ledger-dark); }
+        ::selection { background: var(--ledger-light); color: var(--ledger-dark); }
+
+        /* الأرقام تتحاذى تحت بعض زي الدفتر */
+        td, th, .stats-number { font-variant-numeric: tabular-nums; }
+        .stats-number, .font-mono { font-family: var(--font-mono); }
+
+        /* ============ الشريط العلوي: زجاج عائم ============ */
+        .app-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            background: var(--glass-bg-fallback);
+            background: color-mix(in srgb, var(--paper-raised) 70%, transparent);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            backdrop-filter: blur(20px) saturate(160%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 24px -12px rgba(22, 63, 50, 0.20);
+        }
+        .app-topbar .navbar-brand {
+            color: var(--ledger-dark);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .app-topbar .navbar-brand:hover { color: var(--ledger); }
+        .app-topbar .nav-link { color: var(--ink-muted); }
+        .app-topbar .nav-link:hover { color: var(--ink); }
+        .app-topbar .text-white { color: var(--ledger-dark) !important; }
+
+        /* ============ الشريط الجانبي: لوح زجاجي عائم ============ */
+        .sidebar { background: transparent; min-height: auto; }
+        .sidebar > .position-sticky {
+            top: 74px;
+            margin: 16px 0 24px;
+            padding: 14px 10px;
+            border-radius: 18px;
+            background: var(--glass-bg-fallback);
+            background: color-mix(in srgb, var(--paper-raised) 70%, transparent);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            backdrop-filter: blur(20px) saturate(160%);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            max-height: calc(100vh - 96px);
+            overflow-y: auto;
+        }
+
+        /* بنود القائمة: پِل مدور */
+        .sidebar .nav-link {
+            color: var(--ink-muted);
+            padding: 8px 14px;
+            margin: 2px 4px;
+            border-radius: 999px;
+            font-size: 0.925rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .sidebar .nav-link:hover {
+            color: var(--ink);
+            background-color: rgba(255, 255, 255, 0.85);
+        }
+        .sidebar .nav-link.active {
+            color: var(--ledger-dark);
+            font-weight: 600;
+            background: #DFE9E5;
+            background: linear-gradient(180deg,
+                color-mix(in srgb, var(--ledger) 16%, white 84%),
+                color-mix(in srgb, var(--ledger) 10%, white 90%));
+            box-shadow: 0 1px 3px rgba(22, 63, 50, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+        .sidebar .nav-link i {
+            margin-inline-end: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .sidebar .nav-link.active i { color: var(--ledger); }
+        .sidebar .nav-section {
+            list-style: none;
+            margin: 14px 10px 4px;
+            padding: 10px 6px 0;
+            border-top: 1px dashed var(--paper-line);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            color: var(--ink-muted);
+            opacity: 0.85;
+        }
+
+        /* القوائم الفرعية داخل السايد بار */
+        .sidebar .bg-light {
+            background-color: rgba(31, 92, 74, 0.06) !important;
+            border-radius: 14px;
+        }
+        .sidebar .collapse .nav-link,
+        .sidebar .collapsing .nav-link { border-radius: 999px; }
+        .sidebar .text-dark { color: var(--ink-muted) !important; }
+        .sidebar .text-dark:hover { color: var(--ledger-dark) !important; }
+
+        .main-content { padding: 20px; }
+
+        /* ============ البطاقات: ورق مرفوع بحد رفيع ============ */
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background-color: var(--paper-raised);
+            box-shadow: 0 2px 6px rgba(22, 63, 50, 0.06);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--ledger) 0%, var(--ledger-dark) 100%);
+            color: #fff;
+            border-radius: 13px 13px 0 0 !important;
+            border: none;
+        }
+        .card-header .text-muted { color: rgba(255, 255, 255, 0.75) !important; }
+
+        /* بطاقة الإحصائيات */
+        .stats-card {
+            background: linear-gradient(135deg, var(--ledger) 0%, var(--ledger-dark) 100%);
+            color: white;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 24px -10px rgba(22, 63, 50, 0.45);
+        }
+        .stats-card .stats-number { font-size: 2.3rem; font-weight: 600; }
+        .stats-card .stats-label { font-size: 1.05rem; opacity: 0.9; }
+
+        /* ============ الأزرار ============ */
+        .btn { border-radius: 10px; }
+        .btn-primary {
+            background-color: var(--ledger);
+            border-color: var(--ledger);
+            padding: 10px 20px;
+        }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+        .btn-primary:not(:disabled):active {
+            background-color: var(--ledger-dark);
+            border-color: var(--ledger-dark);
+            box-shadow: 0 4px 10px -2px rgba(22, 63, 50, 0.35);
+        }
+        .btn-success { background-color: var(--ledger); border-color: var(--ledger); }
+        .btn-success:hover, .btn-success:focus { background-color: var(--ledger-dark); border-color: var(--ledger-dark); }
+        .btn-danger { background-color: var(--debit); border-color: var(--debit); }
+        .btn-danger:hover, .btn-danger:focus { background-color: #8C3325; border-color: #8C3325; }
+        .btn-warning { background-color: var(--accrual); border-color: var(--accrual); color: #fff; }
+        .btn-warning:hover, .btn-warning:focus { background-color: #6E4F14; border-color: #6E4F14; color: #fff; }
+        .btn-info { background-color: var(--ledger-light); border-color: var(--ledger-light); color: var(--ledger-dark); }
+        .btn-info:hover, .btn-info:focus { background-color: #D5E7DF; border-color: #D5E7DF; color: var(--ledger-dark); }
+        .btn-secondary { background-color: var(--ink-muted); border-color: var(--ink-muted); }
+        .btn-secondary:hover { background-color: var(--ink); border-color: var(--ink); }
+        .btn-outline-primary { color: var(--ledger); border-color: var(--ledger); }
+        .btn-outline-primary:hover, .btn-outline-primary.active {
+            background-color: var(--ledger); border-color: var(--ledger); color: #fff;
+        }
+        .btn-outline-success { color: var(--ledger); border-color: var(--ledger); }
+        .btn-outline-success:hover { background-color: var(--ledger); border-color: var(--ledger); color: #fff; }
+        .btn-outline-danger { color: var(--debit); border-color: var(--debit); }
+        .btn-outline-danger:hover { background-color: var(--debit); border-color: var(--debit); color: #fff; }
+        .btn-outline-secondary { color: var(--ink-muted); border-color: var(--border); }
+        .btn-outline-secondary:hover { background-color: var(--ink-muted); border-color: var(--ink-muted); color: #fff; }
+        .btn-check:focus + .btn, .btn:focus { box-shadow: 0 0 0 0.2rem rgba(31, 92, 74, 0.2); }
+
+        /* ============ الجداول ============ */
+        .table { border-radius: 12px; overflow: hidden; background-color: var(--paper-raised); }
+        .table thead th {
+            background: var(--ledger-dark);
+            color: #fff;
+            border: none;
+            padding: 13px 15px;
+            font-weight: 600;
+        }
+        .table tbody td { border-color: var(--paper-line); }
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            --bs-table-accent-bg: rgba(31, 92, 74, 0.035);
+        }
+        .table-hover > tbody > tr:hover > * {
+            --bs-table-accent-bg: var(--ledger-light);
+        }
+        .table-light th, .table-light td { background-color: var(--ledger-light) !important; color: var(--ledger-dark); }
+
+        /* ============ النماذج ============ */
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            background-color: var(--paper-raised);
+            color: var(--ink);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--ledger);
+            box-shadow: 0 0 0 0.2rem rgba(31, 92, 74, 0.18);
+        }
+        .form-label { color: var(--ink-muted); font-weight: 600; }
+        .form-check-input:checked { background-color: var(--ledger); border-color: var(--ledger); }
+        .form-check-input:focus { border-color: var(--ledger); box-shadow: 0 0 0 0.2rem rgba(31, 92, 74, 0.18); }
+        .input-group-text { background-color: var(--ledger-light); border: 1px solid var(--border); color: var(--ledger-dark); }
+
+        /* ============ التنبيهات: شرائح ملونة من نفس العائلة ============ */
+        .alert { border-radius: 12px; border: none; }
+        .alert-success { background-color: var(--ledger-light); color: var(--ledger-dark); border-inline-start: 3px solid var(--ledger); }
+        .alert-danger  { background-color: var(--debit-light);  color: var(--debit);       border-inline-start: 3px solid var(--debit); }
+        .alert-warning { background-color: var(--accrual-light); color: var(--accrual);    border-inline-start: 3px solid var(--accrual); }
+        .alert-info    { background-color: var(--ledger-light); color: var(--ledger-dark); border-inline-start: 3px solid var(--ledger); }
+        .alert-secondary, .alert-light { background-color: var(--paper); color: var(--ink-muted); border-inline-start: 3px solid var(--border); }
+
+        /* ============ الشارات وخلفيات الألوان ============ */
+        .badge { font-weight: 600; }
+        .bg-primary   { background-color: var(--ledger) !important; }
+        .bg-success   { background-color: var(--ledger) !important; }
+        .bg-danger    { background-color: var(--debit) !important; }
+        .bg-secondary { background-color: var(--ink-muted) !important; }
+        .bg-info      { background-color: var(--ledger-light) !important; color: var(--ledger-dark) !important; }
+        .bg-warning   { background-color: var(--accrual-light) !important; color: var(--accrual) !important; }
+        .bg-warning.text-dark { color: var(--accrual) !important; }
+        .badge.bg-primary, .badge.bg-success, .badge.bg-danger, .badge.bg-secondary { color: #fff !important; }
+        .bg-light { background-color: var(--paper) !important; }
+        .bg-white { background-color: var(--paper-raised) !important; }
+
+        .text-primary { color: var(--ledger) !important; }
+        .text-success { color: var(--ledger) !important; }
+        .text-danger  { color: var(--debit) !important; }
+        .text-warning { color: var(--accrual) !important; }
+        .text-info    { color: var(--ledger-dark) !important; }
+        .text-muted   { color: var(--ink-faint) !important; }
+        .text-secondary { color: var(--ink-muted) !important; }
+        .border, .border-top, .border-bottom, .border-start, .border-end { border-color: var(--border) !important; }
+
+        /* ============ القوائم المنسدلة والمودالات: زجاج ============ */
+        .dropdown-menu {
+            background: var(--glass-bg-fallback);
+            background: color-mix(in srgb, var(--paper-raised) 78%, transparent);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            backdrop-filter: blur(20px) saturate(160%);
+            border: var(--glass-border);
+            border-radius: 14px;
+            box-shadow: var(--glass-shadow);
+            overflow: hidden;
+        }
+        .dropdown-item { color: var(--ink-muted); border-radius: 8px; }
+        .dropdown-item:hover, .dropdown-item:focus { color: var(--ledger-dark); background-color: var(--ledger-light); }
+        .dropdown-divider { border-color: var(--paper-line); }
+
+        .report-desc { font-size: .82rem; font-weight: 500; margin-top: .2rem; max-width: 74ch; line-height: 1.5; color: var(--ink-muted); }
+        .text-white .report-desc, .bg-danger .report-desc, .bg-info .report-desc, .bg-success .report-desc, .bg-primary .report-desc, .bg-secondary .report-desc { color: inherit; opacity: .85; }
+
+        .modal-content {
+            background: var(--paper-raised);
+            border: 1px solid var(--paper-line);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px -12px rgba(22, 63, 50, 0.28);
+        }
+        .modal-header.bg-info {
+            background: var(--ledger) !important;
+            border-bottom: 0;
+        }
+        .modal-header.bg-info .btn-close { filter: brightness(0) invert(1); }
+        .modal-header { border-bottom: 1px solid var(--paper-line); }
+        .modal-footer { border-top: 1px solid var(--paper-line); }
+        .modal-backdrop.show { opacity: 0.35; }
+
+        /* ============ التبويبات والترقيم ============ */
+        .nav-tabs { border-bottom: 1px solid var(--border); }
+        .nav-tabs .nav-link { color: var(--ink-muted); border-radius: 10px 10px 0 0; }
+        .nav-tabs .nav-link:hover { border-color: var(--paper-line) var(--paper-line) var(--border); }
+        .nav-tabs .nav-link.active {
+            color: var(--ledger-dark);
+            font-weight: 600;
+            background-color: var(--paper-raised);
+            border-color: var(--border) var(--border) var(--paper-raised);
+        }
+        .nav-pills .nav-link { color: var(--ink-muted); border-radius: 999px; }
+        .nav-pills .nav-link.active { background-color: var(--ledger); color: #fff; }
+
+        .pagination .page-link { color: var(--ledger); border-color: var(--border); }
+        .pagination .page-link:hover { background-color: var(--ledger-light); color: var(--ledger-dark); border-color: var(--border); }
+        .pagination .page-item.active .page-link { background-color: var(--ledger); border-color: var(--ledger); color: #fff; }
+
+        .progress { background-color: var(--paper-line); border-radius: 999px; }
+        .progress-bar { background-color: var(--ledger); }
+        .list-group-item { border-color: var(--paper-line); }
+        .list-group-item.active { background-color: var(--ledger); border-color: var(--ledger); }
+        .spinner-border.text-primary { color: var(--ledger) !important; }
+
+        /* ============ التذييل ============ */
+        footer.sticky-footer {
+            background-color: var(--paper-raised) !important;
+            border: 1px solid var(--border);
+            color: var(--ink-muted);
+        }
+
+        /* ============ سكرول بار خفيف ============ */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+
+        /* ============ وصولية وحركة ============ */
+        :focus-visible { outline: 2px solid var(--ledger); outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; }
+        }
+
+        /* ============ الطباعة ============ */
+        @media print {
+            body { background: #fff !important; background-image: none !important; }
+            body::before, body::after { display: none !important; }
+            .app-topbar, .sidebar, footer.sticky-footer { display: none !important; }
+            .main-content { width: 100% !important; padding: 0 !important; }
+            .card, .table { box-shadow: none !important; }
+        }
+
+        /* RTL Specific Overrides */
+        *[dir="rtl"] .me-auto {
+            margin-left: auto !important;
+            margin-right: 0 !important;
+        }
+
+        *[dir="rtl"] .ms-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar navbar-expand-lg app-topbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="fas fa-users-cog me-2"></i>
+                {% if session.username %}
+                {{ settings.app_name if settings and settings.app_name else _('app.name') }}
+                {% else %}
+                {{ _('app.name') }}
+                {% endif %}
+            </a>
+
+            <!-- معلومات المستخدم وزر تسجيل الخروج -->
+            <div class="navbar-nav ms-auto">
+                {% if session.username %}
+                <!-- تم إزالة أزرار مزامنة البصمة -->
+
+                <!-- تنبيه الوثائق -->
+                {% if expiry_alerts and expiry_alerts|length > 0 %}
+                <div class="nav-item me-3">
+                    <a class="nav-link text-white position-relative" href="{{ url_for('document.documents') }}"
+                        title="{{ _('nav.alerts.docs_expiry') }}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ expiry_alerts|length }}
+                        </span>
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- تنبيهات التأخير -->
+                <div class="nav-item me-3" id="lateAlertsContainer" style="display:none;">
+                    <a class="nav-link text-white position-relative" href="{{ url_for('report.late_two_days') }}"
+                        title="{{ _('nav.alerts.late_arrival') }}">
+                        <i class="fas fa-bell"></i>
+                        <span
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark"
+                            id="lateAlertsBadge">0</span>
+                    </a>
+                </div>
+
+                <div class="nav-item me-3" title="{{ _('nav.license_status') }}">
+                    {% if license_info and license_info.ok %}
+                    {% set dl = license_info.days_left %}
+                    {% if dl <= 7 %} <span class="badge bg-danger">{{ _('msg.license_days', days=dl) }}</span>
+                        {% elif dl <= 30 %} <span class="badge bg-warning text-dark">{{ _('msg.license_days', days=dl)
+                            }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ _('msg.license_days', days=dl) }}</span>
+                            {% endif %}
+                            {% else %}
+                            <a class="badge bg-secondary text-decoration-none"
+                                href="{{ url_for('main.license_page') }}">{{ _('btn.activate_license') }}</a>
+                            {% endif %}
+                </div>
+
+                <!-- Language Switcher -->
+                <div class="nav-item dropdown me-3">
+                    <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe me-1"></i> {{ 'English' if get_locale() == 'en' else 'العربية' }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('main.set_language', code='ar') }}">{{ _('x.arabic') }}</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.set_language', code='en') }}">English</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-2"></i>
+                        {{ session.full_name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text text-muted">
+                                <i class="fas fa-user-tag me-2"></i>{{ session.role }}
+                            </span></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ _('auth.logout') }}
+                            </a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- الشريط الجانبي -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"
+                                href="{{ url_for('main.index') }}">
+                                <i class="fas fa-home"></i>
+                                {{ _('nav.home') }}
+                            </a>
+                        </li>
+                        {% if has_permission('employee.view') or has_permission('salary.settings') %}
+                        <li class="nav-section">{{ _('sec.hr') }}</li>
+                        {% endif %}
+                        {% if has_permission('employee.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'employee.employees' %}active{% endif %}"
+                                href="{{ url_for('employee.employees') }}">
+                                <i class="fas fa-users"></i>
+                                {{ _('nav.employees') }}
+                            </a>
+                        </li>
+                        {% if has_permission('employee.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'employee.employee_profile' %}active{% endif %}"
+                                href="{{ url_for('employee.employee_profile') }}">
+                                <i class="fas fa-id-card"></i>
+                                {{ _('nav.employee_profile') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endif %}
+                        {% if has_permission('employee.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed {% if request.endpoint in ['employee.manage_structure', 'employee.org_chart'] %}active{% endif %}" href="#" data-bs-toggle="collapse"
+                                data-bs-target="#structureSubmenu">
+                                <i class="fas fa-sitemap"></i>
+                                {{ _('nav.structure') }}
+                                <i class="fas fa-chevron-down ms-auto small float-end mt-1"></i>
+                            </a>
+                            <div class="collapse {% if request.endpoint in ['employee.manage_structure', 'employee.org_chart'] %}show{% endif %}" id="structureSubmenu">
+                                <ul class="nav flex-column ms-3 bg-light rounded m-2">
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('employee.manage_structure') }}">
+                                            <i class="fas fa-list small me-2"></i>{{ _('x.manage_departments_positions') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('employee.org_chart') }}">
+                                            <i class="fas fa-project-diagram small me-2"></i>{{ _('x.org_chart') }}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.settings') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'shift.index' %}active{% endif %}"
+                                href="{{ url_for('shift.index') }}">
+                                <i class="fas fa-business-time"></i>
+                                {{ _('nav.shift_types') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('employee.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                                data-bs-target="#eosSubmenu">
+                                <i class="fas fa-user-times"></i>
+                                {{ _('x.end_of_service') }}
+                                <i class="fas fa-chevron-down ms-auto small float-end mt-1"></i>
+                            </a>
+                            <div class="collapse" id="eosSubmenu">
+                                <ul class="nav flex-column ms-3 bg-light rounded m-2">
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('eos.terminate_employee') }}">
+                                            <i class="fas fa-sign-out-alt small me-2"></i>{{ _('x.terminate_employee_service') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('eos.list_eos') }}">
+                                            <i class="fas fa-history small me-2"></i>{{ _('x.terminated_employees_log') }}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('attendance.view') or has_permission('leave.view') or has_permission('leave.manage') or has_permission('leave.settings') or has_permission('salary.approve_hours') %}
+                        <li class="nav-section">{{ _('sec.att') }}</li>
+                        {% endif %}
+                        {% if has_permission('attendance.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'attendance.fingerprint' %}active{% endif %}"
+                                href="{{ url_for('attendance.fingerprint') }}">
+                                <i class="fas fa-fingerprint"></i>
+                                {{ _('nav.fingerprint') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('attendance.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'attendance.oracle_control' %}active{% endif %}"
+                                href="{{ url_for('attendance.oracle_control') }}">
+                                <i class="fas fa-database"></i>
+                                {{ _('nav.oracle') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('leave.view') or has_permission('leave.manage') or has_permission('leave.settings') or has_permission('attendance.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                                data-bs-target="#leaveSubmenu">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ _('x.leave_management') }}
+                                <i class="fas fa-chevron-down ms-auto small float-end mt-1"></i>
+                            </a>
+                            <div class="collapse" id="leaveSubmenu">
+                                <ul class="nav flex-column ms-3 bg-light rounded m-2">
+                                    {% if has_permission('leave.view') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('leave.leaves') }}">
+                                            <i class="fas fa-calendar-alt small me-2"></i>{{ _('nav.leaves') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('leave.my_approvals') }}">
+                                            <i class="fas fa-check-double small me-2"></i>{{ _('nav.my_approvals', default='موافقاتي') }}
+                                        </a>
+                                    </li>
+                                    {% if has_permission('leave.manage') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('leave.leave_cancellations') }}">
+                                            <i class="fas fa-cut small me-2"></i>{{ _('nav.leave_cancellations') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if has_permission('leave.settings') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('leave.official_holidays') }}">
+                                            <i class="fas fa-calendar-check small me-2"></i>{{
+                                            _('nav.official_holidays') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('leave_settings.index') }}">
+                                            <i class="fas fa-sliders-h small me-2"></i>{{ _('nav.leave_settings') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if has_permission('attendance.view') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('attendance_excuses.index') }}">
+                                            <i class="fas fa-clipboard-check small me-2"></i>{{
+                                            _('nav.attendance_excuses') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('leave.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'leave.leave_balance_page' %}active{% endif %}"
+                                href="{{ url_for('leave.leave_balance_page') }}">
+                                <i class="fas fa-wallet"></i>
+                                {{ _('x.leave_balance_menu') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.approve_hours') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.hourly_perms_page' %}active{% endif %}"
+                                href="{{ url_for('payroll.hourly_perms_page') }}">
+                                <i class="fas fa-stopwatch"></i>
+                                {{ _('x.hourly_perms_menu') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.view') or has_permission('salary.calculate') or has_permission('salary.approve_hours') %}
+                        <li class="nav-section">{{ _('sec.pay') }}</li>
+                        {% endif %}
+                        {% if has_permission('salary.approve_hours') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.hours_approval' %}active{% endif %}"
+                                href="{{ url_for('payroll.hours_approval') }}">
+                                <i class="fas fa-user-clock"></i>
+                                {{ _('x.hours_approval') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.calculate') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.monthly_sheet' %}active{% endif %}"
+                                href="{{ url_for('payroll.monthly_sheet') }}">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                {{ _('x.payroll_monthly') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.ledger_page' %}active{% endif %}"
+                                href="{{ url_for('payroll.ledger_page') }}">
+                                <i class="fas fa-book"></i>
+                                {{ _('x.ledger_menu') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.employee_history_page' %}active{% endif %}"
+                                href="{{ url_for('payroll.employee_history_page') }}">
+                                <i class="fas fa-user-clock"></i>
+                                {{ _('x.emp_history_menu') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.calculate') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.transactions' %}active{% endif %}"
+                                href="{{ url_for('payroll.transactions') }}">
+                                <i class="fas fa-exchange-alt"></i>
+                                {{ _('x.payroll_tx') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payroll.loans' %}active{% endif %}"
+                                href="{{ url_for('payroll.loans') }}">
+                                <i class="fas fa-hand-holding-usd"></i>
+                                {{ _('x.payroll_loans') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('salary.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'salary.salaries' %}active{% endif %}"
+                                href="{{ url_for('salary.salaries') }}">
+                                <i class="fas fa-money-bill-wave"></i>
+                                {{ _('nav.salaries') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('report.view') or has_permission('attendance.view') or has_permission('employee.documents') %}
+                        <li class="nav-section">{{ _('sec.rep') }}</li>
+                        {% endif %}
+                        {% if has_permission('report.view') or has_permission('attendance.view') %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                                data-bs-target="#reportSubmenu">
+                                <i class="fas fa-chart-pie"></i>
+                                {{ _('nav.reports') }}
+                                <i class="fas fa-chevron-down ms-auto small float-end mt-1"></i>
+                            </a>
+                            <div class="collapse" id="reportSubmenu">
+                                <ul class="nav flex-column ms-3 bg-light rounded m-2">
+                                    {% if has_permission('report.view') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('report.reports') }}">
+                                            <i class="fas fa-chart-bar small me-2"></i>{{ _('nav.reports_general') if
+                                            _('nav.reports_general') != 'nav.reports_general' else 'التقارير العامة' }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if has_permission('attendance.view') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('report.presence_daily_report') }}">
+                                            <i class="fas fa-user-clock small me-2"></i>{{ _('x.presence_report') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('report.monthly_presence_report_page') }}">
+                                            <i class="fas fa-calendar-check small me-2"></i>{{ _('x.monthly_presence_report') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('report.custom_fingerprint_attendance') }}">
+                                            <i class="fas fa-calendar-alt small me-2"></i>{{ _('x.attendance_report_custom') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('report.custom_employees_report_page') }}">
+                                            <i class="fas fa-file-invoice-dollar small me-2"></i>{{ _('x.comprehensive_report_custom') }}
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark"
+                                            href="{{ url_for('report.fingerprint_attendance') }}">
+                                            <i class="fas fa-clock small me-2"></i>{{ _('x.monthly_attendance_summary') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('employee.documents') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'document.documents' %}active{% endif %}"
+                                href="{{ url_for('document.documents') }}">
+                                <i class="fas fa-file-alt"></i>
+                                {{ _('nav.documents') }}
+                                {% if expiry_alerts and expiry_alerts|length > 0 %}
+                                <span class="badge bg-danger ms-2">{{ expiry_alerts|length }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('admin.roles') or has_permission('admin.users') or has_permission('admin.settings') or session.role == 'Admin' %}
+                        <li class="nav-section">{{ _('sec.sys') }}</li>
+                        {% endif %}
+                        {% if has_permission('admin.roles') or has_permission('admin.users') %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                                data-bs-target="#adminSubmenu">
+                                <i class="fas fa-user-shield"></i>
+                                {{ _('nav.admin') }}
+                                <i class="fas fa-chevron-down ms-auto small float-end mt-1"></i>
+                            </a>
+                            <div class="collapse" id="adminSubmenu">
+                                <ul class="nav flex-column ms-3 bg-light rounded m-2">
+                                    {% if has_permission('admin.roles') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('admin.roles_list') }}">
+                                            <i class="fas fa-id-card small me-2"></i>{{ _('nav.roles') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if has_permission('admin.users') %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-2 text-dark" href="{{ url_for('admin.users_list') }}">
+                                            <i class="fas fa-users-cog small me-2"></i>{{ _('nav.users') }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('admin.settings') %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.settings' %}active{% endif %}"
+                                href="{{ url_for('main.settings') }}">
+                                <i class="fas fa-cog"></i>
+                                {{ _('nav.settings') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if has_permission('admin.settings') or session.role == 'Admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'translation.index' %}active{% endif %}"
+                                href="{{ url_for('translation.index') }}">
+                                <i class="fas fa-language"></i>
+                                {{ _('nav.translations') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- المحتوى الرئيسي -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- SweetAlert2 CSS -->
+                <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+                <!-- رسائل التنبيه باستخدام SweetAlert2 -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        {% for category, message in messages %}
+                        Swal.fire({
+                            title: {{ (_('msg.success') if category == 'success' else _('msg.alert')) | tojson }},
+                    text: {{ message | tojson }},
+                    icon: {{ ('success' if category == 'success' else 'error' if category == 'error' else 'warning') | tojson }},
+                    confirmButtonText: {{ _('btn.ok') | tojson }},
+                    confirmButtonColor: '#1F5C4A',
+                        timer: {{ 3000 if category == 'success' else 'null' }},
+                    timerProgressBar: {{ 'true' if category == 'success' else 'false' }}
+                        });
+                    {% endfor %}
+                            });
+
+                    window.DIR = {{ get_direction() | tojson }};
+                    window.TRANS = {
+                        confirm: {{ _('msg.confirm') | tojson }}
+                    };
+                </script>
+                {% endif %}
+                {% endwith %}
+                <script>
+                    window.LOCALE = {{ get_locale() | string | tojson }};
+                    window.DIR = {{ get_direction() | tojson }};
+                    window.TRANS = { confirm: {{ _('msg.confirm') | tojson }} };
+                </script>
+
+
+                {% block content %}{% endblock %}
+
+                <!-- Footer -->
+                <footer class="sticky-footer bg-white mt-4 rounded shadow-sm p-3">
+                    <div class="container my-auto">
+                        <div class="copyright text-center my-auto">
+                            <span>{{ _('footer.rights_reserved') }} &copy; ONpoint HR {{ now.year if now else '2025'
+                                }}</span>
+                            <br>
+                            <small class="text-muted">
+                                {{ _('footer.developed_by') }}: (<span dir="ltr">+965 98953511</span>) | {{
+                                _('footer.company') }}: ONZ.one
+                            </small>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <!-- Move jQuery before Bootstrap for compatibility -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- تم إزالة دوال مزامنة البصمة -->
+    <script>
+        // تهيئة tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // دالة إظهار التنبيهات using SweetAlert2
+        function systemRestart() {
+            if (!confirm({{ _('x.confirm_restart')|tojson }})) return;
+            fetch({{ url_for('admin.system_restart')|tojson }}, { method: 'POST' }).catch(function () { });
+            var ov = document.getElementById('restartOverlay');
+            if (ov) ov.style.display = 'flex';
+            setTimeout(function poll() {
+                fetch('/', { cache: 'no-store' })
+                    .then(function (r) { if (r.ok) { location.reload(); } else { setTimeout(poll, 1500); } })
+                    .catch(function () { setTimeout(poll, 1500); });
+            }, 3500);
+        }
+
+        function showAlert(message, type) {
+            Swal.fire({
+                title: type === 'success' ? {{ _('x.success')|tojson }} : (type === 'danger' || type === 'error' ? {{ _('x.error')|tojson }} : {{ _('x.notice')|tojson }}),
+                text: message,
+                icon: type === 'danger' ? 'error' : type,
+                confirmButtonText: {{ _('x.ok')|tojson }},
+                confirmButtonColor: '#1F5C4A',
+                timer: type === 'success' ? 3000 : null,
+                timerProgressBar: type === 'success'
+            });
+        }
+        // استطلاع تنبيهات التأخير (Admins فقط)
+        document.addEventListener('DOMContentLoaded', function () {
+            const role = '{{ session.role or "" }}';
+            if (!role || role.toLowerCase() !== 'admin') return;
+            const container = document.getElementById('lateAlertsContainer');
+            const badge = document.getElementById('lateAlertsBadge');
+
+            async function pollLateAlerts() {
+                try {
+                    const res = await fetch('/api/late_arrival_alerts');
+                    const data = await res.json();
+                    if (!data.success) return;
+                    const count = data.count || 0;
+                    if (count > 0) {
+                        container.style.display = '';
+                        badge.textContent = count;
+
+                        // Check if we already showed the alert in this session
+                        if (!sessionStorage.getItem('lateAlertShown')) {
+                            // نص مختصر للتنبيه
+                            const list = (data.alerts || []).slice(0, 3).map(a => `${a.name} (${a.employee_number}) {{ _('x.late_word') }} ${a.late_minutes}{{ _('x.minute_abbr') }}`).join({{ _('x.comma_space')|tojson }});
+                            showAlert(`{{ _('x.late_alert_colon') }} ${list}${count > 3 ? {{ _('x.comma_and_more')|tojson }} : ''}`, 'warning');
+
+                            // Mark as shown
+                            sessionStorage.setItem('lateAlertShown', 'true');
+                        }
+                    } else {
+                        container.style.display = 'none';
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            // استدعاء أولي ثم كل 5 دقائق
+            pollLateAlerts();
+            setInterval(pollLateAlerts, 5 * 60 * 1000);
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+    <div id="restartOverlay" style="display:none; position:fixed; inset:0; z-index:20000; background:rgba(250,250,247,.92); backdrop-filter:blur(6px); align-items:center; justify-content:center; flex-direction:column; gap:1rem;">
+        <div class="spinner-border text-success" style="width:3rem;height:3rem;"></div>
+        <div class="fw-bold" style="color: var(--ledger-dark);">{{ _('x.restarting') }}</div>
+    </div>
+</body>
+
+</html>

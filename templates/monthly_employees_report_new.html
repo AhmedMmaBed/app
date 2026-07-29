@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.monthly_report') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div><h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>{{ _('x.custom_comprehensive_report') }}</h5><div class="report-desc">{{ _('x.rdesc_comprehensive') }}</div></div>
+            <div class="d-flex gap-2">
+                <form class="d-flex gap-2" method="GET">
+                    <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-auto" title="{{ _('x.start_date') }}">
+                    <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-auto" title="{{ _('x.end_date') }}">
+                    <select name="dept" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_departments') }}</option>
+                        {% for d in departments %}
+                        <option value="{{ d }}" {% if d==selected_dept %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="pos" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_positions') }}</option>
+                        {% for p in positions %}
+                        <!-- Use loop.index or just p as it's a string list -->
+                        <option value="{{ p }}" {% if p==selected_pos %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary" type="submit">{{ _('btn.view') }}</button>
+                </form>
+                {% if has_permission('report.export') %}
+<button class="btn btn-success" id="btnExportExcel" disabled>
+                    <i class="fas fa-file-excel me-2"></i>{{ _('btn.export_excel') }}
+                </button>
+{% endif %}
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Legend / دليل الرموز -->
+            <div class="p-3 border-bottom bg-light">
+                <span class="fw-bold me-2"><i class="fas fa-info-circle me-1"></i>{{ _('x.legend') }}</span>
+                <span class="badge bg-success me-2">{{ _('x.present_no_hours') }}</span>
+                <span class="badge bg-secondary text-dark me-2 border">{{ _("symbol.weekend") }} {{ _('x.weekly_off') }}</span>
+                <span class="badge bg-warning text-dark me-2">{{ _("symbol.holiday") }} {{ _('x.official_holiday') }}</span>
+                <span class="badge bg-info text-dark me-2">{{ _("symbol.leave") }} {{ _('x.approved_leave') }}</span>
+                <span class="badge bg-danger me-2">{{ _("symbol.absent") }} {{ _('x.absence') }}</span>
+                <span class="badge bg-danger text-white me-2" style="border:1px solid #A8402F;">{{ _("symbol.invalid") }} {{ _('x.missing_punch') }}</span>
+                <span class="text-muted small ms-2">{{ _('x.numbers_are_work_hours') }}</span>
+            </div>
+
+            <div class="table-responsive" style="max-height: 75vh;">
+                <table class="table table-bordered table-striped table-hover align-middle text-center mb-0"
+                    id="reportTable" style="font-size: 0.85rem;">
+                    <thead class="table-dark sticky-top" style="z-index: 5;">
+                        <tr>
+                            <th rowspan="2" class="align-middle" style="min-width:60px;">{{ _('tbl.header.file_number')
+                                }}</th>
+                            <th rowspan="2" class="align-middle"
+                                style="min-width:150px; position:sticky; left:0; z-index:6; background:var(--bs-dark);">
+                                {{ _('tbl.header.name') }}</th>
+                            <th rowspan="2" class="align-middle">{{ _('tbl.header.department') }}</th>
+                            <th rowspan="2" class="align-middle">{{ _('tbl.header.position') }}</th>
+                            <!-- أعمدة جديدة -->
+                            <th rowspan="2" class="align-middle bg-light" style="min-width:60px; font-size:0.8rem;">{{
+                                _('tbl.header.work_days') }}</th>
+                            <th rowspan="2" class="align-middle bg-light" style="min-width:60px; font-size:0.8rem;">
+                                {{ _('tbl.header.sick_emergency') }}</th>
+                            <!-- أيام الشهر -->
+                            {% for d in days_names %}
+                            <th class="px-1" style="min-width:25px; font-size:0.75rem;">
+                                {{ d[0].split('-')[2] }}/{{ d[0].split('-')[1] }}
+                                <small class="d-block text-muted" style="font-size:0.65rem;">{{ d[1] }}</small>
+                            </th>
+                            {% endfor %}
+                            <!-- المجاميع -->
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.req_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.act_basic') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-danger text-white">{{ _('tbl.header.miss_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.ot_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.total_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.late_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.present_days')
+                                }}</th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.absent_days')
+                                }}</th>
+                            <!-- المالي -->
+                            <th rowspan="2" class="align-middle bg-info text-white" style="min-width:80px">{{
+                                _('tbl.header.basic_salary') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-success text-white" style="min-width:80px">{{
+                                _('tbl.header.ot_value') }}
+                            </th>
+                            <th rowspan="1" class="align-middle bg-danger text-white" style="min-width:80px">{{
+                                _('tbl.header.total_deductions') }}
+                            </th>
+                            <th rowspan="1" class="align-middle bg-primary text-white" style="min-width:90px">{{
+                                _('tbl.header.net_salary') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="pbody">
+                        <!-- Shimmer Loader -->
+                        {% for i in range(5) %}
+                        <tr>
+                            <td colspan="{{ 4 + 2 + days_diff + 12 }}" class="p-3">
+                                <div class="placeholder-glow">
+                                    <span class="placeholder col-12 py-3 bg-secondary opacity-25 rounded"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadReportData();
+    });
+
+    async function loadReportData() {
+        const params = new URLSearchParams(window.location.search);
+        try {
+            const res = await fetch(`/api/fingerprint/custom_employees_report?${params.toString()}`);
+            const data = await res.json();
+
+            if (data.success) {
+                // ترتيب الموظفين تصاعدياً بناءً على رقم الملف (employee_number)
+                data.rows.sort((a, b) => {
+                    let numA = parseInt(a.employee_number, 10);
+                    if (isNaN(numA)) numA = 999999;
+                    let numB = parseInt(b.employee_number, 10);
+                    if (isNaN(numB)) numB = 999999;
+                    return numA - numB;
+                });
+
+                window.reportData = data.rows;
+                renderTable(data.rows);
+                var _eb = document.getElementById('btnExportExcel'); if (_eb) _eb.disabled = false;
+            } else {
+                document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">{{ _('error.generic') }}: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">{{ _('error.server_connection') }}</td></tr>`;
+        }
+    }
+
+    function renderTable(rows) {
+        const tbody = document.getElementById('pbody');
+        tbody.innerHTML = '';
+
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="100%">{{ _('msg.no_data') }}</td></tr>`;
+            return;
+        }
+
+        rows.forEach(r => {
+            let daysHtml = '';
+            r.daily_cells.forEach((c) => {
+                const CAN_EDIT_ATT = {{ has_permission('attendance.edit')|tojson }};
+                let cellContent = '';
+                let cellClass = '';
+                let clickAction = '';
+                let cellStyle = '';
+                let statusText = c.status;
+                let tooltip = `{{ _('x.in_colon_space') }}${c.check_in || '-'}\n{{ _('x.out_colon_space') }}${c.check_out || '-'}\n{{ _('x.work_hours') }}: ${c.work_hours || 0}`;
+
+                if (statusText === 'holiday') { cellContent = {{ _("symbol.holiday") | tojson }}; cellClass = 'bg-warning bg-opacity-25 text-warning fw-bold'; }
+                else if (statusText === 'leave') { cellContent = {{ _("symbol.leave") | tojson }}; cellClass = 'bg-info bg-opacity-25 text-info fw-bold'; }
+                else if (statusText === 'weekly_off') { cellContent = {{ _("symbol.weekend") | tojson }}; cellClass = 'bg-secondary bg-opacity-10 text-muted fw-bold'; }
+                else if (statusText === 'absent') { cellContent = {{ _("symbol.absent") | tojson }}; cellClass = 'bg-danger bg-opacity-25 text-danger fw-bold'; if (CAN_EDIT_ATT) { clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${c.date}', 'absent')"`; cellStyle = 'cursor:pointer;'; } }
+                else if (statusText === 'partial') { cellContent = {{ _("symbol.invalid") | tojson }}; cellClass = 'bg-danger text-white fw-bold'; tooltip += ' ({{ _("tooltip.missing_punch") }})'; if (CAN_EDIT_ATT) { clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${c.date}', 'invalid')"`; cellStyle = 'cursor:pointer;'; } }
+                else if (statusText === 'present') { cellContent = c.work_hours > 0 ? c.work_hours : '<span class="text-success">&#10003;</span>'; }
+                else { cellContent = '<span class="text-muted opacity-25">-</span>'; }
+
+                daysHtml += `<td class="${cellClass}" title="${tooltip}" style="${cellStyle}" ${clickAction}>${cellContent}</td>`;
+            });
+
+            let deductionTooltip = `{{ _("tooltip.total_deductions") }}: ${r.financials.total_deduction}`;
+            deductionTooltip += `\n{{ _("tooltip.late") }}: ${r.financials.late_deduction}`;
+            deductionTooltip += `\n{{ _("tooltip.early_leave") }}: ${r.financials.early_leave_deduction}`;
+            deductionTooltip += `\n{{ _("tooltip.absent") }}: ${r.financials.absent_deduction}`;
+            deductionTooltip += `\n{{ _("x.unpaid_leave_ded") }}: ${r.financials.unpaid_leave_deduction}`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                    <td class="fw-bold text-muted">${r.employee_number || ''}</td>
+                    <td class="text-start fw-bold" style="position:sticky; left:0; background:#fff; z-index:1;">
+                        ${r.name}
+                        ${r.arabic_name ? `<div class="text-dark fw-bold small">${r.arabic_name}</div>` : ''}
+                    </td>
+                    <td>${r.department || ''}</td>
+                    <td><small>${r.position || ''}</small></td>
+                    <td class="align-middle fw-bold text-primary">${r.stats.present_days + r.stats.absent_days + r.stats.holiday_days + r.stats.weekly_off_days}</td>
+                    <td class="align-middle fw-bold text-danger">0</td>
+                    ${daysHtml}
+                    <td class="fw-bold text-muted bg-light border-end">0</td>
+                    <td class="fw-bold text-secondary">0</td>
+                    <td class="fw-bold text-danger">0</td>
+                    <td class="fw-bold text-success">${r.stats.total_overtime_mins / 60}</td>
+                    <td class="fw-bold text-dark border-start">${r.stats.total_work_hours}</td>
+                    <td class="text-danger">${r.stats.total_late_mins / 60}</td>
+                    <td class="text-success">${r.stats.present_days}</td>
+                    <td class="text-danger">${r.stats.absent_days}</td>
+                    <td class="text-info fw-bold">${r.salary}</td>
+                    <td class="text-success fw-bold">${r.financials.overtime_reward}</td>
+                    <td class="text-danger fw-bold" title="${deductionTooltip}" data-bs-toggle="tooltip">${r.financials.total_deduction}</td>
+                    <td class="text-primary fw-bold text-decoration-underline">${r.financials.net_salary}</td>
+                `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    if (document.getElementById('btnExportExcel')) document.getElementById('btnExportExcel').addEventListener('click', function () {
+        const wb = XLSX.utils.book_new();
+        
+        // Sheet 1: Main Report
+        const table = document.getElementById('reportTable');
+        const wsMain = XLSX.utils.table_to_sheet(table, { raw: true });
+        // إعدادات الطباعة للورقة الأولى (الرئيسية)
+        wsMain['!dir'] = 'rtl'; // من اليمين لليسار
+        wsMain['!pageSetup'] = { 
+            orientation: 'landscape', // بالعرض
+            paperSize: 9, // A4
+            fitToWidth: 1, // احتواء كافة الأعمدة في عرض صفحة واحدة
+            fitToHeight: 0 // السماح بتعدد الصفحات طولياً
+        };
+        XLSX.utils.book_append_sheet(wb, wsMain, {{ _('x.comprehensive_report')|tojson }});
+
+        // Sheet 2: Detailed Attendance (Check In/Out)
+        if (window.reportData) {
+            let detailsData = [];
+            // Header Row
+            detailsData.push([{{ _('x.employee_number')|tojson }}, {{ _('x.employee_name')|tojson }}, {{ _('x.department')|tojson }}, {{ _('x.date')|tojson }}, {{ _('x.status')|tojson }}, {{ _('x.check_in_time')|tojson }}, {{ _('x.check_out_time')|tojson }}, {{ _('x.work_hours')|tojson }}]);
+            
+            window.reportData.forEach(r => {
+                r.daily_cells.forEach(c => {
+                    detailsData.push([
+                        r.employee_number || '',
+                        r.name || '',
+                        r.department || '',
+                        c.date || '',
+                        c.status || '',
+                        c.check_in || '',
+                        c.check_out || '',
+                        c.work_hours || 0
+                    ]);
+                });
+            });
+            const wsDetails = XLSX.utils.aoa_to_sheet(detailsData);
+            
+            // إعدادات الطباعة للورقة الثانية (التفاصيل)
+            wsDetails['!dir'] = 'rtl';
+            wsDetails['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToWidth: 1, fitToHeight: 0 };
+            wsDetails['!cols'] = [{wch: 12}, {wch: 25}, {wch: 15}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}];
+
+            XLSX.utils.book_append_sheet(wb, wsDetails, {{ _('x.attendance_details')|tojson }});
+        }
+
+        XLSX.writeFile(wb, "Custom_Employees_Report_{{ start_date }}_{{ end_date }}.xlsx");
+    });
+</script>
+
+<style>
+    /* ØªØ­Ø³ÙŠÙ†Ø§Øª Ù„Ù„Ø¬Ø¯ÙˆÙ„ */
+    th,
+    td {
+        white-space: nowrap;
+    }
+
+    .placeholder-glow .placeholder {
+        min-height: 40px;
+    }
+</style>
+
+
+<!-- ØªÙØ§Ø¹Ù„ÙŠØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±: Ù†ÙˆØ§ÙØ° Ø¥Ø¶Ø§ÙØ© Ø¥Ø¬Ø§Ø²Ø©/Ø¹Ø°Ø± -->
+
+<!-- Add Leave Modal -->
+<div class="modal fade" id="addLeaveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('leave.add_leave_request') }}" method="POST">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark">{{ _('x.add_leave_absence') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="leave_employee_id">
+                    <div class="mb-3">
+                        <label class="fw-bold">{{ _('x.employee_colon') }}</label>
+                        <span id="leave_employee_name" class="text-primary"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('x.from_date') }}</label>
+                            <input type="date" class="form-control" name="start_date" id="leave_start_date">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('x.to_date') }}</label>
+                            <input type="date" class="form-control" name="end_date" id="leave_end_date" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.leave_type') }}</label>
+                        <select class="form-select" name="leave_type_id" required>
+                            <option value="">{{ _('x.choose') }}</option>
+                            {% for lt in leave_types %}
+                            <option value="{{ lt.id }}">{{ lt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.reason_notes') }}</label>
+                        <textarea class="form-control" name="reason"
+                            rows="2">{{ _('x.adjust_from_monthly_report') }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('x.save_leave') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Excuse Modal -->
+<div class="modal fade" id="addExcuseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('attendance_excuses.add_excuse') }}" method="POST">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title text-white">{{ _('x.add_task_excuse') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="excuse_employee_id">
+                    <!-- Default to 'mission' for single punch correction usually -->
+                    <input type="hidden" name="type" value="mission">
+
+                    <div class="mb-3">
+                        <label class="fw-bold">{{ _('x.employee_colon') }}</label>
+                        <span id="excuse_employee_name" class="text-primary"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.date') }}</label>
+                        <input type="date" class="form-control" name="date" id="excuse_date" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.excuse_type') }}</label>
+                        <select class="form-select" name="type_selector" id="excuse_type_selector"
+                            onchange="document.getElementsByName('type')[1].value = this.value">
+                            <option value="mission">{{ _('x.work_assignment') }}</option>
+                            <option value="manual_override">{{ _('x.other_excuse_manual') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.reason_notes') }}</label>
+                        <textarea class="form-control" name="reason"
+                            rows="2">{{ _('x.fix_missing_punch_from_report') }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('x.save_excuse') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Handle opening modals from cells
+    function openActionModal(empId, empName, dateStr, status) {
+        if (status === 'absent') {
+            // Open Leave Modal
+            document.getElementById('leave_employee_id').value = empId;
+            document.getElementById('leave_employee_name').innerText = empName;
+            document.getElementById('leave_start_date').value = dateStr;
+            document.getElementById('leave_end_date').value = dateStr; // 1 day default
+
+            var modal = new bootstrap.Modal(document.getElementById('addLeaveModal'));
+            modal.show();
+        } else if (status === 'invalid' || status === 'single_punch') {
+            // Open Excuse Modal
+            document.getElementById('excuse_employee_id').value = empId;
+            document.getElementById('excuse_employee_name').innerText = empName;
+            document.getElementById('excuse_date').value = dateStr;
+
+            var modal = new bootstrap.Modal(document.getElementById('addExcuseModal'));
+            modal.show();
+        }
+    }
+</script>
+
+{% endblock %}

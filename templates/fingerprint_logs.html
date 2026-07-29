@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.sync_logs_title') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div><h1 class="h2"><i class="fas fa-list-alt me-2"></i>{{ _('x.sync_logs') }}</h1><div class="report-desc">{{ _('x.rdesc_fp_log') }}</div></div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('x.back_to_dashboard') }}
+            </a>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="refreshLogs()">
+                <i class="fas fa-sync-alt me-2"></i>{{ _('x.refresh') }}
+            </button>
+            <button class="btn btn-outline-danger" onclick="clearLogs()">
+                <i class="fas fa-trash me-2"></i>{{ _('x.clear_logs') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.total_logs }}</h4>
+                <p class="mb-0">{{ _('x.total_records') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.info_count }}</h4>
+                <p class="mb-0">{{ _('x.info') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.warning_count }}</h4>
+                <p class="mb-0">{{ _('x.warnings') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.error_count }}</h4>
+                <p class="mb-0">{{ _('x.errors') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- فلاتر البحث -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-filter me-2"></i>{{ _('x.search_filters') }}</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('report.fingerprint_sync_logs') }}" id="filterForm">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('x.device') }}</label>
+                    <select name="device" class="form-select">
+                        <option value="">{{ _('x.all_devices') }}</option>
+                        {% for device in devices %}
+                        <option value="{{ device.device_ip }}" {% if filters.device==device.device_ip %}selected{% endif
+                            %}>
+                            {{ device.device_ip }}
+                        </option>
+                        {% endfor %}
+                        <option value="SYSTEM" {% if filters.device=='SYSTEM' %}selected{% endif %}>
+                            {{ _('x.system_general') }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('x.log_level') }}</label>
+                    <select name="level" class="form-select">
+                        <option value="">{{ _('x.all_levels') }}</option>
+                        <option value="INFO" {% if filters.level=='INFO' %}selected{% endif %}>
+                            <span class="badge bg-success">INFO</span> {{ _('x.info') }}
+                        </option>
+                        <option value="WARNING" {% if filters.level=='WARNING' %}selected{% endif %}>
+                            <span class="badge bg-warning">WARNING</span> {{ _('x.warnings') }}
+                        </option>
+                        <option value="ERROR" {% if filters.level=='ERROR' %}selected{% endif %}>
+                            <span class="badge bg-danger">ERROR</span> {{ _('x.errors') }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('x.date') }}</label>
+                    <input type="date" name="date" class="form-control" value="{{ filters.date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>{{ _('x.filter') }}
+                        </button>
+                        <a href="{{ url_for('report.fingerprint_sync_logs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>{{ _('x.clear_filters') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- جدول السجلات -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>{{ _('x.sync_log_details') }}</h5>
+        {% if logs %}
+        <div class="small text-muted">
+            {{ _('x.view') }} {{ ((current_page - 1) * per_page + 1) }} - {{ ((current_page - 1) * per_page + logs|length) }} من {{
+            total_logs }}
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th width="15%">{{ _('x.time_and_date') }}</th>
+                        <th width="10%">{{ _('x.level') }}</th>
+                        <th width="15%">{{ _('x.device_system') }}</th>
+                        <th width="40%">{{ _('x.message') }}</th>
+                        <th width="20%">{{ _('x.details') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="log-row" data-level="{{ log.level }}">
+                        <td>
+                            <div class="small">
+                                <strong>{{ log.timestamp[11:19] }}</strong>
+                                <br>
+                                <span class="text-muted">{{ log.timestamp[:10] }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if log.level == 'INFO' %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-info-circle me-1"></i>{{ _('x.info') }}
+                            </span>
+                            {% elif log.level == 'WARNING' %}
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ _('x.warning') }}
+                            </span>
+                            {% elif log.level == 'ERROR' %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-times-circle me-1"></i>{{ _('x.error') }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary fs-6">{{ log.level }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if log.device_ip == 'SYSTEM' %}
+                                <i class="fas fa-cogs text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">{{ _('x.general_system') }}</div>
+                                    <small class="text-muted">SYSTEM</small>
+                                </div>
+                                {% else %}
+                                <i class="fas fa-microchip text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">{{ _('x.fingerprint_device') }}</div>
+                                    <small class="text-muted">{{ log.device_ip }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="log-message">
+                                {{ log.message }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if log.details %}
+                            <div class="small text-muted">
+                                {{ log.details }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- الترقيم -->
+        {% if total_pages > 1 %}
+        <nav aria-label="ترقيم الصفحات" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('report.fingerprint_sync_logs', page=current_page-1, **filters) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in range(1, total_pages + 1) %}
+                {% if page_num == current_page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% elif page_num <= 3 or page_num> total_pages - 3 or (page_num >= current_page - 1 and page_num <=
+                        current_page + 1) %} <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('report.fingerprint_sync_logs', page=page_num, **filters) }}">{{ page_num
+                            }}</a>
+                        </li>
+                        {% elif page_num == 4 or page_num == total_pages - 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if current_page < total_pages %} <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('report.fingerprint_sync_logs', page=current_page+1, **filters) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            </li>
+                            {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-list-alt text-muted" style="font-size: 4rem;"></i>
+            <h3 class="mt-3 text-muted">{{ _('x.no_records') }}</h3>
+            <p class="text-muted">
+                {% if filters.device or filters.level or filters.date %}
+                {{ _('x.no_records_match_filters') }}
+                {% else %}
+                {{ _('x.no_sync_operations_yet') }}
+                {% endif %}
+            </p>
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-primary">
+                <i class="fas fa-sync-alt me-2"></i>{{ _('x.start_sync') }}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- معلومات إضافية -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>{{ _('x.important_info') }}</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>INFO:</strong> {{ _('x.successful_operations') }}
+                        {{ _('x.and_general_info') }}</li>                    <li class="mb-2"><i
+                            class="fas fa-exclamation-triangle text-warning me-2"></i><strong>WARNING:</strong> {{ _('x.warnings') }}
+                        {{ _('x.needs_attention') }}</li>                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i><strong>ERROR:</strong> {{ _('x.errors') }}
+                        {{ _('x.needs_immediate_fix') }}</li>                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>{{ _('x.session_info') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">{{ _('x.last_update_colon') }}</small><br>
+                        <strong id="lastUpdate">--:--:--</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">{{ _('x.auto_refresh_colon') }}</small><br>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleAutoRefresh()"
+                            id="autoRefreshBtn">
+                            <i class="fas fa-play me-1"></i>{{ _('x.start') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let autoRefresh = false;
+    let refreshInterval;
+
+    // تحديث السجلات
+    function refreshLogs() {
+        window.location.reload();
+    }
+
+    // مسح السجلات (يحتاج تطوير في الباك إند)
+    function clearLogs() {
+        if (confirm({{ _('x.confirm_clear_sync_logs')|tojson }})) {
+            showAlert({{ _('x.clear_logs_coming_soon')|tojson }}, 'info');
+        }
+    }
+
+    // تبديل التحديث التلقائي
+    function toggleAutoRefresh() {
+        autoRefresh = !autoRefresh;
+        const btn = document.getElementById('autoRefreshBtn');
+
+        if (autoRefresh) {
+            btn.innerHTML = {{ _('x.pause_btn_html')|tojson }};
+            btn.className = 'btn btn-sm btn-warning';
+            startAutoRefresh();
+            showAlert({{ _('x.auto_refresh_on_30s')|tojson }}, 'success');
+        } else {
+            btn.innerHTML = {{ _('x.play_btn_html')|tojson }};
+            btn.className = 'btn btn-sm btn-outline-primary';
+            stopAutoRefresh();
+            showAlert({{ _('x.auto_refresh_stopped')|tojson }}, 'info');
+        }
+    }
+
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            if (autoRefresh) {
+                fetch(`/fingerprint/logs/api?limit=50`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.logs.length > 0) {
+                            // تحديث وقت آخر تحديث
+                            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-EG');
+
+                            // إظهار تنبيه للسجلات الجديدة (اختياري)
+                            const newErrorsCount = data.logs.filter(log => log.level === 'ERROR').length;
+                            if (newErrorsCount > 0) {
+                                showAlert(`{{ _('x.detected') }} ${newErrorsCount} {{ _('x.new_errors_in_logs') }}`, 'warning');
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        // تجاهل أخطاء التحديث التلقائي
+                    });
+            }
+        }, 30000); // كل 30 ثانية
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    }
+
+    // تحديث تلقائي للوقت الحالي
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ar-EG', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        const updateElement = document.getElementById('lastUpdate');
+        if (updateElement) {
+            updateElement.textContent = timeString;
+        }
+    }
+
+    // إضافة تأثيرات بصرية للسجلات وتحديث الوقت
+    document.addEventListener('DOMContentLoaded', function () {
+        // تحديث الوقت عند تحميل الصفحة
+        updateCurrentTime();
+
+        // تمييز الأخطاء والتحذيرات
+        const errorRows = document.querySelectorAll('tr[data-level="ERROR"]');
+        errorRows.forEach(row => {
+            row.style.borderLeft = '4px solid #A8402F';
+            row.style.backgroundColor = 'rgba(220, 53, 69, 0.05)';
+        });
+
+        const warningRows = document.querySelectorAll('tr[data-level="WARNING"]');
+        warningRows.forEach(row => {
+            row.style.borderLeft = '4px solid #8A6420';
+            row.style.backgroundColor = 'rgba(255, 193, 7, 0.05)';
+        });
+
+        const infoRows = document.querySelectorAll('tr[data-level="INFO"]');
+        infoRows.forEach(row => {
+            row.style.borderLeft = '4px solid #1F5C4A';
+        });
+
+        // بدء تحديث الوقت كل ثانية
+        setInterval(() => {
+            if (!autoRefresh) {
+                updateCurrentTime();
+            }
+        }, 1000);
+    });
+</script>
+{% endblock %}

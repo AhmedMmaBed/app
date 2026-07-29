@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.edit_document') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit me-2"></i>{{ _('header.edit_document') }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('document.documents') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right me-2"></i>{{ _('btn.back_to_documents') }}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>{{ _('header.edit_document_data') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="editDocumentForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="employee_search" class="form-label">{{ _('label.employee') }} <span
+                                    class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="employee_search"
+                                        placeholder="{{ _('placeholder.search_employee') }}" autocomplete="off"
+                                        value="{{ document.employee_name }} ({{ document.employee_number }})" readonly>
+                                </div>
+                                <input type="hidden" id="employee_id" name="employee_id"
+                                    value="{{ document.employee_id }}" required>
+                                <div id="employee_search_results"
+                                    class="position-absolute w-100 bg-white border rounded shadow-sm"
+                                    style="z-index: 1000; max-height: 200px; overflow-y: auto; display: none; top: 100%;">
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                {{ _('help.employee_edit_disabled') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="document_type" class="form-label">{{ _('label.document_type') }} <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="document_type" name="document_type" required>
+                                <option value="">{{ _('option.select_document_type') }}</option>
+                                <option value="عقد عمل" {% if document.document_type=='عقد عمل' %}selected{% endif %}>{{
+                                    _('doc_type.contract') }}</option>
+                                <option value="شهادة تعليمية" {% if document.document_type=='شهادة تعليمية' %}selected{%
+                                    endif %}>{{ _('doc_type.education') }}</option>
+                                <option value="شهادة خبرة" {% if document.document_type=='شهادة خبرة' %}selected{% endif
+                                    %}>{{ _('doc_type.experience') }}</option>
+                                <option value="بطاقة هوية" {% if document.document_type=='بطاقة هوية' %}selected{% endif
+                                    %}>{{ _('doc_type.id_card') }}</option>
+                                <option value="جواز سفر" {% if document.document_type=='جواز سفر' %}selected{% endif %}>
+                                    {{ _('doc_type.passport') }}</option>
+                                <option value="شهادة طبية" {% if document.document_type=='شهادة طبية' %}selected{% endif
+                                    %}>{{ _('doc_type.medical') }}</option>
+                                <option value="صورة شخصية" {% if document.document_type=='صورة شخصية' %}selected{% endif
+                                    %}>{{ _('doc_type.photo') }}</option>
+                                <option value="وثائق أخرى" {% if document.document_type=='وثائق أخرى' %}selected{% endif
+                                    %}>{{ _('doc_type.other') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="expiry_date" class="form-label">{{ _('label.expiry_date') }}</label>
+                            <input type="date" class="form-control" id="expiry_date" name="expiry_date"
+                                value="{{ document.expiry_date or '' }}">
+                            <div class="form-text">
+                                {{ _('help.expiry_date') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="change_reason" class="form-label">{{ _('label.change_reason') }}</label>
+                            <input type="text" class="form-control" id="change_reason" name="change_reason"
+                                placeholder="{{ _('placeholder.change_reason') }}">
+                            <div class="form-text">
+                                {{ _('help.change_reason') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ _('label.current_file') }}</label>
+                            <div class="d-flex align-items-center p-2 bg-light rounded">
+                                <i class="fas fa-file me-2 text-primary"></i>
+                                <span class="text-truncate" title="{{ document.original_filename }}">
+                                    {{ document.original_filename }}
+                                </span>
+                            </div>
+                            <div class="form-text">
+                                {{ _('help.current_file') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="new_document" class="form-label">{{ _('label.new_document') }}</label>
+                            <input type="file" class="form-control" id="new_document" name="new_document"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <div class="form-text">
+                                {{ _('help.new_document') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- معلومات الملف الجديد -->
+                    <div id="newFileInfo" class="alert alert-info" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>{{ _('label.new_file_name') }}:</strong>
+                                <span class="text-primary" id="newFileName">-</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>{{ _('label.file_size') }}:</strong>
+                                <span class="text-success" id="newFileSize">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('document.documents') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>{{ _('btn.cancel') }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{{ _('btn.save_changes') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>{{ _('header.document_info') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>{{ _('label.file_name') }}:</strong>
+                    <div class="text-muted">{{ document.original_filename }}</div>
+                </div>
+                <div class="mb-3">
+                    <strong>{{ _('label.upload_date') }}:</strong>
+                    <div class="text-muted">{{ document.upload_date.split(' ')[0] }}</div>
+                </div>
+                <div class="mb-3">
+                    <strong>{{ _('label.employee') }}:</strong>
+                    <div class="text-muted">{{ document.employee_name }} ({{ document.employee_number }})</div>
+                </div>
+                {% if document.expiry_date %}
+                <div class="mb-3">
+                    <strong>{{ _('label.expiry_date') }}:</strong>
+                    <div class="text-muted">{{ document.expiry_date }}</div>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>{{ _('label.document_type') }}:</strong>
+                    <div class="text-muted">{{ document.document_type }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- سجل التعديلات -->
+        {% if history %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>{{ _('header.change_history') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for record in history %}
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="timeline-marker me-3">
+                                {% if record.action == 'created' %}
+                                <i class="fas fa-plus-circle text-success"></i>
+                                {% elif record.action == 'updated' %}
+                                <i class="fas fa-edit text-primary"></i>
+                                {% elif record.action == 'file_changed' %}
+                                <i class="fas fa-file-upload text-warning"></i>
+                                {% elif record.action == 'deleted' %}
+                                <i class="fas fa-trash text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content flex-grow-1">
+                                <div class="timeline-header">
+                                    <strong class="text-primary">
+                                        {% if record.action == 'created' %}
+                                        {{ _('action.document_created') }}
+                                        {% elif record.action == 'updated' %}
+                                        {{ _('action.data_updated') }}
+                                        {% elif record.action == 'file_changed' %}
+                                        {{ _('action.file_changed') }}
+                                        {% elif record.action == 'deleted' %}
+                                        {{ _('action.document_deleted') }}
+                                        {% endif %}
+                                    </strong>
+                                    <small class="text-muted ms-2">{{ record.change_date.split(' ')[0] }}</small>
+                                </div>
+
+                                {% if record.action == 'file_changed' %}
+                                <div class="timeline-details mt-2">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">{{ _('label.old_file') }}:</small>
+                                            <div class="text-truncate">{{ record.old_filename }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">{{ _('label.new_file') }}:</small>
+                                            <div class="text-truncate">{{ record.new_filename }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if record.change_reason %}
+                                <div class="timeline-reason mt-2">
+                                    <small class="text-muted">{{ _('label.reason') }}:</small>
+                                    <div class="text-info">{{ record.change_reason }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+    }
+
+    .timeline-item {
+        position: relative;
+    }
+
+    .timeline-marker {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FAFAF7;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .timeline-content {
+        border-left: 2px solid #E3E0D3;
+        padding-left: 15px;
+        margin-left: 15px;
+    }
+
+    .timeline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .timeline-details {
+        background: #FAFAF7;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 0.9em;
+    }
+
+    .timeline-reason {
+        background: #E7F1EC;
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // عرض معلومات الملف الجديد عند اختياره
+    document.getElementById('new_document').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const fileInfo = document.getElementById('newFileInfo');
+
+        if (file) {
+            document.getElementById('newFileName').textContent = file.name;
+
+            // حساب حجم الملف
+            const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            document.getElementById('newFileSize').textContent = fileSizeInMB + ' {{ _("unit.mb") }}';
+
+            // التحقق من حجم الملف
+            if (file.size > 10 * 1024 * 1024) { // 10 ميجابايت
+                alert('{{ _("error.file_too_large") }}');
+                this.value = '';
+                fileInfo.style.display = 'none';
+                return;
+            }
+
+            fileInfo.style.display = 'block';
+        } else {
+            fileInfo.style.display = 'none';
+        }
+    });
+
+    // البحث الذكي عن الموظفين
+    let searchTimeout;
+    const employeeSearch = document.getElementById('employee_search');
+    const employeeSearchResults = document.getElementById('employee_search_results');
+    const employeeIdInput = document.getElementById('employee_id');
+
+    // البحث عند الكتابة
+    employeeSearch.addEventListener('input', function () {
+        const query = this.value.trim();
+
+        // إلغاء البحث السابق
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            employeeSearchResults.style.display = 'none';
+            return;
+        }
+
+        // عرض مؤشر التحميل
+        employeeSearchResults.innerHTML = `
+        <div class="p-3 text-center">
+            <i class="fas fa-spinner fa-spin text-primary me-2"></i>
+            {{ _("status.searching") }}
+        </div>
+    `;
+        employeeSearchResults.style.display = 'block';
+
+        // تأخير البحث لتحسين الأداء
+        searchTimeout = setTimeout(() => {
+            searchEmployees(query);
+        }, 300);
+    });
+
+    // البحث عن الموظفين
+    function searchEmployees(query) {
+        fetch(`/api/search-employees?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.employees.length > 0) {
+                    displaySearchResults(data.employees);
+                } else {
+                    employeeSearchResults.innerHTML = '<div class="p-2 text-muted">{{ _("msg.no_results") }}</div>';
+                    employeeSearchResults.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching employees:', error);
+                employeeSearchResults.innerHTML = '<div class="p-2 text-danger">{{ _("error.search_error") }}</div>';
+                employeeSearchResults.style.display = 'block';
+            });
+    }
+
+    // عرض نتائج البحث
+    function displaySearchResults(employees) {
+        let html = '';
+        employees.forEach(employee => {
+            html += `
+            <div class="employee-result p-2 border-bottom" 
+                 data-id="${employee.id}" 
+                 data-name="${employee.name}" 
+                 data-number="${employee.employee_number}"
+                 style="cursor: pointer; transition: background-color 0.2s;">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 12px;">
+                        ${employee.name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="fw-bold">${employee.name}</div>
+                        <small class="text-muted">{{ _('label.employee_number') }}: ${employee.employee_number}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        });
+
+        employeeSearchResults.innerHTML = html;
+        employeeSearchResults.style.display = 'block';
+
+        // إضافة أحداث النقر على النتائج
+        const resultItems = employeeSearchResults.querySelectorAll('.employee-result');
+        resultItems.forEach(item => {
+            item.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                const number = this.dataset.number;
+
+                employeeSearch.value = `${name} (${number})`;
+                employeeIdInput.value = id;
+                employeeSearchResults.style.display = 'none';
+
+                // إضافة تأثير بصري
+                this.style.backgroundColor = '#E7F1EC';
+                setTimeout(() => {
+                    this.style.backgroundColor = '';
+                }, 200);
+            });
+
+            // تأثيرات التحويم
+            item.addEventListener('mouseenter', function () {
+                this.style.backgroundColor = '#FAFAF7';
+            });
+
+            item.addEventListener('mouseleave', function () {
+                this.style.backgroundColor = '';
+            });
+        });
+    }
+
+    // إخفاء نتائج البحث عند النقر خارجها
+    document.addEventListener('click', function (e) {
+        if (!employeeSearch.contains(e.target) && !employeeSearchResults.contains(e.target)) {
+            employeeSearchResults.style.display = 'none';
+        }
+    });
+
+    // البحث بالضغط على Enter
+    employeeSearch.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstResult = employeeSearchResults.querySelector('.employee-result');
+            if (firstResult) {
+                firstResult.click();
+            }
+        }
+    });
+
+    // التحقق من صحة النموذج
+    document.getElementById('editDocumentForm').addEventListener('submit', function (e) {
+        const employeeId = document.getElementById('employee_id').value;
+        const documentType = document.getElementById('document_type').value;
+        const newFile = document.getElementById('new_document').files[0];
+
+        if (!employeeId) {
+            e.preventDefault();
+            alert('{{ _("error.select_employee") }}');
+            return;
+        }
+
+        if (!documentType) {
+            e.preventDefault();
+            alert('{{ _("error.select_document_type") }}');
+            return;
+        }
+
+        // التحقق من نوع الملف الجديد إذا تم اختياره
+        if (newFile) {
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(newFile.type)) {
+                e.preventDefault();
+                alert('{{ _("error.file_type_not_allowed") }}');
+                return;
+            }
+
+            if (newFile.size > 10 * 1024 * 1024) {
+                e.preventDefault();
+                alert('{{ _("error.file_too_large") }}');
+                return;
+            }
+        }
+    });
+</script>
+{% endblock %}

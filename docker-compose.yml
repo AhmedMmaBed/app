@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  hr_web:
+    build: .
+    pull_policy: build
+    container_name: hr_web_app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - hr_data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - HR_DATA_DIR=/app/data
+      - TZ=Asia/Riyadh
+    command: python app.py
+
+  hr_sync:
+    build: .
+    pull_policy: build
+    container_name: hr_sync_agent
+    restart: unless-stopped
+    volumes:
+      - hr_data:/app/data
+    environment:
+      - HR_DATA_DIR=/app/data
+      - TZ=Asia/Riyadh
+    command: python fingerprint_sync.py
+
+  hr_adms:
+    build: .
+    pull_policy: build
+    container_name: hr_adms_server
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    volumes:
+      - hr_data:/app/data
+    environment:
+      - HR_DATA_DIR=/app/data
+      - ADMS_PORT=8081
+      - TZ=Asia/Riyadh
+    command: python adms_server.py
+
+volumes:
+  hr_data:

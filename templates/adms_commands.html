@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.adms_commands_title') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div><h1 class="h2"><i class="fas fa-terminal me-2"></i>{{ _('x.adms_command_logs') }}</h1><div class="report-desc">{{ _('x.rdesc_adms') }}</div></div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.devices') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('x.back_to_devices') }}
+            </a>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-info text-white" onclick="syncTimeAll()">
+                <i class="fas fa-clock me-2"></i>{{ _('x.update_time_all_devices') }}
+            </button>
+            <button class="btn btn-primary" onclick="refreshCommands()">
+                <i class="fas fa-sync-alt me-2"></i>{{ _('x.refresh') }}
+            </button>
+            <button class="btn btn-outline-danger" onclick="clearCommands()">
+                <i class="fas fa-trash me-2"></i>{{ _('x.clear_logs') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-primary"><i class="fas fa-exchange-alt me-2"></i>{{ _('x.monitor_current_operations') }}</h5>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" onchange="toggleAutoRefresh(this)">
+            <label class="form-check-label" for="autoRefreshSwitch">{{ _('x.auto_refresh_5s') }}</label>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="commandsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('x.device') }}</th>
+                        <th>{{ _('x.command_type') }}</th>
+                        <th>{{ _('x.payload') }}</th>
+                        <th>{{ _('x.status') }}</th>
+                        <th>{{ _('x.created_at') }}</th>
+                        <th>{{ _('x.last_update') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="commandsBody">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">{{ _('x.loading_commands') }}</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+        <div id="statsInfo" class="small text-muted"></div>
+        <div id="pagination" class="btn-group btn-group-sm"></div>
+    </div>
+</div>
+
+<!-- Modal for Payload Inspection -->
+<div class="modal fade" id="payloadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('x.command_payload_details') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="payloadContent" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+    const limit = 20;
+    let autoRefreshTimer = null;
+
+    async function fetchCommands(page = 1) {
+        currentPage = page;
+        const offset = (page - 1) * limit;
+        try {
+            const response = await fetch(`/api/adms/commands?limit=${limit}&offset=${offset}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderTable(data.commands);
+                renderPagination(data.total);
+            }
+        } catch (error) {
+            console.error('Error fetching commands:', error);
+            document.getElementById('commandsBody').innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger"><i class="fas fa-exclamation-circle me-2"></i>{{ _('x.error_loading_data_colon') }} ${error.message}</td></tr>`;
+        }
+    }
+
+    function renderTable(commands) {
+        const body = document.getElementById('commandsBody');
+        if (commands.length === 0) {
+            body.innerHTML = {{ _('x.no_commands_row_html')|tojson }};
+            return;
+        }
+
+        body.innerHTML = commands.map(cmd => {
+            let statusBadge = '';
+            switch(cmd.status) {
+                case 'PENDING': statusBadge = {{ _('x.badge_pending_html')|tojson }}; break;
+                case 'SENT': statusBadge = {{ _('x.badge_sent_html')|tojson }}; break;
+                case 'OK': statusBadge = {{ _('x.badge_executed_html')|tojson }}; break;
+                case 'FAILED': statusBadge = {{ _('x.badge_failed_html')|tojson }}; break;
+                default: statusBadge = `<span class="badge bg-secondary">${cmd.status}</span>`;
+            }
+
+            // Simple preview of payload
+            let payloadPreview = cmd.payload;
+            if (payloadPreview.length > 50) payloadPreview = payloadPreview.substring(0, 50) + '...';
+
+            return `
+                <tr>
+                    <td><code>#${cmd.id}</code></td>
+                    <td>
+                        <div class="fw-bold">${cmd.device_name}</div>
+                        <small class="text-muted">${cmd.device_ip}</small>
+                    </td>
+                    <td><span class="badge border text-primary">${cmd.command_type}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="showPayload(${cmd.id}, '${btoa(cmd.payload)}')">
+                            <i class="fas fa-code me-1"></i>{{ _('x.view_data') }}
+                        </button>
+                        <div class="small text-muted text-truncate" style="max-width: 200px;">${payloadPreview}</div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td><small>${cmd.created_at}</small></td>
+                    <td><small>${cmd.updated_at}</small></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPagination(total) {
+        const pages = Math.ceil(total / limit);
+        const nav = document.getElementById('pagination');
+        document.getElementById('statsInfo').textContent = `{{ _('x.total_operations_colon') }} ${total} | {{ _('x.page') }} ${currentPage} {{ _('x.of') }} ${pages}`;
+
+        let html = '';
+        if (currentPage > 1) {
+            html += `<button class="btn btn-outline-secondary" onclick="fetchCommands(${currentPage - 1})">{{ _('x.previous') }}</button>`;
+        }
+        
+        // Show limited pages if too many
+        for (let i = 1; i <= pages; i++) {
+            if (i === 1 || i === pages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                html += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="fetchCommands(${i})">${i}</button>`;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += `<button class="btn btn-outline-secondary disabled">...</button>`;
+            }
+        }
+
+        if (currentPage < pages) {
+            html += `<button class="btn btn-outline-secondary" onclick="fetchCommands(${currentPage + 1})">{{ _('x.next') }}</button>`;
+        }
+        nav.innerHTML = html;
+    }
+
+    function showPayload(id, base64Payload) {
+        const payload = atob(base64Payload);
+        try {
+            const formatted = JSON.stringify(JSON.parse(payload), null, 4);
+            document.getElementById('payloadContent').textContent = formatted;
+        } catch(e) {
+            document.getElementById('payloadContent').textContent = payload;
+        }
+        const modal = new bootstrap.Modal(document.getElementById('payloadModal'));
+        modal.show();
+    }
+
+    function refreshCommands() {
+        fetchCommands(currentPage);
+    }
+
+    async function clearCommands() {
+        if (!confirm({{ _('x.confirm_clear_all_command_logs')|tojson }})) return;
+        
+        try {
+            const response = await fetch('/api/adms/commands/clear', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                showAlert(data.message, 'success');
+                fetchCommands(1);
+            }
+        } catch (error) {
+            showAlert({{ _('x.error_while_clearing')|tojson }}, 'error');
+        }
+    }
+
+    async function syncTimeAll() {
+        if (!confirm({{ _('x.confirm_schedule_time_sync')|tojson }})) return;
+        
+        try {
+            const response = await fetch('/api/adms/sync_time_all', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                showAlert(data.message, 'success');
+                fetchCommands(1);
+            } else {
+                showAlert(data.message, 'error');
+            }
+        } catch (error) {
+            showAlert({{ _('x.error_scheduling_time_sync')|tojson }}, 'error');
+        }
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    function toggleAutoRefresh(cb) {
+        if (cb.checked) {
+            autoRefreshTimer = setInterval(() => {
+                fetchCommands(currentPage);
+            }, 5000);
+            showAlert({{ _('x.auto_refresh_enabled_5s')|tojson }}, 'info');
+        } else {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchCommands(1);
+    });
+</script>
+{% endblock %}

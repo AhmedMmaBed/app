@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Visual Studio Code
+.vscode/
+
+# Logs
+*.log
+fingerprint_sync.log
+
+# Databases - Exclude all except strict schema if needed. 
+# Usually we don't commit DBs with data.
+*.db
+*.sqlite3
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Executables and builds
+*.exe
+*.pkg
+*.dmg
+*.msi
+*.msp
+*.app
+*.rar
+*.zip
+
+# HR System Specific
+hr_system_backup_*.db
+dist/
+build/
+HRLauncher.spec
+HRSystem.spec
+ystem.spec
+SingleFileBuild.bat
+start_server.bat

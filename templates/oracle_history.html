@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.oracle_sync_history_title') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div><h2 class="fw-bold">
+                <i class="fas fa-history text-primary me-2"></i>
+                {{ _('x.oracle_sync_history') }}
+            </h2><div class="report-desc">{{ _('x.rdesc_oracle') }}</div></div>
+            <div id="connectionStatus" class="alert alert-secondary py-2 px-3 m-0 d-flex align-items-center">
+                <div class="spinner-grow spinner-grow-sm me-2" role="status"></div>
+                <span id="statusText">{{ _('x.checking_connection') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase opacity-75 mb-2">{{ _('x.total_attempts') }}</h6>
+                    <div class="h2 fw-bold mb-0" id="stat-total">0</div>
+                    <i class="fas fa-list-ul position-absolute top-0 end-0 m-3 opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase opacity-75 mb-2">{{ _('x.awaiting_sync') }}</h6>
+                    <div class="h2 fw-bold mb-0" id="stat-pending">0</div>
+                    <i class="fas fa-clock position-absolute top-0 end-0 m-3 opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase opacity-75 mb-2">{{ _('x.completed_successfully') }}</h6>
+                    <div class="h2 fw-bold mb-0" id="stat-synced">0</div>
+                    <i class="fas fa-check-circle position-absolute top-0 end-0 m-3 opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase opacity-75 mb-2">{{ _('x.failed_f') }}</h6>
+                    <div class="h2 fw-bold mb-0" id="stat-failed">0</div>
+                    <i class="fas fa-exclamation-circle position-absolute top-0 end-0 m-3 opacity-25 fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- History Table -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="fas fa-table me-2 text-primary"></i>{{ _('x.last_100_sync_attempts') }}</h5>
+                    <button id="btnRetrySync" class="btn btn-sm btn-primary px-3 shadow-none">
+                        <i class="fas fa-sync-alt me-1"></i> {{ _('x.retry_sync') }}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="historyTable">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th>{{ _('x.employee_number') }}</th>
+                                    <th>{{ _('x.punch_time') }}</th>
+                                    <th>{{ _('x.type') }}</th>
+                                    <th>{{ _('x.status') }}</th>
+                                    <th>{{ _('x.attempts') }}</th>
+                                    <th>{{ _('x.record_time') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in history %}
+                                <tr>
+                                    <td class="fw-bold">{{ row['user_id'] }}</td>
+                                    <td>{{ row['check_time'] }}</td>
+                                    <td>
+                                        {% if row['check_type']|string == '0' %}
+                                        <span class="badge bg-info-soft text-info">{{ _('x.in') }}</span>
+                                        {% elif row['check_type']|string == '1' %}
+                                        <span class="badge bg-warning-soft text-warning">{{ _('x.out') }}</span>
+                                        {% else %}
+                                        {{ row['check_type'] }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if row['status'] == 'SYNCED' %}
+                                        <span class="badge bg-success-soft text-success"><i class="fas fa-check me-1"></i>{{ _('x.done') }}</span>
+                                        {% elif row['status'] == 'PENDING' %}
+                                        <span class="badge bg-warning-soft text-warning"><i class="fas fa-clock me-1"></i>{{ _('x.pending') }}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger-soft text-danger"><i class="fas fa-times me-1"></i>{{ _('x.failed') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ row['retry_count'] }}</td>
+                                    <td class="text-muted small">{{ row['created_at'] }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="fas fa-scroll fa-3x mb-3 opacity-25"></i>
+                                        <p>{{ _('x.no_sync_data') }}</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Actions -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="m-0 fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>{{ _('x.system_info') }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between p-2">
+                            <span>{{ _('x.oracle_table_name') }}</span>
+                            <span class="fw-bold text-secondary">{{ table_name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between p-2">
+                            <span>{{ _('x.auto_sync_interval') }}</span>
+                            <span class="fw-bold text-secondary">{{ sync_interval }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between p-2">
+                            <span>{{ _('x.sync_engine') }}</span>
+                            <span class="badge bg-dark-soft text-dark">Offline-First Resilience</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-dark text-white">
+                <div class="card-header bg-transparent border-bottom border-secondary py-3">
+                    <h5 class="m-0 fw-bold"><i class="fas fa-terminal me-2 text-warning"></i>{{ _('x.system_log_latest') }}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="logViewer" class="p-3 font-monospace small" style="height: 300px; overflow-y: auto; background: #1a1a1a; color: #00ff00;">
+                        <div class="opacity-50 text-center py-5">{{ _('x.loading_system_logs') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Premium Soft Badges */
+    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1); }
+    .bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
+    .bg-success-soft { background-color: rgba(25, 135, 84, 0.1); }
+    .bg-danger-soft { background-color: rgba(220, 53, 69, 0.1); }
+    .bg-dark-soft { background-color: rgba(33, 37, 41, 0.1); }
+    
+    .font-monospace { font-family: 'Courier New', Courier, monospace; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Function to update stats and connection status
+    function refreshDashboard() {
+        $.get("{{ url_for('attendance.oracle_stats') }}", function(data) {
+            if (data.success) {
+                // Update stats
+                $('#stat-total').text(data.stats.total);
+                $('#stat-pending').text(data.stats.pending);
+                $('#stat-synced').text(data.stats.synced);
+                $('#stat-failed').text(data.stats.failed);
+                
+                // Update connection status
+                const statusDiv = $('#connectionStatus');
+                const statusText = $('#statusText');
+                if (data.is_online) {
+                    statusDiv.removeClass('alert-secondary alert-danger').addClass('alert-success');
+                    statusText.html({{ _('x.oracle_connected_html')|tojson }});
+                    statusDiv.find('.spinner-grow').removeClass('spinner-grow-sm').hide();
+                } else {
+                    statusDiv.removeClass('alert-secondary alert-success').addClass('alert-danger');
+                    statusText.html({{ _('x.oracle_connection_failed_html')|tojson }});
+                    statusDiv.find('.spinner-grow').hide();
+                }
+            }
+        });
+    }
+
+    // Function to load logs (from fingerprint sync log - might need more robust endpoint)
+    function loadLogs() {
+        // Ideally we'd have a specific endpoint for oracle_sync.log
+        // Using existing get_sync_logs functionality as fallback
+        $('#logViewer').load("{{ url_for('attendance.fingerprint') }} #syncLogBody", function() {
+             // Basic formatting or placeholder
+        });
+    }
+
+    // Manual Retry Button
+    $('#btnRetrySync').click(function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html({{ _('x.syncing_html')|tojson }});
+        
+        $.post("{{ url_for('attendance.oracle_retry') }}", function(data) {
+            Swal.fire({
+                title: data.success ? {{ _('x.success')|tojson }} : {{ _('x.error')|tojson }},
+                text: data.message,
+                icon: data.success ? 'success' : 'error',
+                confirmButtonText: {{ _('x.ok')|tojson }}
+            }).then(() => {
+                location.reload();
+            });
+        });
+    });
+
+    // Initial load
+    refreshDashboard();
+    setInterval(refreshDashboard, 30000); // Every 30 seconds
+});
+</script>
+{% endblock %}

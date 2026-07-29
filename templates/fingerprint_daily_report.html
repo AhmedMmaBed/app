@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.daily_attendance_report') }}{% endblock %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-calendar-day me-2"></i>{{ _('x.daily_attendance_report') }}
+        <small class="text-muted fs-6">({{ selected_date }})</small>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('x.back_to_dashboard') }}
+            </a>
+            <a href="{{ url_for('report.fingerprint_attendance') }}" class="btn btn-outline-info">
+                <i class="fas fa-list me-2"></i>{{ _('x.detailed_records') }}
+            </a>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportReport()">
+                <i class="fas fa-download me-2"></i>{{ _('x.export') }}
+            </button>
+            <button class="btn btn-success" onclick="printReport()">
+                <i class="fas fa-print me-2"></i>{{ _('x.print') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- فلاتر البحث -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-filter me-2"></i>{{ _('x.report_filters') }}</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('report.smart_reports_daily') }}">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">{{ _('x.date') }}</label>
+                    <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ _('x.employee_optional') }}</label>
+                    <select name="employee_id" class="form-select">
+                        <option value="">{{ _('x.all_employees') }}</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if request.args.get('employee_id')==employee.id|string
+                            %}selected{% endif %}>
+                            {{ employee.name }} ({{ employee.employee_number }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>{{ _('x.view_report') }}
+                        </button>
+                        <a href="{{ url_for('report.smart_reports_daily') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>{{ _('x.clear') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+{% if daily_records %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.total_employees }}</h4>
+                <p class="mb-0">{{ _('x.total_employees') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.present_count }}</h4>
+                <p class="mb-0">{{ _('x.present_plural') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.leave_count }}</h4>
+                <p class="mb-0">{{ _('x.on_leave') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.absent_count }}</h4>
+                <p class="mb-0">{{ _('x.absent_plural') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- جدول التقرير اليومي -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-table me-2"></i>{{ _('x.daily_attendance_report_dash') }} {{ selected_date }}</h5>
+        {% if daily_records %}
+        <div class="small text-muted">
+            {{ _('x.view') }} {{ ((current_page - 1) * per_page + 1) }} - {{ ((current_page - 1) * per_page + daily_records|length) }}
+            {{ _('x.from') }} {{ total_records }} {{ _('x.employee_unit') }}
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if daily_records %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>{{ _('x.employee') }}</th>
+                        <th>{{ _('x.department') }}</th>
+                        <th>{{ _('x.check_in_time') }}</th>
+                        <th>{{ _('x.check_out_time') }}</th>
+                        <th>{{ _('x.work_hours') }}</th>
+                        <th>{{ _('x.status') }}</th>
+                        <th>{{ _('x.leave_type') }}</th>
+                        <th>{{ _('x.notes') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in daily_records %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ record.name }}</div>
+                                    <small class="text-muted">{{ record.employee_number }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ record.department }}</span>
+                        </td>
+                        <td>
+                            {% if record.check_in_time %}
+                            <div class="text-success">
+                                <i class="fas fa-sign-in-alt me-1"></i>
+                                <strong>{{ record.check_in_time[11:16] }}</strong>
+                                <br>
+                                <small class="text-muted">{{ record.check_in_count }} {{ _('x.time_unit') }}</small>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">{{ _('x.did_not_check_in') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.check_out_time %}
+                            <div class="text-danger">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                <strong>{{ record.check_out_time[11:16] }}</strong>
+                                <br>
+                                <small class="text-muted">{{ record.check_out_count }} {{ _('x.time_unit') }}</small>
+                            </div>
+                            {% else %}
+                            {% if record.check_in_time %}
+                            <span class="text-warning">{{ _('x.did_not_check_out') }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.check_in_time and record.check_out_time %}
+                            {% set check_in = record.check_in_time %}
+                            {% set check_out = record.check_out_time %}
+                            {% set hours_worked = ((check_out[11:13]|int * 60 + check_out[14:16]|int) -
+                            (check_in[11:13]|int * 60 + check_in[14:16]|int)) / 60 %}
+                            <span class="badge bg-primary fs-6">
+                                {{ "%.1f"|format(hours_worked) }} {{ _('x.hour') }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.attendance_status == 'في إجازة' %}
+                            <span class="badge bg-info">
+                                <i class="fas fa-calendar-check me-1"></i>{{ _('x.on_leave') }}
+                            </span>
+                            {% elif record.attendance_status == 'إجازة معلقة' %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-hourglass-half me-1"></i>{{ _('x.pending_leave') }}
+                            </span>
+                            {% elif record.check_in_time and record.check_out_time %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>{{ _('x.complete') }}
+                            </span>
+                            {% elif record.check_in_time %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-clock me-1"></i>{{ _('x.at_work') }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times me-1"></i>{{ _('x.absent') }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.leave_type_name %}
+                            <div class="text-info">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                <strong>{{ record.leave_type_name }}</strong>
+                                {% if record.leave_reason %}
+                                <br><small class="text-muted">{{ record.leave_reason[:50] }}{% if
+                                    record.leave_reason|length > 50 %}...{% endif %}</small>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small">
+                                {% if record.device_name %}
+                                <i class="fas fa-microchip me-1"></i>{{ record.device_name }}
+                                {% endif %}
+                                {% if record.check_in_count > 1 or record.check_out_count > 1 %}
+                                <br><span class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {{ _('x.multiple_records') }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- الترقيم -->
+        {% if total_pages > 1 %}
+        <nav aria-label="ترقيم الصفحات" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('report.smart_reports_daily', page=current_page-1, date=selected_date, employee_id=request.args.get('employee_id')) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in range(1, total_pages + 1) %}
+                {% if page_num == current_page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% elif page_num <= 3 or page_num> total_pages - 3 or (page_num >= current_page - 1 and page_num <=
+                        current_page + 1) %} <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('report.smart_reports_daily', page=page_num, date=selected_date, employee_id=request.args.get('employee_id')) }}">{{
+                            page_num }}</a>
+                        </li>
+                        {% elif page_num == 4 or page_num == total_pages - 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if current_page < total_pages %} <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('report.smart_reports_daily', page=current_page+1, date=selected_date, employee_id=request.args.get('employee_id')) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            </li>
+                            {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times text-muted" style="font-size: 4rem;"></i>
+            <h3 class="mt-3 text-muted">{{ _('x.no_attendance_records') }}</h3>
+            <p class="text-muted">
+                {{ _('x.no_attendance_for_date') }} {{ selected_date }}
+            </p>
+            <div class="mt-3">
+                <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-sync-alt me-2"></i>{{ _('x.sync_data') }}
+                </a>
+                <button class="btn btn-outline-secondary" onclick="selectToday()">
+                    <i class="fas fa-calendar-day me-2"></i>{{ _('x.pick_day') }}
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ملخص الإحصائيات -->
+{% if daily_records %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>{{ _('x.attendance_summary') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h5 class="text-success">{{ stats.present_count }}</h5>
+                        <small class="text-muted">{{ _('x.present_plural') }}</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-warning">{{
+                            daily_records|selectattr('check_in_time')|rejectattr('check_out_time')|list|length }}</h5>
+                        <small class="text-muted">{{ _('x.at_work') }}</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-info">{{ daily_records|selectattr('check_out_time')|list|length }}</h5>
+                        <small class="text-muted">{{ _('x.checked_out_plural') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>{{ _('x.additional_info') }}</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-calendar me-2 text-primary"></i>
+                        <strong>{{ _('x.date_colon') }}</strong> {{ selected_date }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-clock me-2 text-success"></i>
+                        <strong>{{ _('x.report_time_colon') }}</strong> <span id="reportTime"></span>
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-users me-2 text-info"></i>
+                        <strong>{{ _('x.total_records_colon') }}</strong> {{ total_records }} {{ _('x.record') }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحديث وقت التقرير
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        const timeString = now.toLocaleString('ar-EG');
+        const reportTimeElement = document.getElementById('reportTime');
+        if (reportTimeElement) {
+            reportTimeElement.textContent = timeString;
+        }
+    });
+
+    // اختيار اليوم الحالي
+    function selectToday() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) {
+            dateInput.value = today;
+            dateInput.form.submit();
+        }
+    }
+
+    // تصدير التقرير
+    function exportReport() {
+        // سيتم تطويرها لاحقاً
+        showAlert({{ _('x.export_coming_soon')|tojson }}, 'info');
+    }
+
+    // طباعة التقرير
+    function printReport() {
+        window.print();
+    }
+
+    // تحديث سريع للتاريخ
+    document.querySelector('input[name="date"]').addEventListener('change', function () {
+        this.form.submit();
+    });
+</script>
+
+<style>
+    @media print {
+
+        .btn-toolbar,
+        .card-header,
+        nav[aria-label="ترقيم الصفحات"] {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        body {
+            font-size: 12px;
+        }
+
+        .table th,
+        .table td {
+            font-size: 11px;
+            padding: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}

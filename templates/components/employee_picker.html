@@ -1,0 +1,185 @@
+{#
+  Unified employee picker — one component for every employee selector.
+
+  Searches Arabic name, English name, employee number and civil ID at once,
+  and always respects the caller's department scope (enforced server-side in
+  /api/employees/picker, not here).
+
+  Usage:
+    {% from "components/employee_picker.html" import employee_picker %}
+    {{ employee_picker('employee_id', scope='active', required=true) }}
+    {{ employee_picker('empSel', scope='all', on_change='myHandler(id)') }}
+    {{ employee_picker('empSel', scope='period', month=6, year=2026) }}
+
+  Params:
+    field     name+id of the hidden input carrying the chosen employee id
+    scope     'active' (default) | 'all' | 'period'
+    month/year  required when scope='period'
+    selected  pre-selected employee id
+    required  marks the hidden input required
+    on_change JS expression run after a pick; `id` is in scope
+    label     optional label text above the control
+#}
+
+{% macro employee_picker(field, scope='active', month=None, year=None,
+                         selected=None, required=false, on_change='',
+                         label='') -%}
+<div class="emp-picker" data-field="{{ field }}" data-scope="{{ scope }}"
+     {% if month %}data-month="{{ month }}"{% endif %}
+     {% if year %}data-year="{{ year }}"{% endif %}
+     {% if on_change %}data-onchange="{{ on_change }}"{% endif %}>
+    {% if label %}<label class="form-label">{{ label }}</label>{% endif %}
+    <input type="hidden" name="{{ field }}" id="{{ field }}"
+           value="{{ selected or '' }}" {% if required %}required{% endif %}>
+    <div class="position-relative">
+        <input type="text" class="form-control emp-picker-input" autocomplete="off"
+               placeholder="{{ _('x.picker_placeholder') }}"
+               aria-label="{{ _('x.picker_placeholder') }}">
+        <button type="button" class="btn btn-sm emp-picker-clear d-none"
+                title="{{ _('x.cancel') }}"
+                style="position:absolute; inset-inline-end:6px; top:50%; transform:translateY(-50%);">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="emp-picker-menu list-group shadow d-none"
+             style="position:absolute; z-index:1080; inset-inline:0; max-height:280px; overflow:auto;"></div>
+    </div>
+    <div class="form-text emp-picker-scope-note d-none"></div>
+</div>
+{%- endmacro %}
+
+
+{% macro employee_picker_assets() -%}
+<style>
+    .emp-picker-menu .list-group-item { cursor: pointer; padding: .45rem .75rem; }
+    .emp-picker-menu .list-group-item.active-row { background: var(--ledger-light, #E7F1EC); }
+    .emp-picker-clear { border: 0; background: transparent; color: #888; line-height: 1; }
+</style>
+<script>
+(function () {
+    const API = "{{ url_for('employee.api_employee_picker') }}";
+    const T = {
+        none: {{ _('x.picker_no_results')|tojson }},
+        ended: {{ _('x.ds_ended')|tojson }},
+        scoped: {{ _('x.picker_scoped')|tojson }},
+        loading: {{ _('x.picker_loading')|tojson }}
+    };
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function initPicker(root) {
+        if (root.dataset.ready) return;
+        root.dataset.ready = '1';
+        const hidden = root.querySelector('input[type=hidden]');
+        const text = root.querySelector('.emp-picker-input');
+        const menu = root.querySelector('.emp-picker-menu');
+        const clearBtn = root.querySelector('.emp-picker-clear');
+        const note = root.querySelector('.emp-picker-scope-note');
+        let items = [], cursor = -1, timer = null;
+
+        const params = () => {
+            const p = new URLSearchParams({ scope: root.dataset.scope || 'active' });
+            if (root.dataset.month) p.set('month', root.dataset.month);
+            if (root.dataset.year) p.set('year', root.dataset.year);
+            const q = text.value.trim();
+            if (q) p.set('q', q);
+            return p;
+        };
+
+        const labelFor = e => `${e.employee_number} — ${e.arabic_name || e.name}`;
+
+        function render() {
+            if (!items.length) {
+                menu.innerHTML = `<div class="list-group-item text-muted small">${esc(T.none)}</div>`;
+            } else {
+                menu.innerHTML = items.map((e, i) => `
+                    <div class="list-group-item ${i === cursor ? 'active-row' : ''}" data-i="${i}">
+                        <div class="d-flex align-items-center gap-2">
+                            <b>${esc(e.employee_number)}</b>
+                            <span>${esc(e.arabic_name || e.name)}</span>
+                            ${!e.is_active ? `<span class="badge bg-secondary ms-auto">${esc(T.ended)}</span>` : ''}
+                        </div>
+                        <div class="small text-muted">${esc(e.department || '')}${e.position ? ' • ' + esc(e.position) : ''}</div>
+                    </div>`).join('');
+            }
+            menu.classList.remove('d-none');
+        }
+
+        function load() {
+            menu.innerHTML = `<div class="list-group-item text-muted small">${esc(T.loading)}</div>`;
+            menu.classList.remove('d-none');
+            fetch(`${API}?${params().toString()}`)
+                .then(r => r.json())
+                .then(d => {
+                    items = d.employees || [];
+                    cursor = -1;
+                    if (d.scoped_to_department) {
+                        note.textContent = T.scoped + ': ' + d.scoped_to_department;
+                        note.classList.remove('d-none');
+                    }
+                    render();
+                });
+        }
+
+        function pick(i) {
+            const e = items[i];
+            if (!e) return;
+            hidden.value = e.id;
+            text.value = labelFor(e);
+            menu.classList.add('d-none');
+            clearBtn.classList.remove('d-none');
+            const expr = root.dataset.onchange;
+            if (expr) { try { new Function('id', 'employee', expr)(e.id, e); } catch (err) { console.error(err); } }
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function clear() {
+            hidden.value = '';
+            text.value = '';
+            clearBtn.classList.add('d-none');
+            menu.classList.add('d-none');
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        text.addEventListener('focus', load);
+        text.addEventListener('input', () => {
+            hidden.value = '';
+            clearTimeout(timer);
+            timer = setTimeout(load, 220);
+        });
+        text.addEventListener('keydown', ev => {
+            if (menu.classList.contains('d-none')) return;
+            if (ev.key === 'ArrowDown') { ev.preventDefault(); cursor = Math.min(cursor + 1, items.length - 1); render(); }
+            else if (ev.key === 'ArrowUp') { ev.preventDefault(); cursor = Math.max(cursor - 1, 0); render(); }
+            else if (ev.key === 'Enter' && cursor >= 0) { ev.preventDefault(); pick(cursor); }
+            else if (ev.key === 'Escape') { menu.classList.add('d-none'); }
+        });
+        menu.addEventListener('mousedown', ev => {
+            const row = ev.target.closest('[data-i]');
+            if (row) { ev.preventDefault(); pick(parseInt(row.dataset.i)); }
+        });
+        clearBtn.addEventListener('click', clear);
+        document.addEventListener('click', ev => {
+            if (!root.contains(ev.target)) menu.classList.add('d-none');
+        });
+
+        // Pre-selected value: resolve its label without making the user retype.
+        if (hidden.value) {
+            fetch(`${API}?${new URLSearchParams({ scope: 'all', limit: 500 }).toString()}`)
+                .then(r => r.json())
+                .then(d => {
+                    const e = (d.employees || []).find(x => String(x.id) === String(hidden.value));
+                    if (e) { text.value = labelFor(e); clearBtn.classList.remove('d-none'); }
+                });
+        }
+    }
+
+    function initAll() { document.querySelectorAll('.emp-picker').forEach(initPicker); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+    else initAll();
+    window.initEmployeePickers = initAll;
+})();
+</script>
+{%- endmacro %}

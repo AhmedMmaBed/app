@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.payroll_monthly') }}{% endblock %}
+
+{% block content %}
+{% set L = get_locale()|string %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2"><i class="fas fa-file-invoice-dollar me-2"></i>{{ _('x.payroll_monthly') }}</h1>
+            <div class="report-desc">{{ _('x.rdesc_payroll_monthly') }}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a id="pmApprovalChip" href="#" class="badge rounded-pill bg-secondary text-decoration-none d-none"></a>
+            <span id="pmStatusChip" class="badge rounded-pill bg-secondary d-none"></span>
+            <button id="pmLockBtn" class="btn btn-outline-dark d-none" onclick="pmLock()">
+                <i class="fas fa-lock me-2"></i>{{ _('x.pm_lock_run') }}
+            </button>
+            <button class="btn btn-outline-secondary" onclick="pmPrint()">
+                <i class="fas fa-print me-2"></i>{{ _('x.eh_print') }}
+            </button>
+            <button class="btn btn-outline-success" onclick="pmExport()">
+                <i class="fas fa-file-excel me-2"></i>{{ _('x.pm_export_excel') }}
+            </button>
+            <button id="pmSaveBtn" class="btn btn-success" onclick="pmSave()">
+                <i class="fas fa-save me-2"></i>{{ _('x.pm_save_run') }}
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label class="form-label small text-muted mb-1">{{ _('x.p_month') }}</label>
+            <select class="form-select" id="pmMonth" onchange="pmLoad()">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small text-muted mb-1">{{ _('x.p_year') }}</label>
+            <input type="number" class="form-control" id="pmYear" value="{{ year }}"
+                   style="width:110px" onchange="pmLoad()">
+        </div>
+        <div class="col-auto align-self-end pb-2">
+            <span class="text-muted small" id="pmPeriodLbl" title="{{ _('x.pp_period_tip') }}"></span>
+        </div>
+        <div class="col"></div>
+        <div class="col-auto">
+            <div class="card text-center px-4 py-2">
+                <div class="text-muted small">{{ _('x.pm_employees_count') }}</div>
+                <div class="h5 mb-0" id="pmCountBox">-</div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="card text-center px-4 py-2">
+                <div class="text-muted small">{{ _('x.pm_net') }} ({{ _('x.pm_totals') }})</div>
+                <div class="h5 mb-0 text-success" id="pmNetBox">-</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:36px"></th>
+                        <th>{{ _('tbl.header.employee') }}</th>
+                        <th class="text-center">{{ _('x.pm_required_hours') }}</th>
+                        <th class="text-center">{{ _('x.pm_actual_hours') }}</th>
+                        <th class="text-center">{{ _('x.pm_diff') }}</th>
+                        <th class="text-end">{{ _('x.pm_basic') }}</th>
+                        <th class="text-end">{{ _('x.pm_allowances') }}</th>
+                        <th class="text-end">{{ _('x.pm_deductions') }}</th>
+                        <th class="text-end">{{ _('x.pm_net') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="pmBody">
+                    <tr><td colspan="9" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </td></tr>
+                </tbody>
+                <tfoot id="pmFoot" class="fw-bold" style="display:none">
+                    <tr class="table-light">
+                        <td></td>
+                        <td>{{ _('x.pm_totals') }}</td>
+                        <td class="text-center" id="ftReq"></td>
+                        <td class="text-center" id="ftAct"></td>
+                        <td></td>
+                        <td class="text-end" id="ftBasic"></td>
+                        <td class="text-end" id="ftAllow"></td>
+                        <td class="text-end" id="ftDed"></td>
+                        <td class="text-end text-success" id="ftNet"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PM_API = {{ url_for('payroll.api_monthly_payroll')|tojson }};
+    const PM_SAVE_API = {{ url_for('payroll.api_monthly_payroll_save')|tojson }};
+    const PM_AR = {{ (L == 'ar')|tojson }};
+    const PM_CUR = {{ settings.get('currency_symbol', 'د.ك')|tojson }};
+    const PM_DEC = parseInt({{ settings.get('rounding_display_decimals', 2)|tojson }}) || 2;
+    const PM_HA_URL = {{ url_for('payroll.hours_approval')|tojson }};
+    const PM_LOCK_API = {{ url_for('payroll.api_run_lock')|tojson }};
+    const PM_UNLOCK_API = {{ url_for('payroll.api_run_unlock')|tojson }};
+    const PM_CAN_LOCK = {{ has_permission('salary.approve_run')|tojson }};
+    const T = {
+        earning: {{ _('x.tx_kind_earning')|tojson }},
+        deduction: {{ _('x.tx_kind_deduction')|tojson }},
+        noItems: {{ _('x.no_items')|tojson }},
+        savedAt: {{ _('x.pm_saved_at')|tojson }},
+        notSaved: {{ _('x.pm_not_saved')|tojson }},
+        savedOk: {{ _('x.pm_saved_ok')|tojson }},
+        saveFailed: {{ _('x.pm_save_failed')|tojson }},
+        overwriteTitle: {{ _('x.pm_overwrite_title')|tojson }},
+        overwriteText: {{ _('x.pm_overwrite_text')|tojson }},
+        confirmBtn: {{ _('x.pm_confirm_btn')|tojson }},
+        cancelBtn: {{ _('x.cancel')|tojson }},
+        noEmployees: {{ _('x.pm_no_employees')|tojson }},
+        save: {{ _('x.pm_save_run')|tojson }},
+        hoursApproval: {{ _('x.ha_summary')|tojson }},
+        hoursNotApprovedTitle: {{ _('x.pm_hours_gate_title')|tojson }},
+        hoursNotApprovedText: {{ _('x.pm_hours_gate_text')|tojson }},
+        goApprove: {{ _('x.pm_go_approve')|tojson }},
+        staleTag: {{ _('x.ha_status_stale')|tojson }},
+        periodLbl: {{ _('x.pp_period_label')|tojson }},
+        lockOk: {{ _('x.pm_lock_ok')|tojson }},
+        unlockOk: {{ _('x.pm_unlock_ok')|tojson }},
+        lockedTitle: {{ _('x.pm_locked')|tojson }},
+        lockedMsg: {{ _('x.pm_run_locked_msg')|tojson }},
+        unlockBtn: {{ _('x.pm_unlock')|tojson }},
+        unlockReason: {{ _('x.pm_unlock_reason')|tojson }},
+        reasonRequired: {{ _('x.act_reason_required')|tojson }},
+        lockConfirmT: {{ _('x.pm_lock_confirm_t')|tojson }},
+        lockConfirmX: {{ _('x.pm_lock_confirm_x')|tojson }}
+    };
+
+    let pmData = null, pmSavedRun = null, pmLoading = false;
+
+    function money(v) {
+        return (Number(v) || 0).toLocaleString(undefined,
+            { minimumFractionDigits: PM_DEC, maximumFractionDigits: PM_DEC }) + ' ' + PM_CUR;
+    }
+    function hrs(v) { return (Math.round((Number(v) || 0) * 100) / 100).toLocaleString(); }
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g,
+            c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function iName(o) { return PM_AR ? (o.arabic_name || o.name) : (o.name || o.arabic_name); }
+    function itName(o) { return PM_AR ? o.name_ar : o.name_en; }
+
+    function detailList(items) {
+        if (!items.length) return '<div class="text-muted small">' + esc(T.noItems) + '</div>';
+        return items.map(i => `
+            <div class="d-flex justify-content-between border-bottom py-1 small">
+                <span>${esc(itName(i))}${i.source === 'tx' ? ' <i class="fas fa-bolt text-warning" title="tx"></i>'
+                    : (i.source === 'computed' ? ' <i class="fas fa-cogs text-secondary"></i>' : '')}</span>
+                <span class="fw-semibold">${money(i.amount)}</span>
+            </div>`).join('');
+    }
+
+    function render() {
+        const body = document.getElementById('pmBody');
+        const rows = pmData.rows;
+        if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">'
+                + esc(T.noEmployees) + '</td></tr>';
+            document.getElementById('pmFoot').style.display = 'none';
+            return;
+        }
+        body.innerHTML = rows.map((r, idx) => {
+            const diff = r.hours_diff;
+            const diffCls = diff < -0.01 ? 'bg-danger' : (diff > 0.01 ? 'bg-success' : 'bg-secondary');
+            return `
+            <tr>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="pmToggle(${idx})">
+                        <i class="fas fa-chevron-down" id="chev-${idx}"></i>
+                    </button>
+                </td>
+                <td>
+                    <div class="fw-semibold">${esc(iName(r))}</div>
+                    <div class="text-muted small">#${esc(r.employee_number)}</div>
+                </td>
+                <td class="text-center">${hrs(r.required_hours)}</td>
+                <td class="text-center">${hrs(r.actual_hours)}
+                    ${r.hours_state === 'approved'
+                        ? '<i class="fas fa-check-circle text-success ms-1" title="' + esc(T.hoursApproval) + '"></i>'
+                        : (r.hours_state === 'stale'
+                            ? '<i class="fas fa-history text-danger ms-1" title="' + esc(T.staleTag) + '"></i>'
+                            : '<i class="fas fa-exclamation-triangle text-warning ms-1"></i>')}
+                </td>
+                <td class="text-center"><span class="badge ${diffCls}">${diff > 0 ? '+' : ''}${hrs(diff)}</span></td>
+                <td class="text-end">${money(r.basic)}</td>
+                <td class="text-end" style="color: var(--ledger);">${money(r.total_allowances)}</td>
+                <td class="text-end" style="color: var(--debit);">${money(r.total_deductions)}</td>
+                <td class="text-end fw-bold">${money(r.net)}</td>
+            </tr>
+            <tr id="det-${idx}" style="display:none">
+                <td></td>
+                <td colspan="8" class="bg-body-tertiary">
+                    <div class="row g-3 py-2">
+                        <div class="col-md-6">
+                            <div class="fw-semibold small mb-1" style="color: var(--ledger);">
+                                <i class="fas fa-plus-circle me-1"></i>${esc(T.earning)}</div>
+                            ${detailList(r.allowances)}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold small mb-1" style="color: var(--debit);">
+                                <i class="fas fa-minus-circle me-1"></i>${esc(T.deduction)}</div>
+                            ${detailList(r.deductions)}
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        const t = pmData.totals;
+        document.getElementById('ftReq').textContent = hrs(t.required_hours);
+        document.getElementById('ftAct').textContent = hrs(t.actual_hours);
+        document.getElementById('ftBasic').textContent = money(t.basic);
+        document.getElementById('ftAllow').textContent = money(t.allowances);
+        document.getElementById('ftDed').textContent = money(t.deductions);
+        document.getElementById('ftNet').textContent = money(t.net);
+        document.getElementById('pmFoot').style.display = '';
+        document.getElementById('pmCountBox').textContent = rows.length;
+        const ha = pmData.hours_approval || { approved: 0, total: rows.length };
+        const hc = document.getElementById('pmApprovalChip');
+        hc.classList.remove('d-none', 'bg-secondary', 'bg-success', 'bg-warning', 'text-dark');
+        if (ha.approved === ha.total && ha.total > 0) { hc.classList.add('bg-success'); }
+        else { hc.classList.add('bg-warning', 'text-dark'); }
+        hc.textContent = T.hoursApproval + ': ' + ha.approved + ' / ' + ha.total;
+        const _m = document.getElementById('pmMonth').value, _y = document.getElementById('pmYear').value;
+        hc.href = PM_HA_URL + '?month=' + _m + '&year=' + _y;
+        document.getElementById('pmNetBox').textContent = money(t.net);
+    }
+
+    function renderChip() {
+        const chip = document.getElementById('pmStatusChip');
+        chip.classList.remove('d-none', 'bg-secondary', 'bg-success', 'bg-dark', 'text-white', 'text-dark');
+        const lockBtn = document.getElementById('pmLockBtn');
+        lockBtn.classList.add('d-none');
+        if (pmSavedRun && pmSavedRun.status === 'approved') {
+            chip.classList.add('bg-dark', 'text-white');
+            chip.innerHTML = '<i class="fas fa-lock me-1"></i>' + esc(T.lockedTitle) + ' — '
+                + esc(pmSavedRun.approved_by_name || '') + ' ' + esc((pmSavedRun.approved_at || '').slice(0, 16));
+        } else if (pmSavedRun) {
+            chip.classList.add('bg-success');
+            chip.textContent = T.savedAt + ' ' + (pmSavedRun.created_at || '');
+            if (PM_CAN_LOCK) lockBtn.classList.remove('d-none');
+        } else {
+            chip.classList.add('bg-secondary');
+            chip.textContent = T.notSaved;
+        }
+    }
+
+    function lockedDialog() {
+        if (typeof Swal === 'undefined') return;
+        Swal.fire({
+            icon: 'info', title: T.lockedTitle, text: T.lockedMsg,
+            showCancelButton: PM_CAN_LOCK,
+            confirmButtonText: PM_CAN_LOCK ? T.unlockBtn : 'OK',
+            cancelButtonText: T.cancelBtn
+        }).then(res => { if (PM_CAN_LOCK && res.isConfirmed) pmUnlock(); });
+    }
+
+    function pmLock() {
+        Swal.fire({
+            icon: 'warning', title: T.lockConfirmT, text: T.lockConfirmX,
+            showCancelButton: true, confirmButtonText: T.confirmBtn, cancelButtonText: T.cancelBtn
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            fetch(PM_LOCK_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ month: +document.getElementById('pmMonth').value,
+                                       year: +document.getElementById('pmYear').value })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    Swal.fire({ icon: 'success', title: T.lockOk, timer: 1600, showConfirmButton: false });
+                    pmLoad();
+                } else Swal.fire({ icon: 'error', title: d.code || d.message || 'Error' });
+            });
+        });
+    }
+
+    function pmUnlock() {
+        Swal.fire({
+            title: T.unlockBtn, input: 'text', inputLabel: T.unlockReason,
+            showCancelButton: true, confirmButtonText: T.confirmBtn, cancelButtonText: T.cancelBtn,
+            inputValidator: v => (!v || v.trim().length < 3) ? T.reasonRequired : undefined
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            fetch(PM_UNLOCK_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ month: +document.getElementById('pmMonth').value,
+                                       year: +document.getElementById('pmYear').value,
+                                       reason: res.value })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    Swal.fire({ icon: 'success', title: T.unlockOk, timer: 1600, showConfirmButton: false });
+                    pmLoad();
+                } else Swal.fire({ icon: 'error', title: d.code || d.message || 'Error' });
+            });
+        });
+    }
+
+    function pmToggle(idx) {
+        const row = document.getElementById('det-' + idx);
+        const open = row.style.display !== 'none';
+        row.style.display = open ? 'none' : '';
+        document.getElementById('chev-' + idx).className =
+            'fas fa-chevron-' + (open ? 'down' : 'up');
+    }
+
+    function pmLoad() {
+        if (pmLoading) return;
+        pmLoading = true;
+        const m = document.getElementById('pmMonth').value;
+        const y = document.getElementById('pmYear').value;
+        document.getElementById('pmBody').innerHTML =
+            '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+        document.getElementById('pmFoot').style.display = 'none';
+        fetch(`${PM_API}?month=${m}&year=${y}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(d => {
+                pmLoading = false;
+                if (!d.success) {
+                    document.getElementById('pmBody').innerHTML =
+                        '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(d.message || 'Error') + '</td></tr>';
+                    return;
+                }
+                pmData = d.data;
+                pmSavedRun = d.saved_run;
+                if (pmData.period)
+                    document.getElementById('pmPeriodLbl').textContent =
+                        T.periodLbl + ': ' + pmData.period.start + ' \u2192 ' + pmData.period.end;
+                render();
+                renderChip();
+            })
+            .catch(e => {
+                pmLoading = false;
+                document.getElementById('pmBody').innerHTML =
+                    '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(String(e)) + '</td></tr>';
+            });
+    }
+
+    function pmDoSave() {
+        const btn = document.getElementById('pmSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + esc(T.save);
+        fetch(PM_SAVE_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({
+                month: parseInt(document.getElementById('pmMonth').value),
+                year: parseInt(document.getElementById('pmYear').value)
+            })
+        }).then(r => r.json()).then(d => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>' + esc(T.save);
+            if (d.success) {
+                if (typeof Swal !== 'undefined')
+                    Swal.fire({ icon: 'success', title: T.savedOk, timer: 1800, showConfirmButton: false });
+                pmLoad();
+            } else if (d.code === 'run_locked') {
+                lockedDialog();
+            } else if (d.code === 'hours_not_approved' && typeof Swal !== 'undefined') {
+                const names = (d.missing || []).slice(0, 8)
+                    .map(x => '<div class="small">• ' + esc(PM_AR ? (x.arabic_name || x.name) : (x.name || x.arabic_name)) + ' (#' + esc(x.employee_number) + ')'
+                        + (x.reason === 'stale' ? ' — <span class="text-danger">' + esc(T.staleTag) + '</span>' : '') + '</div>').join('');
+                const more = (d.missing || []).length > 8 ? '<div class="small text-muted">+' + ((d.missing || []).length - 8) + ' ...</div>' : '';
+                Swal.fire({
+                    icon: 'warning', title: T.hoursNotApprovedTitle,
+                    html: '<div class="mb-2">' + esc(T.hoursNotApprovedText) + '</div>' + names + more,
+                    showCancelButton: true, confirmButtonText: T.goApprove, cancelButtonText: T.cancelBtn
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        const m = document.getElementById('pmMonth').value, y = document.getElementById('pmYear').value;
+                        window.location.href = PM_HA_URL + '?month=' + m + '&year=' + y;
+                    }
+                });
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: T.saveFailed, text: d.message || '' });
+            }
+        }).catch(e => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>' + esc(T.save);
+            if (typeof Swal !== 'undefined')
+                Swal.fire({ icon: 'error', title: T.saveFailed, text: String(e) });
+        });
+    }
+
+    function pmQuery() {
+        return 'month=' + document.getElementById('pmMonth').value +
+               '&year=' + document.getElementById('pmYear').value;
+    }
+    function pmPrint() {
+        window.open({{ url_for('payroll.monthly_print')|tojson }} + '?' + pmQuery(), '_blank');
+    }
+    function pmExport() {
+        window.location = {{ url_for('payroll.monthly_export')|tojson }} + '?' + pmQuery();
+    }
+
+    function pmSave() {
+        if (!pmData) return;
+        if (pmSavedRun && pmSavedRun.status === 'approved') { lockedDialog(); return; }
+        if (pmSavedRun && typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning', title: T.overwriteTitle, text: T.overwriteText,
+                showCancelButton: true, confirmButtonText: T.confirmBtn,
+                cancelButtonText: T.cancelBtn
+            }).then(res => { if (res.isConfirmed) pmDoSave(); });
+        } else {
+            pmDoSave();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', pmLoad);
+</script>
+{% endblock %}

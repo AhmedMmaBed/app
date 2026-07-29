@@ -1,0 +1,1098 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('fingerprint.manage_devices_title') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-microchip me-2"></i>{{ _('fingerprint.manage_devices_title') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('btn.back_to_dashboard') }}
+            </a>
+        </div>
+        <button class="btn btn-info text-white me-2" onclick="startNetworkScan()">
+            <i class="fas fa-search me-2"></i>{{ _('fingerprint.scan_network') }}
+        </button>
+        <a href="{{ url_for('adms_mgr.adms_commands_view') }}" class="btn btn-dark me-2">
+            <i class="fas fa-terminal me-2"></i>{{ _('x.adms_logs') }}
+        </a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+            <i class="fas fa-plus me-2"></i>{{ _('fingerprint.add_new_device') }}
+        </button>
+    </div>
+</div>
+
+<!-- قائمة الأجهزة -->
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="alert {{ 'alert-warning' if current_active >= max_devices else 'alert-info' }} d-flex align-items-center">
+            <i class="fas fa-info-circle me-3 fs-3"></i>
+            <div>
+                <strong>{{ _('x.license_status_colon') }}</strong>
+                {{ _('x.you_now_have') }} <strong>{{ current_active }}</strong> {{ _('x.active_devices_of') }} <strong>{{ max_devices }}</strong> {{ _('x.allowed_devices_period') }}                {% if current_active >= max_devices %}
+                <br><small class="text-danger mt-1 d-block"><i class="fas fa-exclamation-triangle me-1"></i>{{ _('x.max_reached_no_new_devices') }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>{{ _('fingerprint.registered_devices') }}</h5>
+    </div>
+    <div class="card-body">
+        {% if devices %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ _('fingerprint.device_id') }}</th>
+                        <th>{{ _('fingerprint.device_name') }}</th>
+                        <th>{{ _('fingerprint.status') }}</th>
+                        <th>{{ _('fingerprint.ip_address') }}</th>
+                        <th>{{ _('fingerprint.port') }}</th>
+                        <th>{{ _('fingerprint.license') }}</th>
+                        <th>{{ _('fingerprint.last_activity') }}</th>
+                        <th>{{ _('fingerprint.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td><span class="badge bg-primary">#{{ device.id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-microchip text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ device.device_name }}</div>
+                                    <small class="text-muted">{{ _('fingerprint.zkteco_device') }}</small>
+                                    {% if device.is_adms %}
+                                    <span class="badge bg-info text-dark ms-1">ADMS</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if device.last_activity %}
+                                {% set last_act = device.last_activity|datetime_parse if device.last_activity is string else device.last_activity %}
+                                {% set now = now_datetime() %}
+                                {% if (now - last_act).total_seconds() < 300 %}
+                                    <span class="badge bg-success rounded-pill" title="{{ _('x.online_last_5_min') }}">
+                                        <i class="fas fa-circle me-1 small"></i> {{ _('x.online') }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger rounded-pill" title="{{ _('x.offline') }}">
+                                        <i class="fas fa-circle me-1 small"></i> {{ _('x.offline') }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill">{{ _('x.unknown') }}</span>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ device.device_ip }}</code></td>
+                        <td><code>{{ device.device_port }}</code></td>
+                        <td>
+                            {% if device.is_active %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-check-circle me-1"></i>{{
+                                _('fingerprint.active') }}</span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border"><i class="fas fa-times-circle me-1"></i>{{
+                                _('fingerprint.inactive') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.last_activity %}
+                            <div class="small">
+                                <span class="text-muted"><i class="far fa-clock me-1"></i>{{ device.last_activity[11:16] }}</span><br>
+                                <span class="text-dark">{{ device.last_activity[:10] }}</span>
+                                <span class="badge bg-success ms-1">{{ _('x.online') }}</span>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">{{ _('fingerprint.never') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="testDevice({{ device.id }})"
+                                    title="{{ _('btn.test_connection') }}">
+                                    <i class="fas fa-network-wired"></i>
+                                </button>
+                                {% if device.is_adms %}
+                                <button class="btn btn-outline-primary" onclick="syncAdmsUsers({{ device.id }})"
+                                    title="{{ _('x.sync_users_adms') }}">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-outline-warning" onclick="editDevice({{ device.id }})"
+                                    title="{{ _('btn.edit') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-dark" onclick="clearDeviceUsers({{ device.id }})"
+                                    title="{{ _('x.clear_all_employees_from_device') }}">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="showDeviceUserCount({{ device.id }})"
+                                    title="{{ _('x.show_device_employee_count') }}">
+                                    <i class="fas fa-users"></i>
+                                </button>
+                                <a href="{{ url_for('attendance.toggle_device', id=device.id) }}"
+                                    class="btn btn-outline-{{ 'secondary' if device.is_active else 'success' }}"
+                                    title="{{ _('btn.deactivate') if device.is_active else _('btn.activate') }}">
+                                    <i class="fas fa-{{ 'pause' if device.is_active else 'play' }}"></i>
+                                </a>
+                                <button class="btn btn-outline-secondary" onclick="rebootDevice({{ device.id }})"
+                                    title="{{ _('x.restart_device') }}">
+                                    <i class="fas fa-power-off"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="factoryResetDevice({{ device.id }})"
+                                    title="{{ _('x.factory_reset_device') }}">
+                                    <i class="fas fa-bomb"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-microchip text-muted" style="font-size: 4rem;"></i>
+            <h3 class="mt-3 text-muted">{{ _('fingerprint.no_devices') }}</h3>
+            <p class="text-muted">{{ _('fingerprint.start_add_device_msg') }}</p>
+            <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+                <i class="fas fa-plus me-2"></i>{{ _('fingerprint.add_first_device') }}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- مودال إضافة جهاز جديد -->
+<div class="modal fade" id="addDeviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('attendance.add_device') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>{{ _('fingerprint.add_new_device') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="device_name" class="form-label">{{ _('fingerprint.device_name') }}</label>
+                        <input type="text" class="form-control" id="device_name" name="device_name" required
+                            placeholder="{{ _('fingerprint.device_name_placeholder') }}">
+                        <div class="form-text">{{ _('fingerprint.device_name_help') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="device_ip" class="form-label">{{ _('fingerprint.ip_address') }}</label>
+                        <input type="text" class="form-control" id="device_ip" name="device_ip" required
+                            placeholder="192.168.1.100" pattern="^(\d{1,3}\.){3}\d{1,3}$">
+                        <div class="form-text">{{ _('fingerprint.ip_address_help') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="device_port" class="form-label">{{ _('fingerprint.port') }}</label>
+                        <input type="number" class="form-control" id="device_port" name="device_port" value="4370"
+                            min="1" max="65535">
+                        <div class="form-text">{{ _('fingerprint.port_help') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_adms" name="is_adms"
+                                onchange="toggleAdmsMode()">
+                            <label class="form-check-label" for="is_adms"><strong>{{ _('fingerprint.adms_mode')
+                                    }}</strong> (Push Protocol)</label>
+                        </div>
+                        <div class="form-text">{{ _('fingerprint.adms_help') }}</div>
+                    </div>
+
+                    <!-- Listening Area for ADMS -->
+                    <div id="admsListeningArea" class="mb-3 border rounded p-3 bg-light" style="display: none;">
+                        <h6 class="text-muted mb-2"><i class="fas fa-satellite-dish me-2"></i>{{
+                            _('fingerprint.listening_adms') }}</h6>
+                        <div id="admsDevicesList">
+                            <div class="text-center py-2 text-muted small">
+                                <span class="spinner-grow spinner-grow-sm text-primary" role="status"></span>
+                                {{ _('fingerprint.waiting_device_contact') }}...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" id="manualInfoAlert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{{ _('msg.ensure') }}:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>{{ _('msg.device_connected') }}</li>
+                            <li>{{ _('msg.ip_reachable') }}</li>
+                            <li>{{ _('msg.firewall_allowed') }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>{{ _('btn.save_device') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تعديل الجهاز -->
+<div class="modal fade" id="editDeviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editDeviceForm" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>{{ _('fingerprint.edit_device') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_device_name" class="form-label">{{ _('fingerprint.device_name') }}</label>
+                        <input type="text" class="form-control" id="edit_device_name" name="device_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_device_ip" class="form-label">{{ _('fingerprint.ip_address') }}</label>
+                        <input type="text" class="form-control" id="edit_device_ip" name="device_ip" required
+                            pattern="^(\d{1,3}\.){3}\d{1,3}$">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_device_port" class="form-label">{{ _('fingerprint.port') }}</label>
+                        <input type="number" class="form-control" id="edit_device_port" name="device_port" min="1"
+                            max="65535">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active">
+                            <label class="form-check-label" for="edit_is_active">
+                                {{ _('fingerprint.device_active') }}
+                            </label>
+                        </div>
+                        <div class="form-text">{{ _('fingerprint.device_active_help') }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active">
+                            <label class="form-check-label" for="edit_is_active">
+                                {{ _('fingerprint.device_active') }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_is_adms" name="is_adms">
+                            <label class="form-check-label" for="edit_is_adms">
+                                {{ _('fingerprint.adms_mode') }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{{ _('msg.warning') }}:</strong> {{ _('msg.edit_device_warning') }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>{{ _('btn.save_changes') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- مودال اختبار الاتصال -->
+<div class="modal fade" id="testConnectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-network-wired me-2"></i>{{
+                    _('fingerprint.test_connection_result') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- النتائج ستظهر هنا -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- مودال فحص الشبكة -->
+<div class="modal fade" id="networkScanModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-network-wired me-2"></i>{{ _('fingerprint.network_scan') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeScanModal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="scanOptions" class="text-center py-4">
+                    <h5 class="mb-4"><i class="fas fa-search-location me-2"></i>{{ _('fingerprint.select_scan_range') }}
+                    </h5>
+
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card mb-3 border-primary option-card" onclick="selectScanMode('local')"
+                                style="cursor: pointer;">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="scanMode" id="modeLocal"
+                                            value="local" checked>
+                                        <label class="form-check-label fw-bold" for="modeLocal">
+                                            {{ _('fingerprint.scan_local') }}
+                                        </label>
+                                        <p class="text-muted small mb-0 me-4">{{ _('fingerprint.scan_local_desc') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3 border-secondary option-card" onclick="selectScanMode('wide')"
+                                style="cursor: pointer;">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="scanMode" id="modeWide"
+                                            value="wide">
+                                        <label class="form-check-label fw-bold" for="modeWide">
+                                            {{ _('fingerprint.scan_wide') }}
+                                        </label>
+                                        <p class="text-muted small mb-0 me-4">{{ _('fingerprint.scan_wide_desc') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary px-5 btn-lg" onclick="executeScan()">
+                            <i class="fas fa-play me-2"></i>{{ _('btn.start_scan') }}
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scanProgress" class="text-center py-5" style="display: none;">
+                    <h5 class="mb-3">{{ _('status.scanning') }}...</h5>
+
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                            role="progressbar" style="width: 100%"></div>
+                    </div>
+
+                    <p class="text-muted mb-0" id="scanStatusText">{{ _('status.searching_zkteco') }}...</p>
+                    <small class="text-secondary" id="scanNote">{{ _('status.please_wait') }}...</small>
+                </div>
+
+                <div id="scanResults" style="display: none;">
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="fas fa-info-circle me-3 fs-4"></i>
+                        <div class="flex-grow-1">
+                            {{ _('fingerprint.found_devices') }}: <strong id="devicesCount">0</strong>.
+                            <div class="float-start">
+                                <strong>{{ _('fingerprint.license_limit') }}:</strong>
+                                <span class="{{ 'text-danger fw-bold' if current_active >= max_devices else '' }}">
+                                    {{ current_active }} / {{ max_devices }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input class="form-check-input" type="checkbox" id="selectAllScan"
+                                            onchange="toggleSelectAllScan()">
+                                    </th>
+                                    <th>{{ _('fingerprint.ip_address') }}</th>
+                                    <th>{{ _('fingerprint.device_name') }}</th>
+                                    <th>{{ _('fingerprint.mac_address') }}</th>
+                                    <th>{{ _('fingerprint.vendor') }}</th>
+                                    <th>{{ _('fingerprint.confidence') }}</th>
+                                    <th>{{ _('fingerprint.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scanResultsBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="resetScan()">
+                            <i class="fas fa-redo me-2"></i>{{ _('btn.new_scan') }}
+                        </button>
+                        <button class="btn btn-success" onclick="addSelectedDevices()" id="btnAddSelected" disabled>
+                            <i class="fas fa-plus-circle me-2"></i>{{ _('btn.add_selected') }} (<span
+                                id="selectedCount">0</span>)
+                        </button>
+                    </div>
+
+                </div>
+
+                <div id="scanError" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="scanErrorMsg"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function syncAdmsUsers(deviceId) {
+        if (!confirm({{ _('x.confirm_schedule_sync_all_active')|tojson }})) return;
+        
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(`/adms/api/adms/sync_all_to_device/${deviceId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert({{ _('x.error_colon_space')|tojson }} + data.message);
+                }
+            })
+            .catch(err => alert({{ _('x.connection_failed_colon_space')|tojson }} + err))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            });
+    }
+
+    function clearDeviceUsers(deviceId) {
+        if (!confirm({{ _('x.confirm_clear_device_employees')|tojson }})) return;
+        
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(`/fingerprint/api/devices/clear_users/${deviceId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert({{ _('x.error_colon_space')|tojson }} + data.message);
+                }
+            })
+            .catch(err => alert({{ _('x.connection_failed_colon_space')|tojson }} + err))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            });
+    }
+
+    function rebootDevice(deviceId) {
+        if (!confirm({{ _('x.confirm_remote_restart')|tojson }})) return;
+        
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(`/fingerprint/api/devices/reboot/${deviceId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(err => alert({{ _('x.connection_failed_colon_space')|tojson }} + err))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            });
+    }
+
+    function factoryResetDevice(deviceId) {
+        if (!confirm({{ _('x.confirm_factory_reset')|tojson }})) return;
+        
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(`/fingerprint/api/devices/factory_reset/${deviceId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(err => alert({{ _('x.connection_failed_colon_space')|tojson }} + err))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            });
+    }
+
+    function showDeviceUserCount(deviceId) {
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(`/fingerprint/api/devices/user_count/${deviceId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert({{ _('x.error_colon_space')|tojson }} + (typeof data.message === 'string' ? data.message : JSON.stringify(data.message)));
+                }
+            })
+            .catch(err => alert({{ _('x.connection_failed_colon_space')|tojson }} + err))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            });
+    }
+
+    let admsPollInterval = null;
+
+    function toggleAdmsMode() {
+        const isAdms = document.getElementById('is_adms').checked;
+        const listenArea = document.getElementById('admsListeningArea');
+        const manualInfo = document.getElementById('manualInfoAlert');
+
+        if (isAdms) {
+            listenArea.style.display = 'block';
+            manualInfo.style.display = 'none';
+            // Start Polling
+            fetchAdmsDevices();
+            admsPollInterval = setInterval(fetchAdmsDevices, 3000);
+        } else {
+            listenArea.style.display = 'none';
+            manualInfo.style.display = 'block';
+            if (admsPollInterval) clearInterval(admsPollInterval);
+        }
+    }
+
+    function fetchAdmsDevices() {
+        fetch('/fingerprint/api/adms/search')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('admsDevicesList');
+                if (data.success && data.devices.length > 0) {
+                    let html = '<ul class="list-group">';
+                    data.devices.forEach(dev => {
+                        const timeAgo = new Date(dev.last_activity).toLocaleTimeString();
+                        html += `
+                            <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" 
+                                onclick="fillAdmsDevice('${dev.device_sn}', '${dev.ip_address}')" 
+                                style="cursor:pointer">
+                                <div>
+                                    <strong>SN: ${dev.device_sn}</strong><br>
+                                    <small class="text-muted">IP: ${dev.ip_address} (${timeAgo})</small>
+                                </div>
+                                <i class="fas fa-arrow-right text-primary"></i>
+                            </li>
+                        `;
+                    });
+                    html += '</ul>';
+                    list.innerHTML = html;
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function fillAdmsDevice(sn, ip) {
+        document.getElementById('device_name').value = sn; // Use SN as default name
+        document.getElementById('device_ip').value = ip;
+        // Highlight inputs
+        document.getElementById('device_name').classList.add('is-valid');
+        document.getElementById('device_ip').classList.add('is-valid');
+        setTimeout(() => {
+            document.getElementById('device_name').classList.remove('is-valid');
+            document.getElementById('device_ip').classList.remove('is-valid');
+        }, 1000);
+    }
+
+    // Stop polling when modal closes
+    document.getElementById('addDeviceModal').addEventListener('hidden.bs.modal', function () {
+        if (admsPollInterval) clearInterval(admsPollInterval);
+        document.getElementById('is_adms').checked = false;
+        toggleAdmsMode(); // reset UI
+    });
+
+    // فتح المودال (تهيئة)
+    // مساعد لاختيار الوضع عند النقر على الكارت
+    function selectScanMode(mode) {
+        if (mode === 'local') document.getElementById('modeLocal').checked = true;
+        if (mode === 'wide') document.getElementById('modeWide').checked = true;
+    }
+
+    // فتح المودال (تهيئة)
+    function startNetworkScan() {
+        const modal = new bootstrap.Modal(document.getElementById('networkScanModal'));
+        modal.show();
+        resetScan();
+    }
+
+    function resetScan() {
+        document.getElementById('scanOptions').style.display = 'block';
+        document.getElementById('scanProgress').style.display = 'none';
+        document.getElementById('scanResults').style.display = 'none';
+        document.getElementById('scanError').style.display = 'none';
+        document.getElementById('scanResultsBody').innerHTML = '';
+        if (document.getElementById('modeLocal')) document.getElementById('modeLocal').checked = true;
+    }
+
+    // تنفيذ الفحص الفعلي (بث مباشر)
+    function executeScan() {
+        const mode = document.querySelector('input[name="scanMode"]:checked').value;
+        const isWide = (mode === 'wide');
+
+        document.getElementById('scanOptions').style.display = 'none';
+        document.getElementById('scanProgress').style.display = 'block';
+
+        const progressBar = document.querySelector('#scanProgress .progress-bar');
+        const statusText = document.getElementById('scanStatusText');
+        const noteText = document.getElementById('scanNote');
+
+        if (isWide) {
+            noteText.textContent = "{{ _('msg.scanning_wide') }}";
+            progressBar.classList.remove('bg-primary');
+            progressBar.classList.add('bg-warning');
+        } else {
+            noteText.textContent = "{{ _('msg.scanning_local') }}";
+            progressBar.classList.remove('bg-warning');
+            progressBar.classList.add('bg-primary');
+        }
+
+        // Reset Results
+        document.getElementById('scanResultsBody').innerHTML = '';
+        document.getElementById('devicesCount').textContent = '0';
+        let foundDevicesCount = 0;
+        const foundIPs = new Set();
+
+        // Start EventSource
+        const eventSource = new EventSource(`/fingerprint/api/scan_network?mode=${mode}`);
+
+        eventSource.onopen = function () {
+            console.log("Scan started...");
+            progressBar.style.width = '5%';
+        };
+
+        eventSource.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            if (data.type === 'status') {
+                statusText.textContent = data.message;
+                progressBar.style.width = data.percent + '%';
+            }
+            else if (data.type === 'info') {
+                // Fix: Use simple concatenation to avoid jinja formatting errors
+                let scanTxt = "{{ _('status.scanning') }}";
+                statusText.innerHTML = `${scanTxt} ${data.ranges_count} / ${data.total_hosts}`;
+            }
+            else if (data.type === 'progress') {
+                progressBar.style.width = data.percent + '%';
+                if (data.scanned) {
+                    let scanTxt = "{{ _('status.scanning') }}";
+                    statusText.textContent = `${scanTxt} (${data.scanned} / ${data.total})`;
+                }
+            }
+            else if (data.type === 'device') {
+                if (!foundIPs.has(data.device.ip)) {
+                    foundIPs.add(data.device.ip);
+                    foundDevicesCount++;
+                    document.getElementById('devicesCount').textContent = foundDevicesCount;
+                    if (foundDevicesCount === 1) {
+                        document.getElementById('scanResults').style.display = 'block';
+                    }
+                    addDeviceRow(data.device);
+                } else {
+                    updateDeviceRowIfExists(data.device);
+                }
+            }
+            else if (data.type === 'complete') {
+                eventSource.close();
+                document.getElementById('scanProgress').style.display = 'none';
+                document.getElementById('scanResults').style.display = 'block';
+                progressBar.style.width = '100%';
+
+                if (foundDevicesCount === 0) {
+                    document.getElementById('scanResultsBody').innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">{{ _("fingerprint.no_devices_found") }}</td></tr>';
+                }
+            }
+        };
+
+        eventSource.onerror = function (e) {
+            console.error("EventSource failed:", e);
+            eventSource.close();
+            document.getElementById('scanProgress').style.display = 'none';
+            if (progressBar.style.width !== '100%') {
+                showScanError("{{ _('error.connection_lost') }}");
+            } else {
+                document.getElementById('scanResults').style.display = 'block';
+            }
+        };
+    }
+
+    function addDeviceRow(device) {
+        const tbody = document.getElementById('scanResultsBody');
+        const tr = document.createElement('tr');
+        tr.id = 'row-' + device.ip.replace(/\./g, '-');
+        const confidenceClass = device.confidence === 'High' ? 'text-success' : 'text-warning';
+        const defaultName = `Device ${device.ip}`;
+
+        tr.innerHTML = `
+            <td class="text-center align-middle">
+                <input class="form-check-input device-select" type="checkbox" value="${device.ip}" onchange="updateSelectedCount()">
+            </td>
+            <td class="fw-bold align-middle">${device.ip}</td>
+            <td>
+                <input type="text" class="form-control form-control-sm device-name" value="${defaultName}" placeholder="{{ _('fingerprint.device_name') }}">
+            </td>
+            <td class="mac-cell align-middle">${device.mac || '-'}</td>
+            <td class="vendor-cell align-middle">${device.vendor}</td>
+            <td class="confidence-cell ${confidenceClass} align-middle">${device.confidence}</td>
+            <td class="align-middle">
+                <button class="btn btn-sm btn-primary" onclick="addSingleDevice('${device.ip}')" title="{{ _('btn.add_now') }}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function addSingleDevice(ip) {
+        const rowId = 'row-' + ip.replace(/\./g, '-');
+        const tr = document.getElementById(rowId);
+        const nameInput = tr.querySelector('.device-name');
+        const name = nameInput.value.trim() || `Device ${ip}`;
+
+        const btn = tr.querySelector('button');
+        const oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        // Use bulk API for single add too, just list of 1
+        fetch('/fingerprint/api/devices/bulk_add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ devices: [{ ip: ip, name: name }] })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.count > 0) {
+                    btn.className = 'btn btn-sm btn-success';
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                    btn.title = '{{ _("msg.added") }}';
+                    btn.onclick = null;
+                    // Disable inputs
+                    tr.querySelector('.device-select').disabled = true;
+                    nameInput.disabled = true;
+                } else {
+                    alert('{{ _("error.add_failed") }}: ' + (data.errors ? data.errors.join('\n') : data.message));
+                    btn.innerHTML = oldHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert('{{ _("error.occurred") }}: ' + err);
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+            });
+    }
+
+    function toggleSelectAllScan() {
+        const selectAll = document.getElementById('selectAllScan').checked;
+        document.querySelectorAll('.device-select:not(:disabled)').forEach(cb => cb.checked = selectAll);
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const count = document.querySelectorAll('.device-select:checked').length;
+        document.getElementById('selectedCount').textContent = count;
+        document.getElementById('btnAddSelected').disabled = count === 0;
+    }
+
+    function addSelectedDevices() {
+        const selectedDevs = [];
+        document.querySelectorAll('.device-select:checked').forEach(cb => {
+            const ip = cb.value;
+            const rowId = 'row-' + ip.replace(/\./g, '-');
+            const tr = document.getElementById(rowId);
+            const name = tr.querySelector('.device-name').value.trim() || `Device ${ip}`;
+            selectedDevs.push({ ip: ip, name: name });
+        });
+
+        if (selectedDevs.length === 0) return;
+
+        const btn = document.getElementById('btnAddSelected');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> {{ _("status.adding") }}...';
+
+        fetch('/fingerprint/api/devices/bulk_add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ devices: selectedDevs })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.errors && data.errors.length > 0) {
+                        alert(data.message + "\n{{ _('error.cant_add') }}:\n" + data.errors.join("\n"));
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert('{{ _("error.occurred") }}: ' + data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert('{{ _("error.connection_error") }}: ' + err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    function showScanError(msg) {
+        document.getElementById('scanError').style.display = 'block';
+        document.getElementById('scanErrorMsg').textContent = msg;
+    }
+
+    function quickAddDevice(ip) {
+        // Close scan modal
+        const scanModalEl = document.getElementById('networkScanModal');
+        const scanModal = bootstrap.Modal.getInstance(scanModalEl);
+        scanModal.hide();
+
+        // Open Add Modal and fill IP
+        const addModal = new bootstrap.Modal(document.getElementById('addDeviceModal'));
+        addModal.show();
+
+        // Wait for modal to open then set value
+        setTimeout(() => {
+            document.getElementById('device_ip').value = ip;
+            document.getElementById('device_name').focus();
+        }, 500);
+    }
+
+    // [Original Script Content Starts Here]
+    // اختبار الاتصال بجهاز
+    function testDevice(deviceId) {
+        const modal = new bootstrap.Modal(document.getElementById('testConnectionModal'));
+        const resultsDiv = document.getElementById('testResults');
+
+        resultsDiv.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري الاختبار...</span>
+            </div>
+            <p class="mt-3 mb-0">جاري اختبار الاتصال بالجهاز...</p>
+        </div>
+    `;
+        modal.show();
+
+        fetch(`/fingerprint/test/${deviceId}`)
+            .then(async response => {
+                const isJson = response.headers.get('content-type')?.includes('application/json');
+                const data = isJson ? await response.json() : null;
+
+                if (!response.ok) {
+                    // Get error message from JSON or default to status text
+                    const error = (data && data.message) || response.statusText;
+                    return Promise.reject(error);
+                }
+
+                if (!data) {
+                    // Response was OK but not JSON ??
+                    const text = await response.text();
+                    return Promise.reject(`{{ _('x.invalid_server_response_colon') }} ${text.substring(0, 100)}...`);
+                }
+
+                if (data.success) {
+                    const info = data.device_info;
+                    resultsDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-check-circle me-2"></i>تم الاتصال بنجاح!</h6>
+                        <p class="mb-0">الجهاز يعمل بشكل طبيعي ويمكن التواصل معه</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-info-circle me-2"></i>معلومات الجهاز</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>الرقم التسلسلي:</strong></td>
+                                    <td>${info.serial_number}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>نوع النظام:</strong></td>
+                                    <td>${info.platform}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>إصدار البرنامج:</strong></td>
+                                    <td>${info.firmware_version}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>اسم الجهاز:</strong></td>
+                                    <td>${info.device_name}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-database me-2"></i>البيانات المخزنة</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>عدد المستخدمين:</strong></td>
+                                    <td><span class="badge bg-info">${info.users_count}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>سجلات الحضور:</strong></td>
+                                    <td><span class="badge bg-primary">${info.attendance_count}</span></td>
+                                </tr>
+                            </table>
+                            <div class="alert alert-info mt-3">
+                                <small><i class="fas fa-lightbulb me-1"></i>
+                                يمكنك الآن مزامنة البيانات من هذا الجهاز</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="window.location.reload()"><i class="fas fa-sync me-1"></i>تحديث الصفحة لعرض الحالة</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listener to reload when modal is closed
+                const modalEl = document.getElementById('testConnectionModal');
+                const reloadOnClose = function() {
+                    window.location.reload();
+                };
+                modalEl.addEventListener('hidden.bs.modal', reloadOnClose);
+                
+                } else {
+                    resultsDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>فشل الاتصال</h6>
+                        <p class="mb-2">${data.message}</p>
+                        <hr>
+                        <h6>نصائح لحل المشكلة:</h6>
+                        <ul class="mb-0">
+                            <li>تأكد من أن الجهاز متصل بالشبكة</li>
+                            <li>تحقق من صحة عنوان IP ورقم المنفذ</li>
+                            <li>تأكد من أن الجدار الناري لا يحجب الاتصال</li>
+                        </ul>
+                    </div>
+                `;
+                }
+            })
+            .catch(error => {
+                console.error('Connection Error:', error);
+                resultsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>خطأ في الاتصال</h6>
+                    <p class="mb-0">تفاصيل الخطأ: ${error.toString()}</p>
+                </div>
+            `;
+            });
+    }
+
+    // تعديل جهاز
+    function editDevice(deviceId) {
+        // جلب بيانات الجهاز
+        fetch(`/fingerprint/devices/edit/${deviceId}`)
+            .then(response => response.json())
+            .then(device => {
+                // ملء النموذج بالبيانات الحالية
+                document.getElementById('edit_device_name').value = device.device_name;
+                document.getElementById('edit_device_ip').value = device.device_ip;
+                document.getElementById('edit_device_port').value = device.device_port;
+                document.getElementById('edit_is_active').checked = device.is_active === 1;
+
+                // تحديث action للنموذج
+                document.getElementById('editDeviceForm').action = `/fingerprint/devices/edit/${deviceId}`;
+
+                // عرض المودال
+                const modal = new bootstrap.Modal(document.getElementById('editDeviceModal'));
+                modal.show();
+            })
+            .catch(error => {
+                showAlert({{ _('x.error_fetching_device_data')|tojson }}, 'error');
+            });
+    }
+
+    // التحقق من صحة عنوان IP في نموذج الإضافة
+    document.getElementById('device_ip').addEventListener('input', function () {
+        const ip = this.value;
+        const pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+        if (ip && !pattern.test(ip)) {
+            this.setCustomValidity({{ _('x.invalid_ip')|tojson }});
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // التحقق من صحة عنوان IP في نموذج التعديل
+    document.getElementById('edit_device_ip').addEventListener('input', function () {
+        const ip = this.value;
+        const pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+        if (ip && !pattern.test(ip)) {
+            this.setCustomValidity({{ _('x.invalid_ip')|tojson }});
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // معالجة إرسال نموذج التعديل
+    document.getElementById('editDeviceForm').addEventListener('submit', function (e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = {{ _('x.saving_spinner_html')|tojson }};
+
+        // إعادة تمكين الزر بعد التأكد من إرسال النموذج
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }, 3000);
+    });
+
+    // مزامنة مستخدمي ADMS
+    function syncAdmsUsers(deviceId) {
+        if (!confirm({{ _('x.confirm_sync_users_from_device')|tojson }})) return;
+        
+        fetch(`/api/adms/sync_users/${deviceId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+            } else {
+                showAlert(data.message || {{ _('x.error_scheduling_commands')|tojson }}, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert({{ _('x.server_connection_error')|tojson }}, 'error');
+        });
+    }
+</script>
+{% endblock %}

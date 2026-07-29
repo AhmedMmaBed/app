@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+
+{% block title %}{{ _('page.title.leaves') }}{% endblock %}
+
+{% block content %}
+<!-- تنبيهات الرصيد السالب -->
+<div id="negativeBalanceAlerts" class="mb-3">
+    <!-- سيتم ملء هذا القسم بواسطة JavaScript -->
+</div>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('page.header.leaves') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('leave_settings.index') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-cog me-2"></i>{{ _('btn.manage_leave_types') }}
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLeaveModal">
+                <i class="fas fa-plus me-2"></i>{{ _('btn.new_leave_request') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- جدول طلبات الإجازات -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>{{ _('header.leave_requests') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('tbl.header.employee') }}</th>
+                        <th>{{ _('tbl.header.leave_type') }}</th>
+                        <th>{{ _('tbl.header.start_date') }}</th>
+                        <th>{{ _('tbl.header.end_date') }}</th>
+                        <th>{{ _('tbl.header.days_count') }}</th>
+                        <th>{{ _('tbl.header.payment_type') }}</th>
+                        <th>{{ _('tbl.header.reason') }}</th>
+                        <th>{{ _('tbl.header.status') }}</th>
+                        <th>{{ _('tbl.header.request_date') }}</th>
+                        <th>{{ _('tbl.header.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leave_requests %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                    style="width: 35px; height: 35px;">
+                                    {{ leave.name[0] if leave.name else '?' }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ leave.name }}</div>
+                                    {% if leave.arabic_name %}
+                                    <div class="text-dark fw-bold small">{{ leave.arabic_name }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ leave.employee_number }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ leave.leave_type_name }}</span>
+                        </td>
+                        <td>{{ leave.start_date }}</td>
+                        <td>{{ leave.end_date }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ leave.days_count }} {{ _('unit.day') }}</span>
+                            {% if leave.is_paid_leave == 0 and leave.days_count > 0 %}
+                            <br><small class="text-danger">({{ _('status.unpaid') }})</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if leave.is_paid_leave %}
+                            <span class="badge bg-success">{{ _('status.paid') }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">{{ _('status.unpaid') }}</span>
+                            {% if leave.days_count > 0 %}
+                            <br><small class="text-danger">({{ _('msg.balance_exceeded') }})</small>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if leave.reason %}
+                            <span class="text-truncate d-inline-block" style="max-width: 150px;"
+                                title="{{ leave.reason }}">
+                                {{ leave.reason }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if leave.status == 'pending' %}
+                            <span class="badge bg-warning">{{ _('status.pending') }}</span>
+                            {% elif leave.status == 'approved' %}
+                            <span class="badge bg-success">{{ _('status.approved') }}</span>
+                            {% elif leave.status == 'rejected' %}
+                            <span class="badge bg-danger">{{ _('status.rejected') }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ leave.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ leave.created_at.split(' ')[0] }}</td>
+                        <td>
+                            {% if leave.status == 'pending' %}
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                    onclick="updateLeaveStatus({{ leave.id }}, 'approved')"
+                                    title="{{ _('btn.approve') }}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    onclick="updateLeaveStatus({{ leave.id }}, 'rejected')"
+                                    title="{{ _('btn.reject') }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    data-id="{{ leave.id }}" data-type="{{ leave.leave_type_id }}"
+                                    data-start="{{ leave.start_date }}" data-end="{{ leave.end_date }}"
+                                    data-reason="{{ leave.reason|e if leave.reason else '' }}"
+                                    onclick="openEditLeave(this)" title="{{ _('x.edit_leave') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            {% elif leave.status == 'approved' %}
+                            <div class="btn-group" role="group">
+                                <form method="POST" action="{{ url_for('leave.cancel_leave', id=leave.id) }}" class="d-inline"
+                                    onsubmit="return confirm('{{ _('x.confirm_cancel_leave') }}');">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="{{ _('btn.cancel_leave_early') }}">
+                                        <i class="fas fa-cut"></i>
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    data-id="{{ leave.id }}" data-type="{{ leave.leave_type_id }}"
+                                    data-start="{{ leave.start_date }}" data-end="{{ leave.end_date }}"
+                                    data-reason="{{ leave.reason|e if leave.reason else '' }}"
+                                    onclick="openEditLeave(this)" title="{{ _('x.edit_leave') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info"
+                                    onclick="viewLeaveDetails({{ leave.id }})" title="{{ _('btn.view_details') }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">{{ _('status.processed') }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="fas fa-calendar-alt fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>{{ _('msg.no_leave_requests') }}</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addLeaveModal">
+                                <i class="fas fa-plus me-2"></i>{{ _('btn.add_first_leave') }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة طلب إجازة -->
+<div class="modal fade" id="addLeaveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>{{ _('title.new_leave_request') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('leave.add_leave_request') }}" id="addLeaveForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="employee_id" class="form-label">{{ _('label.search_employee') }} <span class="text-danger">*</span></label>
+                            {{ employee_picker('employee_id', scope='active', required=true) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="leave_type_id" class="form-label">{{ _('label.leave_type') }} <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="leave_type_id" name="leave_type_id" required>
+                                <option value="">{{ _('placeholder.select_leave_type') }}</option>
+                                {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}" 
+                                        data-days="{{ leave_type.days_per_year }}"
+                                        data-allow-half="{{ leave_type.allow_half_day }}"
+                                        data-allow-hourly="{{ leave_type.allow_hourly }}"
+                                        data-is-permission="{{ leave_type.is_hourly_permission }}"
+                                        data-requires-attachment="{{ leave_type.requires_attachment }}">
+                                    {{ leave_type.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3" id="duration_type_container" style="display: none;">
+                        <div class="col-md-12">
+                            <label class="form-label">{{ _('x.leave_duration_type') }} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="leave_duration_type" name="leave_duration_type">
+                                <option value="full_day">{{ _('x.full_day') }}</option>
+                                <option value="half_day" id="opt_half_day" style="display: none;">{{ _('x.half_day') }}</option>
+                                <option value="hourly" id="opt_hourly" style="display: none;">{{ _('x.by_hours') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="time_inputs_container" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="start_time" class="form-label">{{ _('x.start_time') }} <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="start_time" name="start_time">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_time" class="form-label">{{ _('x.end_time') }} <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="end_time" name="end_time">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">{{ _('label.start_date') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">{{ _('label.end_date') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">{{ _('label.leave_reason') }}</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3"
+                            placeholder="{{ _('placeholder.leave_reason') }}"></textarea>
+                    </div>
+
+                    <div class="mb-3" id="attachment_container" style="display: none;">
+                        <label for="attachment" class="form-label">{{ _('x.attachment') }} <span class="text-danger" id="attachment_asterisk" style="display: none;">*</span></label>
+                        <input class="form-control" type="file" id="attachment" name="attachment">
+                        <small class="text-muted">{{ _('x.supported_files_images_pdf') }}</small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>{{ _('label.days_count') }}:</strong>
+                                <span class="text-primary fs-5" id="daysCount">0 {{ _('unit.day') }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>{{ _('label.available_balance') }}:</strong>
+                                <span class="text-success" id="availableBalance">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('btn.send_request') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editLeaveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editLeaveForm">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title text-white">{{ _('x.edit_leave') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.leave_type') }}</label>
+                        <select class="form-select" name="leave_type_id" id="el_type" required>
+                            {% for lt in leave_types %}
+                            <option value="{{ lt.id }}">{{ lt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('tbl.header.start_date') }}</label>
+                            <input type="date" class="form-control" name="start_date" id="el_start" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('tbl.header.end_date') }}</label>
+                            <input type="date" class="form-control" name="end_date" id="el_end" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.leave_reason') }}</label>
+                        <textarea class="form-control" name="reason" id="el_reason" rows="2"></textarea>
+                    </div>
+                    <div class="alert alert-warning py-2 small mb-0">{{ _('x.edit_leave_note') }}</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('x.save_data') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تعيين التاريخ الحالي كتاريخ بداية افتراضي
+    document.addEventListener('DOMContentLoaded', function () {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        document.getElementById('start_date').value = tomorrow.toISOString().split('T')[0];
+        document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
+
+        // تهيئة البحث في الموظفين
+        initEmployeeSearch();
+    });
+
+    // تهيئة select2 للبحث في الموظفين
+    if ($.fn.select2) {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addLeaveModal')
+        });
+    }
+
+    // تحديث الرصيد المتاح عند تغيير الموظف
+    $('#employee_id').on('change', function() {
+        updateAvailableBalance();
+    });
+
+    // حساب عدد أيام الإجازة
+    function calculateDays() {
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+
+        if (startDate && endDate && startDate <= endDate) {
+            const timeDiff = endDate.getTime() - startDate.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+            document.getElementById('daysCount').textContent = daysDiff + " {{ _('unit.day') }}";
+        } else {
+            document.getElementById('daysCount').textContent = "0 {{ _('unit.day') }}";
+        }
+    }
+
+    // تحديث الرصيد المتاح
+    function updateAvailableBalance() {
+        const employeeId = document.getElementById('employee_id').value;
+        const startDate = document.getElementById('start_date').value;
+
+        if (employeeId && startDate) {
+            const start = new Date(startDate);
+            const month = start.getMonth() + 1;
+            const year = start.getFullYear();
+
+            // جلب رصيد الإجازات للموظف
+            fetch(`/api/leave_balance?employee_id=${employeeId}&month=${month}&year=${year}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const balance = data.balance;
+                        const balanceElement = document.getElementById('availableBalance');
+
+                        if (balance.is_negative) {
+                            balanceElement.innerHTML = `
+                            <span class="text-danger">${balance.closing_balance.toFixed(1)} {{ _('unit.days_available') }}</span>
+                            <br><small class="text-danger">({{ _('msg.negative_balance_exceeded', days='${balance.excess_days.toFixed(1)}') }})</small>
+                        `;
+                            balanceElement.className = 'text-danger';
+
+                            // إظهار تحذير إضافي
+                            showBalanceWarning(balance);
+                        } else {
+                            balanceElement.textContent = `${balance.closing_balance.toFixed(1)} {{ _('unit.days_available') }}`;
+                            balanceElement.className = 'text-success';
+
+                            // إخفاء التحذير إذا كان موجوداً
+                            hideBalanceWarning();
+                        }
+                    } else {
+                        document.getElementById('availableBalance').textContent = "{{ _('term.unavailable') }}";
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('availableBalance').textContent = "{{ _('error.load_failed') }}";
+                });
+        } else {
+            document.getElementById('availableBalance').textContent = '-';
+        }
+    }
+
+    // إظهار تحذير الرصيد السالب
+    function showBalanceWarning(balance) {
+        let warningDiv = document.getElementById('balanceWarning');
+        if (!warningDiv) {
+            warningDiv = document.createElement('div');
+            warningDiv.id = 'balanceWarning';
+            warningDiv.className = 'alert alert-warning mt-2';
+            document.getElementById('availableBalance').parentNode.appendChild(warningDiv);
+        }
+
+        warningDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>{{ _('alert.warning') }}:</strong> {{ _('msg.negative_balance_deduction', days='${balance.excess_days.toFixed(1)}') }}
+    `;
+    }
+
+    // إخفاء تحذير الرصيد السالب
+    function hideBalanceWarning() {
+        const warningDiv = document.getElementById('balanceWarning');
+        if (warningDiv) {
+            warningDiv.remove();
+        }
+    }
+
+    // تطبيق الحسابات عند تغيير التواريخ
+    document.getElementById('start_date').addEventListener('change', function () {
+        calculateDays();
+        updateAvailableBalance();
+    });
+    document.getElementById('end_date').addEventListener('change', calculateDays);
+
+    // إضافة مستمع لحدث تغيير الموظف (عبر البحث)
+    document.addEventListener('employeeSelected', function () {
+        updateAvailableBalance();
+    });
+
+    // Handle Leave Type Selection
+    document.getElementById('leave_type_id').addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        
+        // Attachment
+        const requiresAttachment = option.getAttribute('data-requires-attachment') === '1';
+        document.getElementById('attachment_container').style.display = requiresAttachment ? 'block' : 'none';
+        document.getElementById('attachment_asterisk').style.display = requiresAttachment ? 'inline' : 'none';
+        document.getElementById('attachment').required = requiresAttachment;
+
+        // Duration Types
+        const allowHalfDay = option.getAttribute('data-allow-half') === '1';
+        const allowHourly = option.getAttribute('data-allow-hourly') === '1';
+        
+        const durationContainer = document.getElementById('duration_type_container');
+        const optHalf = document.getElementById('opt_half_day');
+        const optHourly = document.getElementById('opt_hourly');
+        
+        // Reset
+        document.getElementById('leave_duration_type').value = 'full_day';
+        document.getElementById('time_inputs_container').style.display = 'none';
+        
+        if(allowHalfDay || allowHourly) {
+            durationContainer.style.display = 'flex';
+            optHalf.style.display = allowHalfDay ? 'block' : 'none';
+            optHourly.style.display = allowHourly ? 'block' : 'none';
+        } else {
+            durationContainer.style.display = 'none';
+        }
+    });
+
+    // Handle Duration Type Selection
+    document.getElementById('leave_duration_type').addEventListener('change', function() {
+        const timeContainer = document.getElementById('time_inputs_container');
+        const startTime = document.getElementById('start_time');
+        const endTime = document.getElementById('end_time');
+        
+        if(this.value === 'hourly' || this.value === 'half_day') {
+            timeContainer.style.display = 'flex';
+            startTime.required = true;
+            endTime.required = true;
+            // Disable end_date and make it same as start_date
+            document.getElementById('end_date').value = document.getElementById('start_date').value;
+            // Optionally, can make it readonly or hidden but keeping it visible for now
+        } else {
+            timeContainer.style.display = 'none';
+            startTime.required = false;
+            endTime.required = false;
+        }
+        calculateDays();
+    });
+
+    // تحديث حالة الإجازة
+    function updateLeaveStatus(leaveId, status) {
+        // Translation keys inside JS
+        const statusApprove = "{{ _('status.approved_action') }}";
+        const statusReject = "{{ _('status.rejected_action') }}";
+        const statusText = status === 'approved' ? statusApprove : statusReject;
+
+        // "Are you sure you want to {status} the leave request?"
+        const confirmMsg = "{{ _('confirm.update_leave_status') }}".replace('%s', statusText);
+
+        if (confirm(confirmMsg)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/leaves/update_status/${leaveId}`;
+
+            const statusInput = document.createElement('input');
+            statusInput.type = 'hidden';
+            statusInput.name = 'status';
+            statusInput.value = status;
+
+            form.appendChild(statusInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // فحص الرصيد السالب وإظهار التنبيهات
+    function checkNegativeBalance() {
+        const alertsContainer = document.getElementById('negativeBalanceAlerts');
+        alertsContainer.innerHTML = '';
+
+        // جلب جميع طلبات الإجازات المعتمدة
+        fetch('/api/leave_balance_alerts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.alerts.length > 0) {
+                    data.alerts.forEach(alert => {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                        // Construct message carefully
+                        alertDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{{ _('alert.warning') }}:</strong> ${alert.employee_name} (${alert.employee_number}) 
+                        {{ _('msg.has_negative_balance') }}: ${alert.balance.toFixed(1)} {{ _('unit.day') }}
+                        <br><small class="text-muted">
+                            {{ _('label.earned_days') }}: ${alert.earned_days.toFixed(1)} | 
+                            {{ _('label.used_days') }}: ${alert.used_days.toFixed(1)} | 
+                            {{ _('label.unpaid_leaves') }}: ${alert.unpaid_leaves_count} (${alert.unpaid_leaves_days.toFixed(1)} {{ _('unit.day') }})
+                        </small>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                        alertsContainer.appendChild(alertDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching balance alerts:', error);
+            });
+    }
+
+    // التحقق من صحة النموذج
+    document.getElementById('addLeaveForm').addEventListener('submit', function (e) {
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+        const today = new Date();
+        const employeeId = document.getElementById('employee_id').value;
+
+        // Allow any start date as requested by the user
+        // Removed: if (startDate < today) ...
+
+        if (endDate < startDate) {
+            e.preventDefault();
+            alert("{{ _('error.end_date_before_start') }}");
+            return;
+        }
+
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+
+        if (daysDiff > 30) {
+            if (!confirm("{{ _('confirm.leave_over_30_days') }}")) {
+                e.preventDefault();
+                return;
+            }
+        }
+
+        // التحقق من الرصيد إذا كان الموظف محدد
+        if (employeeId && startDate) {
+            const month = startDate.getMonth() + 1;
+            const year = startDate.getFullYear();
+
+            fetch(`/api/leave_balance?employee_id=${employeeId}&month=${month}&year=${year}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const balance = data.balance;
+                        if (balance.is_negative && daysDiff > balance.excess_days) {
+                            const excessDays = daysDiff - balance.excess_days;
+                            // Complex confirmation message construction
+                            const msg = `{{ _('warn.negative_balance_increase') }}`
+                                .replace('{balance}', balance.closing_balance.toFixed(1))
+                                .replace('{days}', daysDiff)
+                                .replace('{excess}', excessDays);
+
+                            if (!confirm(msg)) {
+                                e.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking balance:', error);
+                });
+        }
+    });
+
+    // فحص الرصيد السالب عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function () {
+        checkNegativeBalance();
+    });
+
+    const EDIT_LEAVE_URL = {{ url_for('leave.edit_leave', id=0)|tojson }};
+    function openEditLeave(btn) {
+        document.getElementById('el_type').value = btn.dataset.type;
+        document.getElementById('el_start').value = btn.dataset.start;
+        document.getElementById('el_end').value = btn.dataset.end;
+        document.getElementById('el_reason').value = btn.dataset.reason || '';
+        document.getElementById('editLeaveForm').action = EDIT_LEAVE_URL.replace('/0', '/' + btn.dataset.id);
+        new bootstrap.Modal(document.getElementById('editLeaveModal')).show();
+    }
+</script>
+{{ employee_picker_assets() }}
+{% endblock %}

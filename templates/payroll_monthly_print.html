@@ -1,0 +1,93 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<title>{{ _('x.payroll_monthly') }} — {{ '%02d'|format(d.month) }}/{{ d.year }}</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 20px; color: #111; }
+    h2 { margin: 0 0 2px; font-size: 19px; }
+    .sub { color: #555; font-size: 12.5px; margin-bottom: 12px; }
+    .box { border: 1px solid #bbb; border-radius: 8px; padding: 9px 13px; margin-bottom: 12px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+    th, td { border: 1px solid #999; padding: 4px 6px; text-align: center; }
+    thead th { background: #eee; }
+    td.name { text-align: right; }
+    .pos { color: #146c2e; } .neg { color: #b02a37; }
+    .tot { font-weight: 700; background: #f4f4f0; }
+    .lines { text-align: right; font-size: 10.5px; color: #333; }
+    .locked { background: #eaf3ee; border-color: #1F5C4A; color: #14503f; }
+    .sig { margin-top: 34px; display: flex; justify-content: space-between; font-size: 13px; }
+    .sig div { width: 200px; border-top: 1px solid #333; text-align: center; padding-top: 6px; }
+    @media print { .noprint { display: none; } body { margin: 8mm; } }
+    @page { size: A4 landscape; }
+</style>
+</head>
+<body>
+<button class="noprint" onclick="window.print()" style="float:left">🖨 {{ _('x.eh_print') }}</button>
+<h2>{{ _('x.payroll_monthly') }} — {{ '%02d'|format(d.month) }}/{{ d.year }}</h2>
+<div class="sub">{{ company }}{% if dept %} — {{ dept }}{% endif %}</div>
+
+<div class="box grid {% if d.locked %}locked{% endif %}">
+    <span>{{ _('x.pp_period_label') }}: <b>{{ d.period.start }} ← {{ d.period.end }}</b></span>
+    <span>{{ _('x.oc_total') }}: <b>{{ d.rows|length }}</b></span>
+    <span class="pos">{{ _('x.pm_allowances') }}: <b>{{ fmt|format(d.totals.allowances or 0) }}</b></span>
+    <span class="neg">{{ _('x.pm_deductions') }}: <b>{{ fmt|format(d.totals.deductions or 0) }}</b></span>
+    <span>{{ _('x.pm_net') }}: <b>{{ fmt|format(d.totals.net or 0) }} {{ currency }}</b></span>
+    {% if d.locked %}<span><b>{{ _('x.pm_locked_badge') }}</b></span>{% endif %}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:34px">#</th>
+            <th style="width:120px">{{ _('x.hp_employee') }}</th>
+            <th>{{ _('x.pm_basic') }}</th>
+            <th style="width:26%">{{ _('x.pm_allowances') }}</th>
+            <th>{{ _('x.pm_allowances') }}</th>
+            <th style="width:26%">{{ _('x.pm_deductions') }}</th>
+            <th>{{ _('x.pm_deductions') }}</th>
+            <th>{{ _('x.pm_net') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in d.rows %}
+        <tr>
+            <td>{{ r.employee_number }}</td>
+            <td class="name">{{ r.arabic_name or r.name }}<br>
+                <span style="color:#777;font-size:10px">{{ r.department or '' }}</span></td>
+            <td>{{ fmt|format(r.basic or 0) }}</td>
+            <td class="lines">
+                {% for a in r.allowances %}
+                <div class="pos">+ {{ a.name_ar or a.name_en }}: {{ fmt|format(a.amount) }}</div>
+                {% else %}—{% endfor %}
+            </td>
+            <td class="pos">{{ fmt|format(r.total_allowances or 0) }}</td>
+            <td class="lines">
+                {% for x in r.deductions %}
+                <div class="neg">− {{ x.name_ar or x.name_en }}: {{ fmt|format(x.amount) }}</div>
+                {% else %}—{% endfor %}
+            </td>
+            <td class="neg">{{ fmt|format(r.total_deductions or 0) }}</td>
+            <td><b>{{ fmt|format(r.net or 0) }}</b></td>
+        </tr>
+        {% endfor %}
+        <tr class="tot">
+            <td colspan="2">{{ _('x.eh_totals') }}</td>
+            <td>{{ fmt|format(d.totals.basic or 0) }}</td>
+            <td></td>
+            <td class="pos">{{ fmt|format(d.totals.allowances or 0) }}</td>
+            <td></td>
+            <td class="neg">{{ fmt|format(d.totals.deductions or 0) }}</td>
+            <td>{{ fmt|format(d.totals.net or 0) }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="sig">
+    <div>{{ _('x.eh_sig_hr') }}</div>
+    <div>{{ _('x.eh_sig_acc') }}</div>
+    <div>{{ _('x.pm_sig_manager') }}</div>
+</div>
+</body>
+</html>

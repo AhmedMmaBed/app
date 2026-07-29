@@ -1,0 +1,947 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('attendance.summary_title') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0"><i class="fas fa-th me-2"></i>{{ _('x.attendance_summary_custom_period') }}
+        </h5>
+      </div>
+      <form class="row g-2" method="GET">
+        <div class="col-auto">
+          <input type="text" name="q" value="{{ q or '' }}" class="form-control"
+            placeholder="{{ _('search.placeholder_name_num') }}">
+        </div>
+        <div class="col-auto">
+          <select name="dept" id="deptFilter" class="form-select">
+            <option value="">{{ _('attendance.all_departments') }}</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <input type="date" name="start_date" value="{{ start_date }}" class="form-control" title="{{ _('x.start_date') }}">
+        </div>
+        <div class="col-auto">
+          <input type="date" name="end_date" value="{{ end_date }}" class="form-control" title="{{ _('x.end_date') }}">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-primary" type="submit"><i class="fas fa-search me-1"></i>{{ _('btn.view') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Legend / دليل الرموز -->
+  <div class="mb-3 p-3 border rounded bg-light">
+      <span class="fw-bold me-2"><i class="fas fa-info-circle me-1"></i>{{ _('x.legend') }}</span>
+      <span class="badge bg-success me-2">{{ _('x.present_no_hours') }}</span>
+      <span class="badge bg-secondary text-dark me-2 border">{{ _("symbol.weekend") | tojson }} {{ _('x.weekly_off') }}</span>
+      <span class="badge bg-warning text-dark me-2">{{ _("symbol.holiday") | tojson }} {{ _('x.official_holiday') }}</span>
+      <span class="badge bg-info text-dark me-2">{{ _("symbol.leave") | tojson }} {{ _('x.approved_leave') }}</span>
+      <span class="badge bg-danger me-2">{{ _("symbol.absent") | tojson }} {{ _('x.absence') }}</span>
+      <span class="badge bg-danger text-white me-2" style="border:1px solid #A8402F;">{{ _("symbol.invalid") | tojson }} {{ _('x.missing_punch') }}</span>
+      <span class="text-muted small ms-2">{{ _('x.numbers_are_work_hours') }}</span>
+  </div>
+
+  <div class="d-flex justify-content-end mb-2 gap-2">
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="scrollGrid(-1)"><i
+        class="fas fa-arrow-left"></i></button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="scrollGrid(1)"><i
+        class="fas fa-arrow-right"></i></button>
+    <button type="button" class="btn btn-sm btn-success" id="btnExportExcel"><i class="fas fa-file-excel me-1"></i>{{
+      _('btn.export_excel') }}</button>
+    <button type="button" class="btn btn-sm btn-success" id="btnExportTimesheet"><i
+        class="fas fa-file-excel me-1"></i>{{ _('btn.export_monthly_report') }}</button>
+  </div>
+
+  <div class="table-responsive table-scroll-x" id="gridWrapper">
+    <table class="table table-bordered table-sm align-middle attendance-grid">
+      <thead class="table-light">
+        <tr>
+          <th class="emp-col">{{ _('attendance.employee') }}</th>
+          {% for d in days_names %}
+          <th class="text-center day-col">
+            {{ d[0].split('-')[2] }}/{{ d[0].split('-')[1] }}
+            <small class="day-name d-block text-muted">{{ d[1] }}</small>
+          </th>
+          {% endfor %}
+          <th class="text-center">{{ _('attendance.total') }}</th>
+        </tr>
+      </thead>
+      <tbody id="gridBody">
+        <!-- Loader / Skeleton (Facebook Style Shimmer) -->
+        <tr id="gridLoader">
+          <td colspan="{{ days_diff + 2 }}" class="p-4">
+            <div id="skeleton-loader">
+              <!-- Header imitation -->
+              <div class="d-flex align-items-center mb-4">
+                <div class="shimmer-circle me-3"></div>
+                <div style="width: 30%">
+                  <div class="shimmer-line mb-2" style="width: 60%"></div>
+                  <div class="shimmer-line" style="width: 40%"></div>
+                </div>
+              </div>
+              <!-- Rows imitation -->
+              <div class="shimmer-line mb-3"></div>
+              <div class="shimmer-line mb-3" style="width: 90%"></div>
+              <div class="shimmer-line mb-3" style="width: 95%"></div>
+              <div class="shimmer-line mb-3" style="width: 85%"></div>
+              <div class="shimmer-line mb-3"></div>
+              <div class="shimmer-line" style="width: 80%"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<style>
+  .attendance-grid th,
+  .attendance-grid td {
+    padding: .15rem .25rem;
+    line-height: 1.1;
+    font-size: 12px;
+  }
+
+  .attendance-grid .emp-col {
+    min-width: 160px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #fff;
+  }
+
+  .attendance-grid .status-cell span {
+    font-size: 12px;
+  }
+
+  .attendance-grid thead th {
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    color: #000;
+  }
+
+  .attendance-grid thead th.emp-col {
+    z-index: 4;
+  }
+
+  .attendance-grid .day-col {
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+  }
+
+  .attendance-grid .day-name {
+    font-size: 6px;
+    line-height: 1;
+    margin-top: -2px;
+    display: block;
+  }
+
+  /* غلاف التمرير الأفقي مع سحب بالماوس */
+  .table-scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: grab;
+  }
+
+  .table-scroll-x:active {
+    cursor: grabbing;
+  }
+
+  /* ألوان نصوص الحالات لتحسين الوضوح */
+  .attendance-grid td.status-present {
+    color: #1F5C4A;
+  }
+
+  .attendance-grid td.status-absent {
+    color: #A8402F;
+  }
+
+  .attendance-grid td.status-leave {
+    color: #1F5C4A;
+  }
+
+  .attendance-grid td.status-weekly_off {
+    color: #5F6B62;
+  }
+
+  .attendance-grid td.status-holiday {
+    color: #8A6420;
+  }
+
+  /* تأثير خفيف عند المرور */
+  .attendance-grid td.status-cell:hover {
+    background: #FAFAF7;
+  }
+
+  /* Shimmer Effect CSS */
+  .shimmer-line {
+    height: 16px;
+    background: linear-gradient(90deg, #F1EFE8 25%, #DAD7CB 50%, #F1EFE8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .shimmer-circle {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(90deg, #F1EFE8 25%, #DAD7CB 50%, #F1EFE8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 50%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    loadAttendanceData();
+  });
+
+  async function loadAttendanceData() {
+    const params = new URLSearchParams(window.location.search);
+    try {
+      const response = await fetch(`/api/fingerprint/custom_attendance_summary?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        // ترتيب الموظفين تصاعدياً بناءً على رقم الملف
+        data.rows.sort((a, b) => {
+            let numA = parseInt(a.employee_number, 10);
+            if (isNaN(numA)) numA = 999999;
+            let numB = parseInt(b.employee_number, 10);
+            if (isNaN(numB)) numB = 999999;
+            return numA - numB;
+        });
+
+        window.reportData = data.rows;
+        renderGrid(data.rows);
+      } else {
+        showError(data.message || '{{ _("error.unknown") }}');
+      }
+    } catch (error) {
+      showError('{{ _("error.connection_error") }}');
+      console.error(error);
+    }
+  }
+
+  function renderGrid(rows) {
+    const tbody = document.getElementById('gridBody');
+    tbody.innerHTML = '';
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="100%" class="text-center py-4">{{ _('attendance.no_data') }}</td></tr>`;
+      return;
+    }
+
+    rows.forEach(r => {
+      let cellsHtml = '';
+      r.cells.forEach(c => {
+        let symbol = '';
+        let colorClass = '';
+
+        if (c.single_punch) {
+          symbol = '<span class="text-danger" title="{{ _("attendance.single_punch") }}">&#10068;</span>';
+        } else if (c.late_after_grace) {
+          symbol = '<span class="text-warning" title="{{ _("attendance.late_after_grace") }}">&#9888;</span>';
+        } else if (c.status === 'present') {
+          symbol = '<span class="text-success">&#10003;</span>';
+        } else if (c.status === 'leave') {
+          symbol = '<span class="text-primary">&#1F5C4A;</span>';
+        } else if (c.status === 'holiday') {
+          symbol = '<span class="text-warning">&#163F32;</span>';
+        } else if (c.status === 'weekly_off') {
+          symbol = '<span class="text-secondary">&#9200;</span>';
+        } else { // absent
+          symbol = '<span class="text-danger">&#10007;</span>';
+        }
+
+        colorClass = `status-${c.status}`;
+
+        cellsHtml += `
+                <td class="text-center status-cell day-col ${colorClass}" 
+                    title="" 
+                    data-tooltip-html="${(c.tooltip_html || '').replace(/"/g, '&quot;')}"
+                    data-emp-id="${r.employee_id}" 
+                    data-emp-name="${r.name}"
+                    data-emp-number="${r.employee_number}"
+                    data-dept="${r.department}"
+                    data-date="${c.date}">
+                    ${symbol}
+                </td>
+            `;
+      });
+
+      const tr = document.createElement('tr');
+      tr.dataset.costCenter = r.cost_center || '';
+      tr.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width:32px;height:32px">
+                        <i class="fas fa-user text-muted"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">${r.name}</div>
+                        ${r.arabic_name ? `<div class="text-dark fw-bold small">${r.arabic_name}</div>` : ''}
+                        <small class="text-muted">${r.position} - ${r.department}</small>
+                    </div>
+                </div>
+            </td>
+            ${cellsHtml}
+            <td class="text-center fw-bold text-success">${r.present_count || 0}</td>
+        `;
+      tbody.appendChild(tr);
+    });
+
+    // Trigger event listeners attachment after render
+    if (window.attachGridEvents) window.attachGridEvents();
+  }
+
+  function showError(msg) {
+    const tbody = document.getElementById('gridBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="100%" class="text-center text-danger py-5">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
+                ${msg}
+            </td>
+        </tr>
+    `;
+  }
+
+  (function () {
+    const wrapper = document.getElementById('gridWrapper');
+    if (!wrapper) return;
+    // ملء الأقسام ديناميكياً وتحديد القيمة المختارة
+    (async function fillDepts() {
+      try {
+        const res = await fetch('/api/departments');
+        const data = await res.json();
+        if (!data.success) return;
+        const sel = document.getElementById('deptFilter');
+        if (!sel) return;
+        const current = '{{ dept or "" }}';
+        (data.departments || []).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d; opt.textContent = d;
+          if (current && current === d) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      } catch (e) { }
+    })();
+    window.scrollGrid = function (dir) {
+      const step = 280;
+      wrapper.scrollBy({ left: dir * step, behavior: 'smooth' });
+    };
+    let isDown = false, startX = 0, scrollLeft = 0;
+    wrapper.addEventListener('mousedown', (e) => {
+      isDown = true;
+      startX = e.pageX - wrapper.offsetLeft;
+      scrollLeft = wrapper.scrollLeft;
+    });
+    wrapper.addEventListener('mouseleave', () => { isDown = false; });
+    wrapper.addEventListener('mouseup', () => { isDown = false; });
+    wrapper.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - wrapper.offsetLeft;
+      const walk = (x - startX);
+      wrapper.scrollLeft = scrollLeft - walk;
+    });
+
+    // تصدير إلى Excel
+    const btnExport = document.getElementById('btnExportExcel');
+    if (btnExport) {
+      btnExport.addEventListener('click', () => {
+        try {
+          const wb = XLSX.utils.book_new();
+          // ورقة 1: الشبكة كما تظهر
+          const table = document.querySelector('table.attendance-grid');
+          if (!table) { showAlert('{{ _("error.no_table_to_export") }}', 'danger'); return; }
+          const ws1 = XLSX.utils.table_to_sheet(table, { raw: true });
+          
+          // إعدادات الطباعة للورقة الأولى
+          ws1['!dir'] = 'rtl';
+          ws1['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToWidth: 1, fitToHeight: 0 };
+          
+          XLSX.utils.book_append_sheet(wb, ws1, '{{ _("attendance.summary_sheet") }}');
+
+          // ورقة 2: تفاصيل يومية قابلة للتحليل
+          const rowsArray = [];
+          // رؤوس الأعمدة
+          rowsArray.push([{{ _('x.employee_number')|tojson }}, {{ _('x.employee_name')|tojson }}, {{ _('x.department')|tojson }}, {{ _('x.date')|tojson }}, {{ _('x.status')|tojson }}, {{ _('x.check_in_time')|tojson }}, {{ _('x.check_out_time')|tojson }}, {{ _('x.work_hours')|tojson }}, {{ _('x.late_minutes')|tojson }}, {{ _('x.missing_punch')|tojson }}]);
+          if (window.reportData) {
+            window.reportData.forEach(r => {
+                r.cells.forEach(c => {
+                    rowsArray.push([
+                        r.employee_number || '',
+                        r.name || '',
+                        r.department || '',
+                        c.date || '',
+                        c.status || '',
+                        c.check_in || '',
+                        c.check_out || '',
+                        c.work_hours || 0,
+                        c.late_minutes || 0,
+                        c.single_punch ? {{ _('x.yes')|tojson }} : {{ _('x.no')|tojson }}
+                    ]);
+                });
+            });
+          }
+          const ws2 = XLSX.utils.aoa_to_sheet(rowsArray);
+          
+          // إعدادات الطباعة للورقة الثانية
+          ws2['!dir'] = 'rtl';
+          ws2['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToWidth: 1, fitToHeight: 0 };
+          ws2['!cols'] = [{wch: 12}, {wch: 25}, {wch: 15}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 10}];
+
+          XLSX.utils.book_append_sheet(wb, ws2, '{{ _("attendance.details_sheet") }}');
+          XLSX.writeFile(wb, 'custom-attendance-summary-{{ start_date }}-{{ end_date }}.xlsx');
+        } catch (e) {
+          showAlert('{{ _("error.export_failed") }}: ' + e.message, 'danger');
+        }
+      });
+    }
+
+    // تصدير تقرير شهري
+    const btnTimesheet = document.getElementById('btnExportTimesheet');
+    if (btnTimesheet) {
+      btnTimesheet.addEventListener('click', () => {
+        try {
+          const wb = XLSX.utils.book_new();
+          /* daysInMonth: using safe conversion */
+          const daysInMonth = Number("{{ days_diff }}");
+          // العناوين
+          const header = ['file #', 'Name', 'Dept.', 'Cost Center', 'Job -E.'];
+          for (let d = 1; d <= daysInMonth; d++) header.push(String(d));
+          header.push('T. W. Hours', 'T. Late. Hours', 'T. W. Days', 'Absent Days', 'Deduction Notices');
+
+          const rows = [header];
+          document.querySelectorAll('tbody tr').forEach(tr => {
+            const name = tr.querySelector('.fw-bold')?.textContent?.trim() || '';
+            const meta = tr.querySelector('td:first-child small')?.textContent?.trim() || '';
+            // meta: "position - department"
+            const parts = meta.split('-');
+            const job = (parts[0] || '').trim();
+            const dept = (parts[1] || '').trim();
+            // employee number من أول خلية يوم
+            const firstCell = tr.querySelector('td.status-cell');
+            const empNo = firstCell ? (firstCell.getAttribute('data-emp-number') || '') : '';
+
+            const dailyHours = [];
+            let totalHours = 0;
+            let totalLateHours = 0;
+            let workDays = 0;
+            let absentDays = 0;
+            let deductionCount = 0;
+
+            tr.querySelectorAll('td.status-cell').forEach(td => {
+              const tipHtml = td.getAttribute('data-tooltip-html') || '';
+              // دخول/خروج
+              const ciMatch = tipHtml.match(/<strong>دخول:<\/strong>\s*([^<]+)/);
+              const coMatch = tipHtml.match(/<strong>خروج:<\/strong>\s*([^<]+)/);
+              const ci = ciMatch ? ciMatch[1].trim() : '';
+              const co = coMatch ? coMatch[1].trim() : '';
+              let hours = 0;
+              if (ci && co && ci !== '-' && co !== '-') {
+                const [ciH, ciM] = ci.split(':').map(Number);
+                const [coH, coM] = co.split(':').map(Number);
+                const startMin = ciH * 60 + ciM;
+                const endMin = coH * 60 + coM;
+                let diffMin = endMin - startMin;
+                if (diffMin < 0) diffMin += 24 * 60; // عبور منتصف الليل
+                hours = Math.round((diffMin / 60) * 10) / 10; // خانة عشرية
+              }
+              dailyHours.push(hours);
+              totalHours += hours;
+
+              // تأخير بعد السماح بالدقائق
+              const netLateMatch = tipHtml.match(/<strong>صافي التأخير:<\/strong>\s*(\d+)د/);
+              const lateAfterMin = netLateMatch ? parseInt(netLateMatch[1], 10) : 0;
+              totalLateHours += (lateAfterMin / 60);
+
+              // حالات اليوم
+              const cls = td.className;
+              if (cls.includes('status-present')) workDays += 1;
+              if (cls.includes('status-absent')) absentDays += 1;
+
+              if (tipHtml.includes({{ _('x.deduction_notice')|tojson }})) deductionCount += 1;
+            });
+
+            const costCenter = tr.getAttribute('data-cost-center') || '';
+            const row = [empNo, name, dept, costCenter, job];
+            // إضافة ساعات الأيام
+            for (let i = 0; i < daysInMonth; i++) row.push(dailyHours[i] || 0);
+            row.push(Math.round(totalHours * 10) / 10);
+            row.push(Math.round(totalLateHours * 10) / 10);
+            row.push(workDays);
+            row.push(absentDays);
+            row.push(deductionCount);
+            rows.push(row);
+          });
+
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, 'Time Attendance');
+          XLSX.writeFile(wb, 'custom-time-attendance-{{ start_date }}-{{ end_date }}.xlsx');
+        } catch (e) {
+          showAlert('{{ _("error.export_failed") }}: ' + e.message, 'danger');
+        }
+      });
+    }
+    // Removed day logic since we render directly in jinja for custom ranges
+
+    // بوب-أب لطيف عند المرور على الخلية
+    const tip = document.createElement('div');
+    tip.className = 'rounded shadow border bg-white p-2 position-absolute';
+    tip.style.display = 'none';
+    tip.style.zIndex = '9999';
+    tip.style.minWidth = '160px';
+    tip.style.fontSize = '12px';
+    document.body.appendChild(tip);
+
+    function showTip(html, x, y) {
+      tip.innerHTML = html || '';
+      tip.style.left = (x + 12) + 'px';
+      tip.style.top = (y + 12) + 'px';
+      tip.style.display = html ? 'block' : 'none';
+    }
+
+    // وظيفة ربط الأحداث للخلايا (Global exposed)
+    window.attachGridEvents = function () {
+      // حالة آخر خلية مختارة من المستخدم
+      let lastPick = { date: '', empId: '', empName: '', empNumber: '' };
+
+      document.querySelectorAll('td.status-cell').forEach(td => {
+        // remove old listeners to prevent dupes (naive check, better to just not re-bind if bound)
+        if (td.dataset.boundEvents) return;
+
+        td.addEventListener('mouseenter', (e) => {
+          const html = td.getAttribute('data-tooltip-html');
+          // console.log('Tooltip hover:', html ? 'Found' : 'No data');
+          if (html) showTip(html, e.pageX, e.pageY);
+        });
+        td.addEventListener('mousemove', (e) => {
+          if (tip.style.display === 'block') {
+            tip.style.left = (e.pageX + 12) + 'px';
+            tip.style.top = (e.pageY + 12) + 'px';
+          }
+        });
+        td.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+        // قائمة سياقية يمين الماوس
+        td.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          // إخفاء التولتيب إن ظاهر
+          tip.style.display = 'none';
+          const menu = document.getElementById('dayContextMenu');
+          const empId = td.getAttribute('data-emp-id');
+          const empName = td.getAttribute('data-emp-name');
+          const empNumber = td.getAttribute('data-emp-number');
+          const dateStr = td.getAttribute('data-date');
+          document.getElementById('ctxEmpId').value = empId || '';
+          document.getElementById('ctxDate').value = dateStr || '';
+          const nEl = document.getElementById('ctxEmpName');
+          if (nEl) nEl.value = empName || '';
+          const numEl = document.getElementById('ctxEmpNumber');
+          if (numEl) numEl.value = empNumber || '';
+          // احفظ آخر اختيار
+          lastPick = { date: dateStr || '', empId: empId || '', empName: empName || '', empNumber: empNumber || '' };
+          // تمرير البيانات لزرّ الفتح نفسه ليستلمها المودال عبر relatedTarget
+          const quickBtn = document.getElementById('ctxQuickLeave');
+          if (quickBtn) {
+            quickBtn.dataset.date = dateStr || '';
+            quickBtn.dataset.empId = empId || '';
+            quickBtn.dataset.empName = empName || '';
+            quickBtn.dataset.empNumber = empNumber || '';
+          }
+          const dedBtn = document.getElementById('ctxDeduction');
+          if (dedBtn) {
+            dedBtn.dataset.date = dateStr || '';
+            dedBtn.dataset.empId = empId || '';
+            dedBtn.dataset.empName = empName || '';
+            dedBtn.dataset.empNumber = empNumber || '';
+          }
+          const rect = document.body.getBoundingClientRect();
+          menu.style.left = (e.pageX) + 'px';
+          menu.style.top = (e.pageY) + 'px';
+          menu.style.display = 'block';
+        });
+
+        td.dataset.boundEvents = "1";
+      });
+    };
+
+    // Call initially if there are static rows (unlikely now)
+    window.attachGridEvents();
+
+    // إغلاق القائمة عند الضغط خارجها
+    document.addEventListener('click', () => {
+      const menu = document.getElementById('dayContextMenu');
+      if (menu) menu.style.display = 'none';
+    });
+
+    // فتح مودال الإجازة السريعة
+    const ctxQuickLeaveBtn = document.getElementById('ctxQuickLeave');
+    if (ctxQuickLeaveBtn) {
+      ctxQuickLeaveBtn.addEventListener('click', () => {
+        const dateStr = lastPick.date || document.getElementById('ctxDate').value;
+        const leaveDateInput = document.getElementById('leaveDate');
+        if (leaveDateInput) leaveDateInput.value = dateStr;
+        const menuEl = document.getElementById('dayContextMenu');
+        if (menuEl) menuEl.style.display = 'none';
+      });
+    }
+
+    // فتح مودال الخصم
+    const ctxDeductionBtn = document.getElementById('ctxDeduction');
+    if (ctxDeductionBtn) {
+      ctxDeductionBtn.addEventListener('click', () => {
+        const dateStr = lastPick.date || document.getElementById('ctxDate').value;
+        const deductionDateInput = document.getElementById('deductionDate');
+        if (deductionDateInput) deductionDateInput.value = dateStr;
+        const menuEl = document.getElementById('dayContextMenu');
+        if (menuEl) menuEl.style.display = 'none';
+      });
+    }
+
+    // ضمان تعبئة التاريخ لحظة فتح المودال (لو ترتيب الأحداث اختلف)
+    if (window.bootstrap) {
+      const leaveModalEl = document.getElementById('quickLeaveModal');
+      if (leaveModalEl) {
+        leaveModalEl.addEventListener('show.bs.modal', (ev) => {
+          // أولوية: القراءة من الزر الذي فتح المودال (relatedTarget)
+          let dateStr = (ev && ev.relatedTarget && ev.relatedTarget.dataset && ev.relatedTarget.dataset.date) || lastPick.date;
+          if (!dateStr) dateStr = document.getElementById('ctxDate').value;
+          const leaveDateInput = document.getElementById('leaveDate');
+          if (leaveDateInput) leaveDateInput.value = dateStr || '';
+        });
+      }
+      const deductionModalEl = document.getElementById('deductionModal');
+      if (deductionModalEl) {
+        deductionModalEl.addEventListener('show.bs.modal', (ev) => {
+          let dateStr = (ev && ev.relatedTarget && ev.relatedTarget.dataset && ev.relatedTarget.dataset.date) || lastPick.date;
+          if (!dateStr) dateStr = document.getElementById('ctxDate').value;
+          const deductionDateInput = document.getElementById('deductionDate');
+          if (deductionDateInput) deductionDateInput.value = dateStr || '';
+        });
+      }
+    }
+
+    // حفظ إجازة سريعة (تنفيذ لاحق عبر API)
+    const saveLeaveBtn = document.getElementById('saveQuickLeave');
+    if (saveLeaveBtn) {
+      saveLeaveBtn.addEventListener('click', () => {
+        const empId = document.getElementById('ctxEmpId').value;
+        const dateStr = document.getElementById('leaveDate').value;
+        const type = document.getElementById('leaveType').value;
+        const note = document.getElementById('leaveNote').value;
+        showAlert(`{{ _("msg.leave_request_prepared") }}`, 'success');
+        if (window.bootstrap) bootstrap.Modal.getInstance(document.getElementById('quickLeaveModal')).hide();
+        // طباعة سند بسيط
+        const empName = document.getElementById('ctxEmpName').value;
+        const empNumber = document.getElementById('ctxEmpNumber').value;
+        try {
+          const win = window.open('', '_blank');
+          if (!win || !win.document) {
+            showAlert('{{ _("msg.popup_blocked") }}', 'warning');
+          } else {
+            win.document.write(`
+            <html><head><title>{{ _("print.leave_receipt") }}</title>
+            <style>body{font-family:Tahoma,Arial} .title{font-size:18px;margin-bottom:10px} .row{margin:6px 0}</style>
+            </head><body dir='{{ get_locale().text_direction or "rtl" }}'>
+            <div class='title'>{{ _("print.leave_receipt") }}</div>
+            <div class='row'><strong>{{ _("print.employee") }}:</strong> ${empName} (${empNumber})</div>
+            <div class='row'><strong>{{ _("print.date") }}:</strong> ${dateStr}</div>
+            <div class='row'><strong>{{ _("print.leave_type") }}:</strong> ${type}</div>
+            <div class='row'><strong>{{ _("print.note") }}:</strong> ${note || '-'}</div>
+            <hr><div class='row'>{{ _("print.print_date") }}: ${new Date().toLocaleString()}</div>
+            </body></html>
+          `);
+            win.document.close(); win.focus(); win.print(); win.close();
+          }
+        } catch (e) {
+          showAlert('{{ _("error.print_failed") }}', 'warning');
+        }
+      });
+    }
+
+    // إرسال إشعار خصم (تنفيذ لاحق عبر API)
+    const saveDeductionBtn = document.getElementById('saveDeduction');
+    if (saveDeductionBtn) {
+      saveDeductionBtn.addEventListener('click', () => {
+        const empId = document.getElementById('ctxEmpId').value;
+        const dateStr = document.getElementById('deductionDate').value;
+        const amount = document.getElementById('deductionAmount').value;
+        const reason = document.getElementById('deductionReason').value;
+        fetch('/api/deductions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ employee_id: empId, date: dateStr, amount: amount, reason: reason })
+        }).then(r => r.json()).then(data => {
+          if (!data.success) { throw new Error(data.message || '{{ _("error.save_failed") }}'); }
+          showAlert(`{{ _("msg.deduction_saved") }}`, 'success');
+          if (window.bootstrap) bootstrap.Modal.getInstance(document.getElementById('deductionModal')).hide();
+          // تحديث بوب-أب اليوم ليظهر أنه تم عمل إشعار خصم
+          const cell = document.querySelector(`td.status-cell[data-emp-id="${empId}"][data-date="${dateStr}"]`);
+          if (cell) {
+            let html = cell.getAttribute('data-tooltip-html') || '';
+            const noteHtml = "<div dir='rtl' style='color:#A8402F'><strong>{{ _('attendance.deduction_notice') }}:</strong> {{ _('attendance.created') }}</div>";
+            if (!html.includes('{{ _("attendance.deduction_notice") }}')) {
+              html = html + noteHtml;
+              cell.setAttribute('data-tooltip-html', html);
+            }
+          }
+          // طباعة سند خصم
+          const empName = document.getElementById('ctxEmpName').value;
+          const empNumber = document.getElementById('ctxEmpNumber').value;
+          try {
+            const win = window.open('', '_blank');
+            if (!win || !win.document) {
+              showAlert('{{ _("msg.popup_blocked") }}', 'warning');
+            } else {
+              win.document.write(`
+              <html><head><title>{{ _("print.deduction_receipt") }}</title>
+              <style>body{font-family:Tahoma,Arial} .title{font-size:18px;margin-bottom:10px} .row{margin:6px 0}</style>
+              </head><body dir='{{ get_locale().text_direction or "rtl" }}'>
+              <div class='title'>{{ _("print.deduction_receipt") }}</div>
+              <div class='row'><strong>{{ _("print.employee") }}:</strong> ${empName} (${empNumber})</div>
+              <div class='row'><strong>{{ _("print.date") }}:</strong> ${dateStr}</div>
+              <div class='row'><strong>{{ _("print.amount_minutes") }}:</strong> ${amount}</div>
+              <div class='row'><strong>{{ _("print.reason") }}:</strong> ${reason || '-'}</div>
+              <hr><div class='row'>{{ _("print.print_date") }}: ${new Date().toLocaleString()}</div>
+              </body></html>
+            `);
+              win.document.close(); win.focus(); win.print(); win.close();
+            }
+          } catch (e) {
+            showAlert('{{ _("error.print_failed") }}', 'warning');
+          }
+        }).catch(err => {
+          showAlert(`{{ _("error.deduction_save_failed") }}: ${err.message}`, 'danger');
+        });
+        // طباعة سند خصم
+      });
+    }
+
+    // في بعض المتصفحات قد يُنفذ السكربت قبل إنشاء عناصر القائمة/المودالات
+    // نربط نفس الأحداث بعد اكتمال تحميل الصفحة كضمان إضافي
+    window.addEventListener('load', () => {
+      // ربط فتح مودال الإجازة
+      const btnQL = document.getElementById('ctxQuickLeave');
+      if (btnQL && !btnQL.dataset.bound) {
+        btnQL.addEventListener('click', () => {
+          const dateStr = lastPick.date || document.getElementById('ctxDate').value;
+          const leaveDateInput = document.getElementById('leaveDate');
+          if (leaveDateInput) leaveDateInput.value = dateStr || '';
+          const menuEl = document.getElementById('dayContextMenu');
+          if (menuEl) menuEl.style.display = 'none';
+        });
+        btnQL.dataset.bound = '1';
+      }
+      // ربط فتح مودال الخصم
+      const btnDed = document.getElementById('ctxDeduction');
+      if (btnDed && !btnDed.dataset.bound) {
+        btnDed.addEventListener('click', () => {
+          const dateStr = lastPick.date || document.getElementById('ctxDate').value;
+          const deductionDateInput = document.getElementById('deductionDate');
+          if (deductionDateInput) deductionDateInput.value = dateStr || '';
+          const menuEl = document.getElementById('dayContextMenu');
+          if (menuEl) menuEl.style.display = 'none';
+        });
+        btnDed.dataset.bound = '1';
+      }
+      // ربط زرّي الحفظ إن لم يرتبطا
+      const svLeave = document.getElementById('saveQuickLeave');
+      if (svLeave && !svLeave.dataset.bound) {
+        svLeave.addEventListener('click', () => {
+          const empId = document.getElementById('ctxEmpId').value;
+          const dateStr = document.getElementById('leaveDate').value;
+          const type = document.getElementById('leaveType').value;
+          const note = document.getElementById('leaveNote').value;
+          showAlert(`{{ _("msg.leave_request_prepared") }}`, 'success');
+          if (window.bootstrap) bootstrap.Modal.getInstance(document.getElementById('quickLeaveModal')).hide();
+          const empName = document.getElementById('ctxEmpName').value;
+          const empNumber = document.getElementById('ctxEmpNumber').value;
+          try {
+            const win = window.open('', '_blank');
+            if (!win || !win.document) {
+              showAlert('{{ _("msg.popup_blocked") }}', 'warning');
+            } else {
+              win.document.write(`
+              <html><head><title>{{ _("print.leave_receipt") }}</title>
+              <style>body{font-family:Tahoma,Arial} .title{font-size:18px;margin-bottom:10px} .row{margin:6px 0}</style>
+              </head><body dir='{{ get_locale().text_direction or "rtl" }}'>
+              <div class='title'>{{ _("print.leave_receipt") }}</div>
+              <div class='row'><strong>{{ _('x.employee_colon') }}</strong> ${empName} (${empNumber})</div>
+              <div class='row'><strong>{{ _('x.date_colon') }}</strong> ${dateStr}</div>
+              <div class='row'><strong>{{ _('x.leave_type') }}:</strong> ${type}</div>
+              <div class='row'><strong>{{ _('x.note_colon') }}</strong> ${note || '-'}</div>
+              <hr><div class='row'>{{ _('x.print_date_colon') }} ${new Date().toLocaleString({{ ("ar-EG" if get_locale()|string == "ar" else "en-GB")|tojson }})}</div>
+              </body></html>
+            `);
+              win.document.close(); win.focus(); win.print(); win.close();
+            }
+          } catch (e) {
+            showAlert({{ _('x.prepared_print_failed')|tojson }}, 'warning');
+          }
+        });
+        svLeave.dataset.bound = '1';
+      }
+      const svDed = document.getElementById('saveDeduction');
+      if (svDed && !svDed.dataset.bound) {
+        svDed.addEventListener('click', () => {
+          const empId = document.getElementById('ctxEmpId').value;
+          const dateStr = document.getElementById('deductionDate').value;
+          const amount = document.getElementById('deductionAmount').value;
+          const reason = document.getElementById('deductionReason').value;
+          fetch('/api/deductions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employee_id: empId, date: dateStr, amount, reason })
+          }).then(r => r.json()).then(data => {
+            if (!data.success) throw new Error(data.message || {{ _('x.save_failed')|tojson }});
+            showAlert(`{{ _('x.deduction_saved_p1') }} (${amount}) {{ _('x.deduction_saved_p2') }} ${empId} {{ _('x.deduction_saved_p3') }} ${dateStr}.`, 'success');
+            if (window.bootstrap) bootstrap.Modal.getInstance(document.getElementById('deductionModal')).hide();
+            const cell = document.querySelector(`td.status-cell[data-emp-id="${empId}"][data-date="${dateStr}"]`);
+            if (cell) {
+              let html = cell.getAttribute('data-tooltip-html') || '';
+              const noteHtml = {{ _('x.deduction_notice_created_html')|tojson }};
+              if (!html.includes({{ _('x.deduction_notice')|tojson }})) { cell.setAttribute('data-tooltip-html', html + noteHtml); }
+            }
+            const empName = document.getElementById('ctxEmpName').value;
+            const empNumber = document.getElementById('ctxEmpNumber').value;
+            try {
+              const win = window.open('', '_blank');
+              if (!win || !win.document) {
+                showAlert({{ _('x.saved_enable_popups')|tojson }}, 'warning');
+              } else {
+                win.document.write(`
+                <html><head><title>{{ _('x.deduction_voucher') }}</title>
+                <style>body{font-family:Tahoma,Arial} .title{font-size:18px;margin-bottom:10px} .row{margin:6px 0}</style>
+                </head><body dir='{{ get_direction() }}'>
+                <div class='title'>{{ _('x.deduction_voucher') }}</div>
+                <div class='row'><strong>{{ _('x.employee_colon') }}</strong> ${empName} (${empNumber})</div>
+                <div class='row'><strong>{{ _('x.date_colon') }}</strong> ${dateStr}</div>
+                <div class='row'><strong>{{ _('x.amount_minutes_colon') }}</strong> ${amount}</div>
+                <div class='row'><strong>{{ _('x.reason') }}:</strong> ${reason || '-'}</div>
+                <hr><div class='row'>{{ _('x.print_date_colon') }} ${new Date().toLocaleString({{ ("ar-EG" if get_locale()|string == "ar" else "en-GB")|tojson }})}</div>
+                </body></html>
+              `);
+                win.document.close(); win.focus(); win.print(); win.close();
+              }
+            } catch (e) {
+              showAlert({{ _('x.notice_saved_print_failed')|tojson }}, 'warning');
+            }
+          }).catch(err => {
+            showAlert(`{{ _('x.deduction_save_failed_colon') }} ${err.message}`, 'danger');
+          });
+        });
+        svDed.dataset.bound = '1';
+      }
+    });
+  })();
+</script>
+<!-- قائمة سياقية لليوم -->
+<div id="dayContextMenu" class="position-absolute bg-white border rounded shadow"
+  style="display:none; z-index:10000; min-width: 180px;">
+  <div class="list-group list-group-flush">
+    <button type="button" class="list-group-item list-group-item-action" id="ctxQuickLeave" data-bs-toggle="modal"
+      data-bs-target="#quickLeaveModal">
+      <i class="fas fa-plane-departure me-2"></i>{{ _('menu.add_leave') }}
+    </button>
+    <button type="button" class="list-group-item list-group-item-action" id="ctxDeduction" data-bs-toggle="modal"
+      data-bs-target="#deductionModal">
+      <i class="fas fa-money-bill-wave me-2"></i>{{ _('menu.add_deduction') }}
+    </button>
+  </div>
+  <input type="hidden" id="ctxEmpId">
+  <input type="hidden" id="ctxDate">
+  <input type="hidden" id="ctxEmpName">
+  <input type="hidden" id="ctxEmpNumber">
+</div>
+
+<!-- مودال إجازة سريعة -->
+<div class="modal fade" id="quickLeaveModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('modal.quick_leave_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="quickLeaveForm" class="row g-3">
+          <div class="col-12">
+            <label class="form-label">{{ _('label.date') }}</label>
+            <input type="date" class="form-control" id="leaveDate">
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ _('label.leave_type') }}</label>
+            <select class="form-select" id="leaveType">
+              <option value="Emergency Leave">{{ _('leave.emergency') }}</option>
+              <option value="Annual Leave">{{ _('leave.annual') }}</option>
+              <option value="Sick Leave">{{ _('leave.sick') }}</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ _('label.note_optional') }}</label>
+            <textarea class="form-control" id="leaveNote" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel') }}</button>
+        <button type="button" class="btn btn-primary" id="saveQuickLeave">{{ _('btn.save_print') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال إشعار خصم -->
+<div class="modal fade" id="deductionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('modal.deduction_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="deductionForm" class="row g-3">
+          <div class="col-6">
+            <label class="form-label">{{ _('label.date') }}</label>
+            <input type="date" class="form-control" id="deductionDate">
+          </div>
+          <div class="col-6">
+            <label class="form-label">{{ _('label.amount_minutes') }}</label>
+            <input type="number" class="form-control" id="deductionAmount" min="0" step="0.01"
+              placeholder="{{ _('placeholder.amount_minutes') }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ _('label.reason') }}</label>
+            <textarea class="form-control" id="deductionReason" rows="2"
+              placeholder="{{ _('placeholder.reason') }}"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel') }}</button>
+        <button type="button" class="btn btn-danger" id="saveDeduction">{{ _('btn.send_print') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

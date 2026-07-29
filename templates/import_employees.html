@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.import_employees') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-file-excel me-2"></i>{{ _('header.import_employees') }}</h4>
+                    <a href="{{ url_for('employee.employees') }}" class="btn btn-light btn-sm"><i
+                            class="fas fa-arrow-left me-1"></i>{{ _('btn.back_to_employees') }}</a>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('employee.import_employees') }}" method="POST"
+                        enctype="multipart/form-data" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('label.excel_file') }}</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                            <small class="text-muted">{{ _('help.expected_columns') }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" value="1" id="onlyDeptPos"
+                                    name="update_only_dept_pos">
+                                <label class="form-check-label" for="onlyDeptPos">
+                                    {{ _('label.update_only_dept_pos') }}
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" value="1" id="existingOnly"
+                                    name="update_existing_only">
+                                <label class="form-check-label" for="existingOnly">
+                                    {{ _('label.update_existing_only') }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end align-self-end">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-upload me-1"></i>{{
+                                _('btn.upload_and_import') }}</button>
+                            <a href="{{ url_for('employee.download_template') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-download me-1"></i>{{ _('btn.download_template') }}
+                            </a>
+                        </div>
+                    </form>
+
+                    {% if summary %}
+                    <hr>
+                    <h5>{{ _('header.import_summary') }}</h5>
+                    <ul>
+                        <li>{{ _('label.total_rows') }}: {{ summary.total_rows }}</li>
+                        <li>{{ _('label.inserted') }}: {{ summary.inserted }}</li>
+                        <li>{{ _('label.updated') }}: {{ summary.updated }}</li>
+                        <li>{{ _('label.skipped') }}: {{ summary.skipped }}</li>
+                        <li>{{ _('label.preview_rows') }}: {{ summary.preview_rows }}</li>
+                        <li>{{ _('label.duplicates_in_file') }}: {{ summary.duplicates_in_file }}</li>
+                    </ul>
+                    {% if summary.detected_headers %}
+                    <div class="alert alert-info">
+                        <div><strong>{{ _('label.detected_headers') }}:</strong></div>
+                        <code>{{ summary.detected_headers }}</code>
+                        <div class="mt-2"><strong>{{ _('label.used_mapping') }}:</strong></div>
+                        <code>{{ summary.used_mapping }}</code>
+                    </div>
+                    {% endif %}
+                    {% if summary.errors and summary.errors|length > 0 %}
+                    <div class="alert alert-warning">
+                        <strong>{{ _('label.errors_top_10') }}:</strong>
+                        <ul class="mb-0">
+                            {% for err in summary.errors %}
+                            <li class="small">{{ err }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

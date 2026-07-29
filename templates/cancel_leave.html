@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('title.cut_leave') }} - {{ leave_request.employee_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title">
+                                <i class="fas fa-cut me-2"></i>
+                                {{ _('header.cut_leave') }}
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {{ _('label.employee') }}: {{ leave_request.employee_name }}
+                            </p>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('leave.leaves') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                {{ _('btn.back_to_leaves') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- تفاصيل الإجازة الحالية -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>{{ _('header.current_leave_details') }}</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>{{ _('label.start_date') }}:</strong><br>
+                                {{ leave_request.start_date }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>{{ _('label.end_date') }}:</strong><br>
+                                {{ leave_request.end_date }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>{{ _('label.days_count') }}:</strong><br>
+                                {{ leave_request.days_count }} {{ _('unit.day') }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>{{ _('label.remaining_days') }}:</strong><br>
+                                <span class="badge bg-warning">{{ remaining_days }} {{ _('unit.day') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نموذج قطع الإجازة -->
+                    <form method="POST" id="cancelLeaveForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cancellation_date" class="form-label">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        {{ _('label.cut_date') }}
+                                    </label>
+                                    <input type="date" class="form-control" id="cancellation_date"
+                                        name="cancellation_date" required min="{{ leave_request.start_date }}"
+                                        max="{{ leave_request.end_date }}">
+                                    <div class="form-text">
+                                        {{ _('help.cut_date') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">
+                                        <i class="fas fa-comment me-2"></i>
+                                        {{ _('label.cut_reason') }}
+                                    </label>
+                                    <textarea class="form-control" id="reason" name="reason" rows="3"
+                                        placeholder="{{ _('placeholder.cut_reason') }}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ملخص القطع -->
+                        <div class="alert alert-warning" id="cancellationSummary" style="display: none;">
+                            <h6><i class="fas fa-calculator me-2"></i>{{ _('header.cut_summary') }}</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>{{ _('label.cancelled_days') }}:</strong><br>
+                                    <span id="cancelledDays" class="badge bg-danger">0 {{ _('unit.day') }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{{ _('label.remaining_days_after') }}:</strong><br>
+                                    <span id="remainingDaysAfter" class="badge bg-success">0 {{ _('unit.day') }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{{ _('label.saved_balance') }}:</strong><br>
+                                    <span id="savedBalance" class="badge bg-info">0 {{ _('unit.day') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-cut me-2"></i>
+                                    {{ _('btn.cut_leave') }}
+                                </button>
+                                <a href="{{ url_for('leave.leaves') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    {{ _('btn.cancel') }}
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const cancellationDateInput = document.getElementById('cancellation_date');
+        const cancellationSummary = document.getElementById('cancellationSummary');
+        const cancelledDaysSpan = document.getElementById('cancelledDays');
+        const remainingDaysAfterSpan = document.getElementById('remainingDaysAfter');
+        const savedBalanceSpan = document.getElementById('savedBalance');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // تعيين التاريخ الافتراضي (اليوم)
+        const today = new Date().toISOString().split('T')[0];
+        cancellationDateInput.value = today;
+
+        // حساب ملخص القطع عند تغيير التاريخ
+        function updateCancellationSummary() {
+            const cancellationDate = cancellationDateInput.value;
+            if (!cancellationDate) return;
+
+            const startDate = new Date('{{ leave_request.start_date }}');
+            const endDate = new Date('{{ leave_request.end_date }}');
+            const cancelDate = new Date(cancellationDate);
+
+            // التحقق من صحة التاريخ
+            if (cancelDate < startDate || cancelDate > endDate) {
+                cancellationSummary.style.display = 'none';
+                submitBtn.disabled = true;
+                return;
+            }
+
+            // حساب الأيام
+            const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const usedDays = Math.ceil((cancelDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const cancelledDays = totalDays - usedDays;
+            const remainingDays = usedDays;
+
+            // عرض الملخص
+            cancelledDaysSpan.textContent = cancelledDays + " {{ _('unit.day') }}";
+            remainingDaysAfterSpan.textContent = remainingDays + " {{ _('unit.day') }}";
+            savedBalanceSpan.textContent = cancelledDays + " {{ _('unit.day') }}";
+
+            cancellationSummary.style.display = 'block';
+            submitBtn.disabled = false;
+
+            // تحذير إذا كان القطع في نفس يوم البداية
+            if (cancellationDate === '{{ leave_request.start_date }}') {
+                alert("{{ _('warn.cut_leave_full_cancellation') }}");
+            }
+        }
+
+        cancellationDateInput.addEventListener('change', updateCancellationSummary);
+
+        // تحديث الملخص عند تحميل الصفحة
+        updateCancellationSummary();
+
+        // التحقق قبل الإرسال
+        document.getElementById('cancelLeaveForm').addEventListener('submit', function (e) {
+            const cancellationDate = cancellationDateInput.value;
+            const endDate = '{{ leave_request.end_date }}';
+
+            if (cancellationDate >= endDate) {
+                e.preventDefault();
+                alert("{{ _('error.cut_date_invalid') }}");
+                return false;
+            }
+
+            if (!confirm("{{ _('confirm.cut_leave') }}")) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_babel import gettext, _
+from datetime import datetime
+from utils.db import get_db_connection
+from utils.db import get_db_connection
+from utils.auth import login_required, get_allowed_department_name
+from utils.rbac import require_permission
+from utils.settings_utils import get_salary_settings_v2
+from utils.salary_utils import calculate_salary_for_employee, calculate_leave_deductions_v2, calculate_attendance_allowance_v2
+from utils.leave_policy_utils import process_holiday_work
+from datetime import date
+import calendar
+
+salary_bp = Blueprint('salary', __name__)
+
+@salary_bp.route('/salaries')
+@login_required
+@require_permission('salary.view')
+def salaries():
+    """Retired. This screen wrote hand-entered salaries into the legacy
+    `salaries` table, which the payroll engine and the ledger never read —
+    so anything recorded here was invisible to actual disbursement while
+    still looking authoritative on screen. Kept as a redirect so old links
+    and bookmarks land on the real monthly payroll instead of a dead page."""
+    flash(gettext('x.sal_legacy_moved'), 'info')
+    return redirect(url_for('payroll.monthly_sheet'))
+
+
+@salary_bp.route('/salaries/add', methods=['POST'])
+@login_required
+@require_permission('salary.calculate')
+def add_salary():
+    # Retired: manual salary entry bypassed the attestation and
+    # ledger chain entirely. Use the monthly payroll screen.
+    flash(gettext('x.sal_legacy_moved'), 'warning')
+    return redirect(url_for('payroll.monthly_sheet'))
+
+
+@salary_bp.route('/salaries/add_from_report', methods=['POST'])
+@login_required
+@require_permission('salary.calculate')
+def add_salary_from_report():
+    # Retired: manual salary entry bypassed the attestation and
+    # ledger chain entirely. Use the monthly payroll screen.
+    flash(gettext('x.sal_legacy_moved'), 'warning')
+    return redirect(url_for('payroll.monthly_sheet'))
+
+
+@salary_bp.route('/shift_types')
+@login_required
+@require_permission('salary.settings')
+def shift_types():
+    conn = get_db_connection()
+    shift_types_rows = conn.execute('SELECT * FROM shift_types').fetchall()
+    shift_types = [dict(row) for row in shift_types_rows]
+    pass # conn.close() removed to prevent leak in Flask g
+    return render_template('shift_types.html', shift_types=shift_types)
+
+@salary_bp.route('/shift_types/add', methods=['POST'])
+@login_required
+@require_permission('salary.settings')
+def add_shift_type():
+    try:
+        name = request.form['name']
+        start_time = request.form['start_time']
+        end_time = request.form['end_time']
+        
+        # حساب عدد الساعات تلقائياً
+        try:
+            from datetime import datetime
+            fmt = '%H:%M'
+            t1 = datetime.strptime(start_time, fmt)
+            t2 = datetime.strptime(end_time, fmt)
+            # إذا كان وقت النهاية أصغر من البداية، يعني دخلنا في اليوم التالي
+            if t2 < t1:
+                from datetime import timedelta
+                t2 += timedelta(days=1)
+                
+            hours_diff = (t2 - t1).total_seconds() / 3600
+            hours_per_day = round(hours_diff, 2)
+        except Exception as e:
+            print(f"Error calculating hours: {e}")
+            hours_per_day = 8 # افتراضي
+        
+        # السماح للمستخدم بتعديل الساعات يدوياً إذا رغب
+        if 'hours_per_day' in request.form and request.form['hours_per_day']:
+            hours_per_day = float(request.form['hours_per_day'])
+            
+        description = request.form.get('description', '')
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO shift_types (name, start_time, end_time, hours_per_day, description)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (name, start_time, end_time, hours_per_day, description))
+        conn.commit()
+        pass # conn.close() removed to prevent leak in Flask g
+        
+        flash(gettext('x.f_shift_type_added'), 'success')
+    except Exception as e:
+        flash(gettext('x.f_error_colon') % {'p0': f'{e}'}, 'error')
+        
+    return redirect(url_for('salary.shift_types'))
+
+@salary_bp.route('/shift_types/edit', methods=['POST'])
+@login_required
+@require_permission('salary.settings')
+def edit_shift_type():
+    try:
+        shift_id = request.form['shift_id']
+        name = request.form['name']
+        start_time = request.form['start_time']
+        end_time = request.form['end_time']
+        
+        hours_per_day = 8
+        # حساب عدد الساعات تلقائياً
+        try:
+            from datetime import datetime, timedelta
+            fmt = '%H:%M'
+            t1 = datetime.strptime(start_time, fmt)
+            t2 = datetime.strptime(end_time, fmt)
+            if t2 < t1:
+                t2 += timedelta(days=1)
+            hours_per_day = round((t2 - t1).total_seconds() / 3600, 2)
+        except Exception as e:
+            print(f"Error calculating hours: {e}")
+
+        # السماح للمستخدم بتعديل الساعات يدوياً إذا رغب
+        if request.form.get('hours_per_day'):
+             hours_per_day = float(request.form['hours_per_day'])
+             
+        description = request.form.get('description', '')
+        
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE shift_types 
+            SET name=?, start_time=?, end_time=?, hours_per_day=?, description=?
+            WHERE id=?
+        ''', (name, start_time, end_time, hours_per_day, description, shift_id))
+        conn.commit()
+        pass # conn.close() removed to prevent leak in Flask g
+        flash(gettext('x.f_shift_updated'), 'success')
+    except Exception as e:
+        flash(gettext('x.f_edit_error') % {'p0': f'{e}'}, 'error')
+        
+    return redirect(url_for('salary.shift_types'))
+
+@salary_bp.route('/salary_settings_v2', methods=['GET', 'POST'])
+@login_required
+def salary_settings_v2_route():
+    """تم توحيد الإعدادات: تحويل للصفحة الموحدة"""
+    return redirect(url_for('main.settings'))
+

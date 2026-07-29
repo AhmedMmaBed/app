@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.cleanup') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i> {{ _('header.cleanup_management') }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>{{ _('label.warning') }}:</strong> {{ _('msg.cleanup_warning') }}
+            </div>
+
+            <form id="cleanupForm">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">{{ _('label.admin_password') }}</label>
+                    <input type="password" class="form-control" id="adminPassword"
+                        placeholder="{{ _('placeholder.enter_password') }}" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">{{ _('label.select_to_clear') }}:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkAttendance" value="clear_attendance">
+                        <label class="form-check-label" for="checkAttendance">
+                            {{ _('option.clear_attendance') }}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkLogs" value="clear_logs">
+                        <label class="form-check-label" for="checkLogs">
+                            {{ _('option.clear_logs') }}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkUsers" value="clear_fingerprint_users">
+                        <label class="form-check-label" for="checkUsers">
+                            {{ _('option.clear_fingerprint_users') }}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkEmployees" value="clear_employees">
+                        <label class="form-check-label" for="checkEmployees">
+                            {{ _('option.clear_employees') }} - <span class="text-danger">{{
+                                _('msg.clear_employees_warning') }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="fas fa-bomb me-2"></i> {{ _('btn.execute_action') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('cleanupForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const password = document.getElementById('adminPassword').value;
+        const actions = [];
+
+        if (document.getElementById('checkAttendance').checked) actions.push('clear_attendance');
+        if (document.getElementById('checkLogs').checked) actions.push('clear_logs');
+        if (document.getElementById('checkUsers').checked) actions.push('clear_fingerprint_users');
+        if (document.getElementById('checkEmployees').checked) actions.push('clear_employees');
+
+        if (actions.length === 0) {
+            Swal.fire('{{ _("error.title") }}', '{{ _("error.select_at_least_one") }}', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: '{{ _("msg.are_you_sure") }}',
+            text: "{{ _('msg.cannot_undo') }}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#1F5C4A',
+            confirmButtonText: '{{ _("btn.yes_delete") }}',
+            cancelButtonText: '{{ _("btn.cancel") }}'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/admin/cleanup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: password, actions: actions })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('{{ _("status.success") }}', data.message, 'success')
+                                .then(() => location.reload()); // Reload to clear inputs
+                        } else {
+                            Swal.fire('{{ _("error.title") }}', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('{{ _("error.title") }}', '{{ _("error.system_error") }}', 'error');
+                        console.error(error);
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

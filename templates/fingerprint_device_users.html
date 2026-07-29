@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.device_users_management') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-users-cog me-2"></i>{{ _('x.device_users_management') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('x.the_back') }}
+            </a>
+        </div>
+        <button class="btn btn-primary" id="btnUpload" onclick="startUpload()">
+            <i class="fas fa-cloud-upload-alt me-2"></i>{{ _('x.upload_selected_users') }}
+        </button>
+        <button class="btn btn-success d-none" id="btnPull" onclick="startSync()">
+            <i class="fas fa-cloud-download-alt me-2"></i>{{ _('x.start_sync_selected') }}
+        </button>
+    </div>
+</div>
+
+<ul class="nav nav-pills mb-3" id="opTabs">
+    <li class="nav-item">
+        <button class="nav-link active" data-op="upload" type="button">
+            <i class="fas fa-cloud-upload-alt me-1"></i>{{ _('x.upload_tab') }}
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-op="pull" type="button">
+            <i class="fas fa-cloud-download-alt me-1"></i>{{ _('x.pull_tab') }}
+        </button>
+    </li>
+</ul>
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>{{ _('x.users_database') }}</h5>
+                <div class="input-group input-group-sm w-50">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchUser" placeholder="{{ _('x.search_by_name_or_number_dots') }}">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="alert alert-warning m-2 py-2 small d-none" id="pullNote">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ _('x.note_pull_all_if_none') }}
+                </div>
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover mb-0" id="usersTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th width="40" class="text-center">
+                                    <input type="checkbox" class="form-check-input" id="checkAllUsers">
+                                </th>
+                                <th>{{ _('x.fp_id_number') }}</th>
+                                <th>{{ _('x.name') }}</th>
+                                <th>{{ _('x.department') }}</th>
+                                <th class="text-center">{{ _('x.fingerprints_fp') }}</th>
+                                <th class="text-center">{{ _('x.face') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input user-check"
+                                        value="{{ emp.employee_number }}" data-id="{{ emp.id }}">
+                                </td>
+                                <td><span class="badge bg-secondary">{{ emp.employee_number }}</span></td>
+                                <td class="fw-bold">{{ emp.name }}</td>
+                                <td class="small">{{ emp.department }}</td>
+                                <td class="text-center">
+                                    {% if emp.fp_count and emp.fp_count > 0 %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-fingerprint me-1"></i> {{ emp.fp_count }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if emp.face_count and emp.face_count > 0 %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="fas fa-user-circle me-1"></i> {{ emp.face_count }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">{{ _('x.no_active_users') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted small">
+                {{ _('x.selected_count_prefix') }} <span id="selectedUsersCount" class="fw-bold text-primary">0</span> {{ _('x.user_unit') }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-microchip me-2"></i>{{ _('x.target_devices') }}</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for device in devices %}
+                    <label class="list-group-item d-flex gap-3 align-items-center cursor-pointer">
+                        <input class="form-check-input flex-shrink-0 device-check" type="checkbox"
+                            value="{{ device.id }}" data-adms="{{ 1 if device.is_adms else 0 }}" checked
+                            style="font-size: 1.3em;">
+                        <span class="pt-1 form-checked-content">
+                            <strong>{{ device.device_name }}</strong>
+                            {% if device.is_adms %}<span class="badge bg-success ms-1">ADMS</span>{% endif %}
+                            <small class="d-block text-muted">
+                                <i class="fas fa-network-wired me-1"></i>{{ device.device_ip }}
+                            </small>
+                        </span>
+                    </label>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-exclamation-circle mb-2"></i><br>
+                        {{ _('x.no_registered_active_devices') }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-muted small">
+                {{ _('x.selected_count_prefix') }} <span id="selectedDevicesCount" class="fw-bold text-primary">0</span> {{ _('x.device_unit') }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="opResultsModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-sync fa-spin me-2" id="opIcon"></i><span id="opTitle">{{ _('x.operation_status') }}</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeResultsBtn"></button>
+            </div>
+            <div class="modal-body" id="opResultsBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="finishBtn"
+                    disabled>{{ _('x.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentOp = {{ (active_tab or 'upload')|tojson }};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('#opTabs .nav-link').forEach(btn => {
+            btn.addEventListener('click', () => setOp(btn.dataset.op));
+        });
+        setOp(currentOp);
+
+        document.getElementById('searchUser').addEventListener('keyup', function () {
+            const searchText = this.value.toLowerCase();
+            document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(searchText) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('checkAllUsers').addEventListener('change', function () {
+            const checked = this.checked;
+            document.querySelectorAll('.user-check').forEach(cb => {
+                if (cb.closest('tr').style.display !== 'none') cb.checked = checked;
+            });
+            updateCounts();
+        });
+
+        document.querySelectorAll('.user-check, .device-check').forEach(input => {
+            input.addEventListener('change', updateCounts);
+        });
+    });
+
+    function setOp(op) {
+        currentOp = op;
+        document.querySelectorAll('#opTabs .nav-link').forEach(b =>
+            b.classList.toggle('active', b.dataset.op === op));
+        document.getElementById('btnUpload').classList.toggle('d-none', op !== 'upload');
+        document.getElementById('btnPull').classList.toggle('d-none', op !== 'pull');
+        document.getElementById('pullNote').classList.toggle('d-none', op !== 'pull');
+        document.querySelectorAll('.device-check').forEach(cb => {
+            const isAdms = cb.dataset.adms === '1';
+            if (op === 'pull' && !isAdms) { cb.checked = false; cb.disabled = true; }
+            else { cb.disabled = false; }
+        });
+        updateCounts();
+    }
+
+    function updateCounts() {
+        document.getElementById('selectedUsersCount').textContent =
+            document.querySelectorAll('.user-check:checked').length;
+        document.getElementById('selectedDevicesCount').textContent =
+            document.querySelectorAll('.device-check:checked').length;
+    }
+
+    function openOpModal(title) {
+        document.getElementById('opTitle').textContent = title;
+        const modal = new bootstrap.Modal(document.getElementById('opResultsModal'));
+        document.getElementById('opIcon').className = "fas fa-sync fa-spin me-2";
+        document.getElementById('closeResultsBtn').style.display = 'none';
+        document.getElementById('finishBtn').disabled = true;
+        modal.show();
+        return modal;
+    }
+    function finishOpModal(ok) {
+        document.getElementById('opIcon').className = ok
+            ? "fas fa-check-circle text-success me-2"
+            : "fas fa-exclamation-triangle text-danger me-2";
+        document.getElementById('closeResultsBtn').style.display = 'block';
+        document.getElementById('finishBtn').disabled = false;
+    }
+
+    function startUpload() {
+        const userIds = Array.from(document.querySelectorAll('.user-check:checked')).map(cb => cb.dataset.id);
+        const deviceIds = Array.from(document.querySelectorAll('.device-check:checked')).map(cb => cb.value);
+
+        if (userIds.length === 0) {
+            Swal.fire({{ _('x.notice')|tojson }}, {{ _('x.choose_at_least_one_user')|tojson }}, 'warning');
+            return;
+        }
+        if (deviceIds.length === 0) {
+            Swal.fire({{ _('x.notice')|tojson }}, {{ _('x.choose_at_least_one_device')|tojson }}, 'warning');
+            return;
+        }
+
+        openOpModal({{ _('x.upload_status')|tojson }});
+        const resultsBody = document.getElementById('opResultsBody');
+        resultsBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">{{ _('x.uploading_word') }} ${userIds.length} {{ _('x.user_unit') }} {{ _('x.to') }} ${deviceIds.length} {{ _('x.device_unit') }}...</p>
+            <small class="text-muted">{{ _('x.upload_wait_note') }}</small>
+        </div>`;
+
+        fetch('/fingerprint/api/upload_users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_ids: userIds, device_ids: deviceIds })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    resultsBody.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    finishOpModal(false);
+                    return;
+                }
+                let html = '<div class="accordion" id="resultsAccordion">';
+                data.results.forEach((deviceRes, index) => {
+                    const isSuccess = deviceRes.fail_count === 0;
+                    const badgeClass = isSuccess ? 'bg-success' : (deviceRes.success_count > 0 ? 'bg-warning' : 'bg-danger');
+                    html += `
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                             Device #${deviceRes.device_id}
+                             <span class="badge ${badgeClass} ms-2">
+                                {{ _('x.succeeded_colon') }} ${deviceRes.success_count} | {{ _('x.failed') }}: ${deviceRes.fail_count}
+                             </span>
+                        </button>
+                    </h2>
+                    <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#resultsAccordion">
+                        <div class="accordion-body p-0">
+                            <ul class="list-group list-group-flush">`;
+                    deviceRes.details.forEach(detail => {
+                        const icon = detail.status === 'success' ? 'text-success fas fa-check-circle' : 'text-danger fas fa-times-circle';
+                        html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="${icon} me-2"></i>${detail.user}</span>
+                        <span class="small text-muted">${detail.message}</span>
+                    </li>`;
+                    });
+                    html += `</ul></div></div></div>`;
+                });
+                html += '</div>';
+                resultsBody.innerHTML = html;
+                finishOpModal(true);
+            })
+            .catch(error => {
+                resultsBody.innerHTML = `<div class="alert alert-danger">{{ _('x.connection_error_occurred_colon') }} ${error}</div>`;
+                finishOpModal(false);
+            });
+    }
+
+    function startSync() {
+        const userPins = Array.from(document.querySelectorAll('.user-check:checked')).map(cb => cb.value);
+        const deviceIds = Array.from(document.querySelectorAll('.device-check:checked')).map(cb => cb.value);
+
+        if (deviceIds.length === 0) {
+            Swal.fire({{ _('x.notice')|tojson }}, {{ _('x.choose_at_least_one_device')|tojson }}, 'warning');
+            return;
+        }
+
+        openOpModal({{ _('x.sync_status')|tojson }});
+        const resultsBody = document.getElementById('opResultsBody');
+        resultsBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3">{{ _('x.scheduling_pull_for') }} ${deviceIds.length} {{ _('x.device_unit') }}...</p>
+            </div>`;
+
+        fetch('/fingerprint/api/sync_from_device', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device_ids: deviceIds, user_pins: userPins })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    resultsBody.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    finishOpModal(false);
+                    return;
+                }
+                let html = '<div class="list-group">';
+                data.results.forEach(res => {
+                    html += `
+                    <div class="list-group-item">
+                        <h6 class="mb-1"><i class="fas fa-check-circle text-success me-2"></i>{{ _('x.device') }}: ${res.device_id}</h6>
+                        <p class="mb-0 small text-muted">${res.message}</p>
+                    </div>`;
+                });
+                html += {{ _('x.scheduled_alert_html')|tojson }};
+                resultsBody.innerHTML = html;
+                finishOpModal(true);
+            })
+            .catch(error => {
+                resultsBody.innerHTML = `<div class="alert alert-danger">{{ _('x.error_colon_space') }}${error}</div>`;
+                finishOpModal(false);
+            });
+    }
+</script>
+{% endblock %}

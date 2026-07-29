@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.oracle_center') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2"><i class="fas fa-database me-2"></i>{{ _('x.oracle_center') }}</h1>
+            <div class="report-desc">{{ _('x.rdesc_oracle_center') }}</div>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('attendance.oracle_history') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-history me-2"></i>{{ _('x.oracle_sync_history') }}
+            </a>
+            <a href="{{ url_for('attendance.sync_queue') }}" class="btn btn-outline-warning">
+                <i class="fas fa-list-ol me-2"></i>{{ _('x.oracle_sync_queue_pending') }}
+            </a>
+            {% if has_permission('admin.settings') %}
+            <button type="button" class="btn btn-outline-danger" onclick="systemRestart()">
+                <i class="fas fa-redo me-2"></i>{{ _('x.restart_app') }}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header {{ 'text-white' }}" style="background: {{ 'var(--ledger)' if enabled else 'var(--debit)' }};">
+                    <h5 class="mb-0"><i class="fas fa-power-off me-2"></i>{{ _('x.oracle_integration') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        {% if enabled %}
+                        <span class="badge bg-success fs-6 py-2 px-3"><i class="fas fa-check-circle me-2"></i>{{ _('x.oracle_enabled_on') }}</span>
+                        {% else %}
+                        <span class="badge fs-6 py-2 px-3" style="background: var(--debit);"><i class="fas fa-ban me-2"></i>{{ _('x.oracle_enabled_off') }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-info py-2 small">
+                        <i class="fas fa-info-circle me-1"></i>{{ _('x.oracle_disabled_note') }}
+                    </div>
+                    {% if not enabled %}
+                    <div class="alert alert-warning py-2 small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>{{ _('x.oracle_enable_restart_note') }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if enabled %}
+                        <form method="POST" action="{{ url_for('attendance.oracle_toggle') }}">
+                            <input type="hidden" name="enable" value="0">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-power-off me-2"></i>{{ _('x.btn_disable_oracle') }}
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-outline-primary" onclick="testOracle()">
+                            <i class="fas fa-plug me-2"></i>{{ _('x.test_connection') }}
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="syncMissing()">
+                            <i class="fas fa-sync me-2"></i>{{ _('x.check_sync_missing') }}
+                        </button>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('attendance.oracle_toggle') }}">
+                            <input type="hidden" name="enable" value="1">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-power-off me-2"></i>{{ _('x.btn_enable_oracle') }}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>{{ _('x.connection_settings') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('attendance.oracle_save_settings') }}">
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <label class="form-label">Host</label>
+                                <input type="text" class="form-control font-mono" name="host" value="{{ cfg.host }}">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label">Port</label>
+                                <input type="text" class="form-control font-mono" name="port" value="{{ cfg.port }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Service</label>
+                                <input type="text" class="form-control font-mono" name="service" value="{{ cfg.service }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">{{ _('tbl.header.username') }}</label>
+                                <input type="text" class="form-control font-mono" name="user" value="{{ cfg.user }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">{{ _('x.password') }}</label>
+                                <input type="password" class="form-control" name="password" autocomplete="new-password"
+                                    placeholder="{{ '••••••••' if cfg.password_set else '' }}">
+                                <div class="form-text small">{{ _('x.password_keep_hint') }}</div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Table</label>
+                                <input type="text" class="form-control font-mono" name="table" value="{{ cfg.table }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">{{ _('x.oracle_lib_dir') }}</label>
+                                <input type="text" class="form-control font-mono" dir="ltr" name="lib_dir" value="{{ cfg.lib_dir }}">
+                                <div class="form-text small">{{ _('x.restart_needed_libdir') }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="small text-muted"><i class="fas fa-info-circle me-1"></i>{{ _('x.oracle_settings_note') }}</div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ _('x.save_data') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card text-center py-3">
+                <div class="text-muted small">{{ _('x.pending') }}</div>
+                <div class="stats-number h3 mb-0 {{ 'text-warning' if stats.pending else '' }}">{{ stats.pending }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center py-3">
+                <div class="text-muted small">{{ _('x.synced') }}</div>
+                <div class="stats-number h3 mb-0 text-success">{{ stats.synced }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center py-3">
+                <div class="text-muted small">{{ _('x.failed') }}</div>
+                <div class="stats-number h3 mb-0 {{ 'text-danger' if stats.failed else '' }}">{{ stats.failed }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function testOracle() {
+        fetch("{{ url_for('attendance.oracle_test') }}")
+            .then(r => r.json())
+            .then(d => {
+                if (!d.enabled) { showAlert({{ _('x.oracle_is_disabled')|tojson }}, 'warning'); return; }
+                showAlert(d.alive ? {{ _('x.oracle_alive')|tojson }} : {{ _('x.oracle_dead')|tojson }},
+                          d.alive ? 'success' : 'danger');
+            })
+            .catch(e => showAlert({{ _('x.oracle_dead')|tojson }}, 'danger'));
+    }
+    function syncMissing() {
+        fetch("{{ url_for('attendance.sync_missing_to_oracle') }}", { method: 'POST' })
+            .then(r => r.json())
+            .then(d => showAlert(d.message || {{ _('x.success')|tojson }}, d.success ? 'success' : 'danger'))
+            .catch(e => showAlert({{ _('x.error')|tojson }}, 'danger'));
+    }
+</script>
+{% endblock %}

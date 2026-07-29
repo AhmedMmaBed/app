@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">{{ _('header.leave_settings') }}</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+            <i class="fas fa-plus fa-sm"></i> {{ _('btn.add_new_type') }}
+        </button>
+    </div>
+
+    <div class="row">
+        {% for item in leave_types %}
+        <div class="col-xl-6 col-md-12 mb-4">
+            <div class="card shadow h-100 py-2">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ item.type.name }}</h6>
+                    <div class="dropdown no-arrow">
+                        <form action="{{ url_for('leave_settings.delete_leave_type', type_id=item.type.id) }}"
+                            method="POST"
+                            onsubmit="return confirmDelete('{{ _('confirm.delete_leave_type_with_tiers') }}');">
+                            <button type="submit" class="btn btn-danger btn-sm rounded-circle"
+                                title="{{ _('btn.delete_type') }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Main Settings Form -->
+                    <form action="{{ url_for('leave_settings.update_leave_type') }}" method="POST" class="mb-4">
+                        <input type="hidden" name="type_id" value="{{ item.type.id }}">
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">{{ _('label.annual_balance_days') }}</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="days_per_year"
+                                    value="{{ item.type.days_per_year }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">{{ _('label.service_months_required') }}</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="service_months_required"
+                                    value="{{ item.type.service_months_required or 0 }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="col-sm-4">{{ _('label.properties') }}</div>
+                            <div class="col-sm-8">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_paid"
+                                        id="paid_{{ item.type.id }}" {% if item.type.is_paid %}checked{% endif %}>
+                                    <label class="form-check-label" for="paid_{{ item.type.id }}">{{
+                                        _('label.is_paid_default') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="requires_approval"
+                                        id="appr_{{ item.type.id }}" {% if item.type.requires_approval %}checked{% endif
+                                        %}>
+                                    <label class="form-check-label" for="appr_{{ item.type.id }}">{{
+                                        _('label.requires_approval') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_carry_over"
+                                        id="carry_{{ item.type.id }}" {% if item.type.is_carry_over %}checked{% endif %}>
+                                    <label class="form-check-label" for="carry_{{ item.type.id }}">{{ _('label.carry_over_balance') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="requires_attachment"
+                                        id="attach_{{ item.type.id }}" {% if item.type.requires_attachment %}checked{% endif %}>
+                                    <label class="form-check-label" for="attach_{{ item.type.id }}">{{ _('x.attachment_required_full') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="allow_half_day"
+                                        id="halfday_{{ item.type.id }}" {% if item.type.allow_half_day %}checked{% endif %}>
+                                    <label class="form-check-label" for="halfday_{{ item.type.id }}">{{ _('x.allow_half_day') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="allow_hourly"
+                                        id="hourly_{{ item.type.id }}" {% if item.type.allow_hourly %}checked{% endif %}>
+                                    <label class="form-check-label" for="hourly_{{ item.type.id }}">{{ _('x.allow_hourly_leave') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_hourly_permission"
+                                        id="permission_{{ item.type.id }}" {% if item.type.is_hourly_permission %}checked{% endif %}>
+                                    <label class="form-check-label" for="permission_{{ item.type.id }}">{{ _('x.monthly_permission_separate') }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">{{ _('x.monthly_permission_balance_hours') }}</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="monthly_hours_allowance"
+                                    value="{{ item.type.monthly_hours_allowance or 0 }}" step="0.5">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">{{ _('btn.save_settings') }}</button>
+                    </form>
+
+                    <hr>
+
+                    <!-- Tiers Section -->
+                    <h6 class="font-weight-bold text-secondary">{{ _('header.payment_tiers') }}</h6>
+
+                    {% if item.tiers %}
+                    <table class="table table-sm table-bordered mt-2">
+                        <thead>
+                            <tr>
+                                <th>{{ _('tbl.header.from_day') }}</th>
+                                <th>{{ _('tbl.header.to_day') }}</th>
+                                <th>{{ _('tbl.header.payment_percentage') }}</th>
+                                <th>{{ _('tbl.header.delete') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tier in item.tiers %}
+                            <tr>
+                                <td>{{ tier.start_day }}</td>
+                                <td>{{ tier.end_day }}</td>
+                                <td>{{ tier.payment_percentage * 100 }}%</td>
+                                <td>
+                                    <form action="{{ url_for('leave_settings.delete_tier', tier_id=tier.id) }}"
+                                        method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm p-0 px-1"
+                                            onclick="return confirmDelete('{{ _('confirm.delete_tier') }}');">&times;</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted small">{{ _('msg.no_tiers_defined') }}</p>
+                    {% endif %}
+
+                    <!-- Add Tier Form -->
+                    <form action="{{ url_for('leave_settings.add_tier') }}" method="POST" class="form-inline mt-2">
+                        <input type="hidden" name="leave_type_id" value="{{ item.type.id }}">
+                        <input type="number" class="form-control form-control-sm mr-1" name="start_day"
+                            placeholder="{{ _('placeholder.from') }}" style="width: 70px;" required>
+                        <input type="number" class="form-control form-control-sm mr-1" name="end_day"
+                            placeholder="{{ _('placeholder.to') }}" style="width: 70px;" required>
+                        <input type="number" class="form-control form-control-sm mr-1" name="payment_percentage"
+                            placeholder="{{ _('placeholder.percentage') }}" style="width: 80px;" required>
+                        <button type="submit" class="btn btn-success btn-sm">+</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Leave Type Modal -->
+<div class="modal fade" id="addTypeModal" tabindex="-1" role="dialog" aria-labelledby="addTypeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTypeModalLabel">{{ _('title.add_new_leave_type') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('leave_settings.add_leave_type') }}" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ _('label.leave_name') }}</label>
+                        <input type="text" class="form-control" name="name" required
+                            placeholder="{{ _('placeholder.leave_name_example') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ _('label.default_annual_balance') }}</label>
+                        <input type="number" class="form-control" name="days_per_year" value="0">
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="requires_attachment" id="new_attach">
+                        <label class="form-check-label" for="new_attach">{{ _('x.attachment_required') }}</label>
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="allow_half_day" id="new_halfday">
+                        <label class="form-check-label" for="new_halfday">{{ _('x.allow_half_day') }}</label>
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="allow_hourly" id="new_hourly">
+                        <label class="form-check-label" for="new_hourly">{{ _('x.hourly_leave_from_annual') }}</label>
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="is_hourly_permission" id="new_permission">
+                        <label class="form-check-label" for="new_permission">{{ _('x.monthly_permission_own_balance') }}</label>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>{{ _('x.monthly_permission_hours') }}</label>
+                        <input type="number" class="form-control" name="monthly_hours_allowance" value="0" step="0.5">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('btn.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('btn.save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(message) {
+        return confirm(message);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.monthly_presence_report') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center bg-info text-white">
+            <div><h5 class="mb-0"><i class="fas fa-fingerprint me-2"></i>{{ _('header.monthly_presence_report') }} - {{
+                month_name }} {{ year }}</h5><div class="report-desc">{{ _('x.rdesc_presence_monthly') }}</div></div>
+            <div class="d-flex gap-2">
+                <form class="d-flex gap-2" method="GET">
+                    <select name="year" class="form-select w-auto">
+                        {% for y in range(year-2, year+3) %}
+                        <option value="{{ y }}" {% if y==year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="month" class="form-select w-auto">
+                        {% set months =
+                        ['','January','February','March','April','May','June','July','August','September','October','November','December']
+                        %}
+                        {% for i in range(1,13) %}
+                        <option value="{{ i }}" {% if i==month %}selected{% endif %}>{{ _('month.' +
+                            (months[i]|lower)[:3]) }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="dept" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_departments') }}</option>
+                        {% for d in departments %}
+                        <option value="{{ d }}" {% if d==selected_dept %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="pos" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_positions') }}</option>
+                        {% for p in positions %}
+                        <option value="{{ p }}" {% if p==selected_pos %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-light" type="submit">{{ _('btn.view') }}</button>
+                </form>
+                <button class="btn btn-success" id="btnExportExcel" disabled>
+                    <i class="fas fa-file-excel me-2"></i>{{ _('btn.export_excel') }}
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="p-2 border-bottom bg-light d-flex gap-3 align-items-center small">
+                <strong>{{ _('x.symbol_key') }}</strong>
+                <span class="badge bg-success"><i class="fas fa-check-circle"></i> {{ _('x.presence_punch_found') }}</span>
+                <span class="badge bg-danger"><i class="fas fa-exclamation-circle"></i> {{ _('x.presence_punch_missing') }}</span>
+                <span class="badge bg-info bg-opacity-25 text-dark">{{ _('x.l_leave') }}</span>
+                <span class="badge bg-warning bg-opacity-25 text-dark">{{ _('x.h_holiday') }}</span>
+            </div>
+            <div class="table-responsive" style="max-height: 75vh;">
+                <table class="table table-bordered table-striped table-hover align-middle text-center mb-0"
+                    id="reportTable" style="font-size: 0.85rem;">
+                    <thead class="table-dark sticky-top" style="z-index: 5;">
+                        <tr>
+                            <th rowspan="2" class="align-middle" style="min-width:60px;">{{ _('tbl.header.file_number')
+                                }}</th>
+                            <th rowspan="2" class="align-middle"
+                                style="min-width:150px; position:sticky; left:0; z-index:6; background:var(--bs-dark);">
+                                {{ _('tbl.header.name') }}</th>
+                            <th rowspan="2" class="align-middle">{{ _('tbl.header.department') }}</th>
+                            {% for d in range(1, days_in_month + 1) %}
+                            <th class="px-1" style="min-width:35px; font-size:0.75rem;">{{ d }}</th>
+                            {% endfor %}
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.present_days')
+                                }}</th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.absent_days')
+                                }}</th>
+                            <th rowspan="2" class="align-middle bg-success text-white">{{ _('x.presence_days_check') }}</th>
+                            <th rowspan="2" class="align-middle bg-danger text-white">{{ _('x.missing_presence_days') }}</th>
+                        </tr>
+                        <tr>
+                            {% for d_name in days_names %}
+                            <th style="font-size:0.6rem; padding:0;" class="text-muted">{{ _('day.' + d_name|lower) }}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody id="pbody">
+                        {% for i in range(5) %}
+                        <tr>
+                            <td colspan="{{ 3 + days_in_month + 2 }}" class="p-3">
+                                <div class="placeholder-glow">
+                                    <span class="placeholder col-12 py-3 bg-secondary opacity-25 rounded"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    const SYMBOL_HOLIDAY = {{ _("symbol.holiday") | tojson }};
+    const SYMBOL_LEAVE = {{ _("symbol.leave") | tojson }};
+    const SYMBOL_WEEKEND = {{ _("symbol.weekend") | tojson }};
+    const SYMBOL_ABSENT = {{ _("symbol.absent") | tojson }};
+    const SYMBOL_INVALID = {{ _("symbol.invalid") | tojson }};
+    const TIP_MISSING_PUNCH = {{ _("tooltip.missing_punch") | tojson }};
+    const MSG_ERROR_GENERIC = {{ _('error.generic') | tojson }};
+    const MSG_ERROR_CONN = {{ _('error.server_connection') | tojson }};
+    const MSG_NO_DATA = {{ _('msg.no_data') | tojson }};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadReportData();
+    });
+
+    async function loadReportData() {
+        const params = new URLSearchParams(window.location.search);
+        try {
+            const res = await fetch(`/api/fingerprint/monthly_presence_report?${params.toString()}`);
+            const data = await res.json();
+            if (data.success) {
+                renderTable(data.rows);
+                document.getElementById('btnExportExcel').disabled = false;
+            } else {
+                document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">${MSG_ERROR_GENERIC}: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">${MSG_ERROR_CONN}</td></tr>`;
+        }
+    }
+
+    function renderTable(rows) {
+        const tbody = document.getElementById('pbody');
+        tbody.innerHTML = '';
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="100%">${MSG_NO_DATA}</td></tr>`;
+            return;
+        }
+        rows.forEach(r => {
+            let daysHtml = '';
+            r.daily_hours.forEach((h, index) => {
+                let cellContent = '';
+                let cellClass = '';
+                let val = h.code;
+                let tooltip = h.tooltip || '';
+                let presenceIcon = '';
+
+                // Build detailed tooltip with times
+                let timeDetails = [];
+                if (h.check_in) timeDetails.push({{ _('x.in_colon_space')|tojson }} + h.check_in);
+                if (h.check_out) timeDetails.push({{ _('x.out_colon_space')|tojson }} + h.check_out);
+                if (h.presence_time) timeDetails.push({{ _('x.presence_colon_space')|tojson }} + h.presence_time);
+                if (timeDetails.length > 0) {
+                    tooltip = timeDetails.join(' | ') + (tooltip ? '\n' + tooltip : '');
+                }
+
+                // Presence status text - only show if presence window is required
+                // 'ok' = presence window defined AND punch found → ✓
+                // 'missing' = presence window defined BUT no punch found → ن تواجد
+                // 'none' = no presence window defined (optional) → show nothing
+                let presenceText = '';
+                if (h.presence_status === 'ok') {
+                    presenceText = '<span class="text-success fw-bold">✓</span>';
+                } else if (h.presence_status === 'missing' || h.presence_status === 'absent_missing') {
+                    presenceText = {{ _('x.missing_presence_badge_html')|tojson }};
+                }
+                // If 'none' - no presence window required, show nothing
+
+                // Build cell content: check_in - نقص بصمه - check_out (single line format)
+                let timesLine = '';
+                if (h.check_in || h.check_out || presenceText) {
+                    let parts = [];
+                    if (h.check_in) parts.push(`<span class="text-success">${h.check_in}</span>`);
+                    if (presenceText) parts.push(presenceText);
+                    if (h.check_out) parts.push(`<span class="text-primary">${h.check_out}</span>`);
+                    timesLine = `<div class="small" style="font-size:0.65rem; line-height:1.2;">${parts.join(' - ')}</div>`;
+                }
+
+                if (val === 'H') { cellContent = SYMBOL_HOLIDAY; cellClass = 'bg-warning bg-opacity-25 text-warning fw-bold'; }
+                else if (val === 'L') { cellContent = SYMBOL_LEAVE; cellClass = 'bg-info bg-opacity-25 text-info fw-bold'; }
+                else if (val === 'W') { cellContent = SYMBOL_WEEKEND; cellClass = 'bg-secondary bg-opacity-10 text-muted fw-bold'; }
+                else if (val === 'A') { cellContent = SYMBOL_ABSENT; cellClass = 'bg-danger bg-opacity-25 text-danger fw-bold'; }
+                else if (val === 'I') { cellContent = SYMBOL_INVALID; cellClass = 'bg-danger text-white fw-bold'; tooltip += ' (' + TIP_MISSING_PUNCH + ')'; }
+                else if (val > 0) { cellContent = val; }
+                else { cellContent = '<span class="text-muted opacity-25">-</span>'; }
+
+                let finalContent = `<div class="d-flex flex-column align-items-center justify-content-center">${timesLine}<div class="fw-bold">${cellContent}</div></div>`;
+                daysHtml += `<td class="${cellClass}" title="${tooltip}" data-bs-toggle="tooltip">${finalContent}</td>`;
+            });
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                    <td class="fw-bold text-muted">${r.file_number || ''}</td>
+                    <td class="text-start fw-bold" style="position:sticky; left:0; background:#fff; z-index:1;">
+                        ${r.name}
+                        ${r.arabic_name ? `<div class="text-dark fw-bold small">${r.arabic_name}</div>` : ''}
+                    </td>
+                    <td>${r.department || ''}</td>
+                    ${daysHtml}
+                    <td class="text-success fw-bold">${r.present_days}</td>
+                    <td class="text-danger fw-bold">${r.absent_days}</td>
+                    <td class="text-success fw-bold bg-success bg-opacity-10">${r.presence_ok_days || 0}</td>
+                    <td class="text-danger fw-bold bg-danger bg-opacity-10">${r.presence_missing_days || 0}</td>
+                `;
+            tbody.appendChild(tr);
+        });
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    }
+
+    document.getElementById('btnExportExcel').addEventListener('click', function () {
+        const wb = XLSX.utils.book_new();
+        const table = document.getElementById('reportTable');
+        const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+        XLSX.utils.book_append_sheet(wb, ws, "Monthly Presence Report");
+        XLSX.writeFile(wb, "Monthly_Presence_Report_{{ year }}_{{ month }}.xlsx");
+    });
+</script>
+<style>
+    th,
+    td {
+        white-space: nowrap;
+    }
+
+    .placeholder-glow .placeholder {
+        min-height: 40px;
+    }
+</style>
+{% endblock %}

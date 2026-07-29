@@ -1,0 +1,125 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<title>{{ _('x.eh_report_title') }} — {{ d.employee.arabic_name or d.employee.name }}</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 24px; color: #111; }
+    h2 { margin: 0 0 2px; font-size: 20px; }
+    .sub { color: #555; font-size: 12.5px; margin-bottom: 14px; }
+    .box { border: 1px solid #bbb; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    th, td { border: 1px solid #999; padding: 5px 7px; text-align: center; }
+    thead th { background: #eee; }
+    td.r { text-align: left; direction: ltr; }
+    .lines { text-align: right; font-size: 11.5px; color: #333; }
+    .lines div { padding: 1px 0; }
+    .pos { color: #146c2e; } .neg { color: #b02a37; }
+    .tot { font-weight: 700; background: #f6f6f6; }
+    .sig { margin-top: 34px; display: flex; justify-content: space-between; font-size: 13px; }
+    .sig div { width: 220px; border-top: 1px solid #333; text-align: center; padding-top: 6px; }
+    @media print { .noprint { display: none; } }
+</style>
+</head>
+<body>
+<button class="noprint" onclick="window.print()" style="float:left">🖨 {{ _('x.eh_print') }}</button>
+<h2>{{ _('x.eh_report_title') }}</h2>
+<div class="sub">{{ company }} — {{ _('x.eh_generated') }} {{ '' }}</div>
+
+<div class="box grid">
+    <span><b>{{ d.employee.employee_number }}</b> — {{ d.employee.arabic_name or d.employee.name }}</span>
+    <span>{{ d.employee.department or '' }} / {{ d.employee.position or '' }}</span>
+    <span>{{ _('x.hp_date') }}: {{ d.employee.hire_date }} ←
+        {{ d.employee.end_of_service_date or '...' }}</span>
+    <span>{{ _('x.pm_basic') }}: {{ fmt|format(d.employee.basic or 0) }} {{ currency }}</span>
+</div>
+
+<div class="box grid">
+    <span>{{ _('x.eh_months_n') }}: <b>{{ d.totals.months }}</b></span>
+    <span class="pos">{{ _('x.pm_allowances') }}: <b>{{ fmt|format(d.totals.allow) }}</b></span>
+    <span class="neg">{{ _('x.pm_deductions') }}: <b>{{ fmt|format(d.totals.ded) }}</b></span>
+    <span>{{ _('x.eh_totals') }}: <b>{{ fmt|format(d.totals.net) }} {{ currency }}</b></span>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>{{ _('x.pp_period_label') }}</th>
+            <th>{{ _('x.pm_basic') }}</th>
+            <th>{{ _('x.pm_allowances') }}</th>
+            <th>{{ _('x.pm_deductions') }}</th>
+            <th>{{ _('x.pm_net') }}</th>
+            <th>{{ _('x.eh_status') }}</th>
+            <th style="width:40%">{{ _('x.lg_lines') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in d.months %}
+        <tr>
+            <td><b>{{ '%02d'|format(m.month) }}/{{ m.year }}</b><br>
+                <span style="font-size:10.5px;color:#666">{{ m.period_start }} ← {{ m.period_end }}</span></td>
+            <td>{{ fmt|format(m.basic or 0) }}</td>
+            <td class="pos">{{ fmt|format(m.allow or 0) }}</td>
+            <td class="neg">{{ fmt|format(m.ded or 0) }}</td>
+            <td><b>{{ fmt|format(m.net or 0) }}</b></td>
+            <td>{% if m.source == 'ledger' %}{{ _('x.eh_posted') }} #{{ m.posting_id }}
+                {% else %}{{ _('x.eh_draft') }}{% endif %}</td>
+            <td class="lines">
+                {% for a in m.details.allowances or [] %}
+                <div class="pos">+ {{ a.name_ar or a.name_en }} : {{ fmt|format(a.amount) }}</div>
+                {% endfor %}
+                {% for x in m.details.deductions or [] %}
+                <div class="neg">− {{ x.name_ar or x.name_en }} : {{ fmt|format(x.amount) }}</div>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+        <tr class="tot">
+            <td>{{ _('x.eh_totals') }}</td>
+            <td></td>
+            <td class="pos">{{ fmt|format(d.totals.allow) }}</td>
+            <td class="neg">{{ fmt|format(d.totals.ded) }}</td>
+            <td>{{ fmt|format(d.totals.net) }}</td>
+            <td colspan="2">{{ currency }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 style="margin:18px 0 6px;font-size:15px">{{ _('x.eh_loans') }}</h3>
+{% if d.loans %}
+<table>
+    <thead>
+        <tr>
+            <th>{{ _('x.eh_principal') }}</th>
+            <th>{{ _('x.eh_installment') }}</th>
+            <th>{{ _('x.eh_paid') }}</th>
+            <th>{{ _('x.eh_remaining') }}</th>
+            <th>{{ _('x.pp_period_label') }}</th>
+            <th>{{ _('x.p_reason') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for l in d.loans %}
+        <tr>
+            <td>{{ fmt|format(l.principal or 0) }}</td>
+            <td>{{ fmt|format(l.installment or 0) }}</td>
+            <td class="pos">{{ fmt|format(l.paid) }}</td>
+            <td class="neg"><b>{{ fmt|format(l.remaining) }}</b></td>
+            <td>{{ l.start }}</td>
+            <td>{{ l.reason or '' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="color:#666;font-size:13px">{{ _('x.eh_no_loans') }}</div>
+{% endif %}
+
+<div class="sig">
+    <div>{{ _('x.eh_sig_hr') }}</div>
+    <div>{{ _('x.eh_sig_acc') }}</div>
+    <div>{{ _('x.eh_sig_emp') }}</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<title>{{ _('x.eosp_title') }} — {{ r.arabic_name or r.name }}</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 26px; color: #111; }
+    h2 { margin: 0 0 2px; font-size: 20px; }
+    .sub { color: #555; font-size: 12.5px; margin-bottom: 14px; }
+    .box { border: 1px solid #bbb; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-bottom: 12px; }
+    th, td { border: 1px solid #999; padding: 5px 8px; }
+    thead th { background: #eee; text-align: center; }
+    td.n { text-align: left; direction: ltr; width: 130px; }
+    .pos { color: #146c2e; } .neg { color: #b02a37; }
+    .net { font-size: 15px; font-weight: 700; background: #f2f7f4; }
+    .muted { color: #666; font-size: 11.5px; }
+    .sig { margin-top: 40px; display: flex; justify-content: space-between; font-size: 13px; }
+    .sig div { width: 210px; border-top: 1px solid #333; text-align: center; padding-top: 6px; }
+    @media print { .noprint { display: none; } }
+</style>
+</head>
+<body>
+<button class="noprint" onclick="window.print()" style="float:left">🖨 {{ _('x.eh_print') }}</button>
+<h2>{{ _('x.eosp_title') }}</h2>
+<div class="sub">{{ company }}</div>
+
+{% if legacy %}
+<div class="box" style="border-color:#b02a37;background:#fdf2f3">
+    <b style="color:#b02a37">{{ _('x.eosp_legacy_title') }}</b>
+    <div style="font-size:12.5px;margin-top:4px">{{ _('x.eosp_legacy_note') }}</div>
+</div>
+{% endif %}
+<div class="box grid">
+    <span><b>{{ r.employee_number }}</b> — {{ r.arabic_name or r.name }}</span>
+    <span>{{ r.department or '' }} / {{ r.position or '' }}</span>
+    <span>{{ _('x.hp_date') }}: {{ r.hire_date }} ← {{ r.termination_date }}</span>
+    <span>{{ _('x.eosp_reason') }}: {{ _('x.' + r.reason) }}</span>
+    <span>{{ _('x.years_of_service') }}: <b>{{ '%.2f'|format(r.years_of_service or 0) }}</b>
+        {% if c.service_days %}({{ c.service_days }} {{ _('x.day_unit_pl') }}){% endif %}</span>
+</div>
+
+{% if not legacy %}
+<table>
+    <thead><tr><th colspan="2">{{ _('x.eosp_wage') }} ({{ _('x.eosp_basis26') }})</th></tr></thead>
+    <tbody>
+        {% for w in c.wage_lines %}
+        <tr><td>{{ w.name_ar or w.name_en }}</td><td class="n">{{ '%.3f'|format(w.amount) }}</td></tr>
+        {% endfor %}
+        <tr class="net"><td>{{ _('x.eosp_monthly_wage') }}</td>
+            <td class="n">{{ '%.3f'|format(r.monthly_wage or 0) }}</td></tr>
+        <tr><td>{{ _('x.eosp_daily') }} (÷26)</td>
+            <td class="n">{{ '%.3f'|format(r.daily_rate or 0) }}</td></tr>
+    </tbody>
+</table>
+
+<table>
+    <thead><tr><th colspan="2">{{ _('x.eosp_gratuity') }}</th></tr></thead>
+    <tbody>
+        <tr><td>{{ _('x.eosp_tier1') }}</td>
+            <td class="n">{{ '%.2f'|format(r.tier1_days or 0) }} {{ _('x.day_unit_pl') }}</td></tr>
+        <tr><td>{{ _('x.eosp_tier2') }}</td>
+            <td class="n">{{ '%.2f'|format(r.tier2_days or 0) }} {{ _('x.day_unit_pl') }}</td></tr>
+        {% if r.capped %}
+        <tr><td colspan="2" class="muted">{{ _('x.eosp_capped') }}</td></tr>
+        {% endif %}
+        <tr><td>{{ _('x.eosp_pay_days') }}</td>
+            <td class="n">{{ '%.2f'|format(c.pay_days or 0) }} × {{ '%.3f'|format(r.daily_rate or 0) }}</td></tr>
+        <tr><td>{{ _('x.eosp_gross') }}</td>
+            <td class="n">{{ '%.3f'|format(c.gross_gratuity or 0) }}</td></tr>
+        <tr><td>{{ _('x.eosp_fraction') }}</td>
+            <td class="n">{{ '%.2f'|format((r.fraction or 0) * 100) }}%</td></tr>
+        <tr class="net"><td class="pos">{{ _('x.eosp_gratuity_net') }}</td>
+            <td class="n pos">{{ '%.3f'|format(r.gratuity_amount or 0) }}</td></tr>
+    </tbody>
+</table>
+{% endif %}
+
+<table>
+    <thead><tr><th colspan="2">{{ _('x.eosp_settlement') }}</th></tr></thead>
+    <tbody>
+        {% if legacy %}
+        <tr><td>{{ _('x.eosp_gratuity_net') }} ({{ _('x.eosp_legacy_stored') }})</td>
+            <td class="n pos">{{ '%.3f'|format(r.reward_amount or 0) }}</td></tr>
+        {% else %}
+        <tr><td class="pos">{{ _('x.eosp_gratuity_net') }}</td>
+            <td class="n pos">{{ '%.3f'|format(r.gratuity_amount or 0) }}</td></tr>
+        <tr><td class="pos">{{ _('x.eosp_leave') }} ({{ '%.2f'|format(r.leave_days or 0) }} {{ _('x.day_unit_pl') }})</td>
+            <td class="n pos">{{ '%.3f'|format(r.leave_amount or 0) }}</td></tr>
+        <tr><td class="neg">{{ _('x.eosp_loans') }}</td>
+            <td class="n neg">− {{ '%.3f'|format(r.loans_deducted or 0) }}</td></tr>
+        {% endif %}
+        <tr class="net"><td>{{ _('x.eosp_net') }}</td>
+            <td class="n">{{ '%.3f'|format(r.net_payout or 0) }} {{ currency }}</td></tr>
+    </tbody>
+</table>
+
+{% if r.notes %}<div class="box muted">{{ _('x.notes') }}: {{ r.notes }}</div>{% endif %}
+<div class="muted">{{ _('x.eosp_legal') }}</div>
+
+<div class="sig">
+    <div>{{ _('x.eh_sig_hr') }}</div>
+    <div>{{ _('x.eh_sig_acc') }}</div>
+    <div>{{ _('x.eh_sig_emp') }}</div>
+</div>
+</body>
+</html>

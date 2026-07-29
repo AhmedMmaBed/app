@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.role_permissions', role=role.name) }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ _('header.assign_permissions') }}: <span class="text-primary">{{ role.name
+                }}</span></h1>
+    <div class="alert alert-info py-2 small mt-2"><i class="fas fa-sitemap me-1"></i>{{ _('x.perm_nesting_note') }}</div>
+        <a href="{{ url_for('admin.roles_list') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> {{ _('btn.back_to_roles') }}
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">{{ _('header.permissions_matrix') }}</h6>
+            <button class="btn btn-success" id="savePermsBtn">
+                <i class="fas fa-save"></i> {{ _('btn.save_changes') }}
+            </button>
+        </div>
+        <div class="card-body">
+            <form id="permsForm">
+                <div class="row">
+                    {% for group, perms in grouped_perms.items() %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-left-primary">
+                            <div class="card-header bg-light font-weight-bold">
+                                {{ group }}
+                            </div>
+                            <div class="card-body">
+                                {% for p in perms %}
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input perm-check" id="perm_{{ p.id }}"
+                                        value="{{ p.id }}" {% if p.id in current_ids %}checked{% endif %}>
+                                    <label class="custom-control-label" for="perm_{{ p.id }}">
+                                        <strong>{{ p.name }}</strong><br>
+                                        <small class="text-muted">{{ p.description }}</small>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('savePermsBtn');
+        if (btn) btn.addEventListener('click', function () {
+            var selected = Array.from(document.querySelectorAll('.perm-check:checked')).map(function (c) { return c.value; });
+            fetch({{ url_for('admin.role_permissions', role_id=role.id)|tojson }}, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ permissions: selected })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) {
+                        alert({{ _("msg.permissions_saved")|tojson }});
+                        window.location.href = {{ url_for('admin.roles_list')|tojson }};
+                    } else {
+                        alert({{ _("error.generic")|tojson }} + ': ' + res.message);
+                    }
+                })
+                .catch(function (err) { alert({{ _("error.connection")|tojson }} + ': ' + err); });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.hours_approval') }}{% endblock %}
+
+{% block content %}
+<style>
+    .day-inner { font-size: 0.76rem; }
+    .ha-scroll thead th { position: sticky; top: 0; z-index: 6; }
+    .day-scroll { max-height: 52vh; overflow: auto; }
+    .day-scroll thead th { position: sticky; top: 0; z-index: 4; }
+    .day-inner thead th { background: #e9ecef !important; color: #111 !important;
+                          font-weight: 600; border-color: #cfd4d9 !important; }
+    .day-inner td, .day-inner th { padding: 0.15rem 0.3rem !important; white-space: nowrap; }
+    .day-inner td.rsn { white-space: normal; min-width: 150px; }
+</style>
+{% set L = get_locale()|string %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between flex-wrap align-items-center gap-2">
+            <div>
+                <h5 class="mb-0"><i class="fas fa-user-clock me-2"></i>{{ _('x.hours_approval') }}</h5>
+                <div class="report-desc">{{ _('x.rdesc_hours_approval2') }}</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <select class="form-select w-auto" id="haMonth" onchange="haLoad()">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" class="form-control" id="haYear" value="{{ year }}"
+                       style="width:110px" onchange="haLoad()">
+                <input type="search" class="form-control w-auto" id="haSearch"
+                       placeholder="{{ _('x.ha_search') }}" oninput="haRender()" style="min-width:200px">
+                <select class="form-select w-auto" id="haDept" onchange="haLoad()">
+                    <option value="">{{ _('filter.all_departments') }}</option>
+                    {% for d in departments %}
+                    <option value="{{ d }}">{{ d }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-outline-secondary" id="haPrintBtn" target="_blank" href="#">
+                    <i class="fas fa-print me-2"></i>{{ _('x.pr_print_all') }}
+                </a>
+                <button class="btn btn-success" id="haApproveBtn" onclick="haApproveSelected()">
+                    <i class="fas fa-signature me-2"></i>{{ _('x.ha_attest_selected') }}
+                </button>
+            </div>
+        </div>
+
+        <div class="p-2 px-3 border-bottom bg-light d-flex flex-wrap align-items-center gap-2">
+            <span id="chipApproved" class="badge rounded-pill bg-success">--</span>
+            <span id="chipStale" class="badge rounded-pill bg-warning text-dark d-none"></span>
+            <span id="chipPending" class="badge rounded-pill bg-secondary">--</span>
+            <span id="haPeriodChip" class="badge rounded-pill bg-secondary border" title="{{ _('x.pp_period_tip') }}"></span>
+            <span id="haPayrollChip" class="badge rounded-pill bg-secondary border d-none"></span>
+            <span class="text-muted small ms-2">
+                <i class="fas fa-shield-alt me-1"></i>{{ _('x.ha_principle') }}
+            </span>
+        </div>
+
+        <div class="table-responsive ha-scroll" style="max-height: 72vh;">
+            <table class="table table-hover align-middle text-center mb-0" style="font-size:0.86rem;">
+                <thead class="table-dark sticky-top" style="z-index:5;">
+                    <tr>
+                        <th style="width:34px">
+                            <input type="checkbox" class="form-check-input" id="haCheckAll"
+                                   onclick="haToggleAll(this.checked)">
+                        </th>
+                        <th style="width:34px"></th>
+                        <th>{{ _('tbl.header.file_number') }}</th>
+                        <th class="text-start">{{ _('tbl.header.name') }}</th>
+                        <th>{{ _('x.ha_req_days') }}</th>
+                        <th>{{ _('x.ha_act_days') }}</th>
+                        <th>{{ _('x.ha_weekly_off_days') }}</th>
+                        <th>{{ _('x.ha_holiday_days') }}</th>
+                        <th>{{ _('x.pm_required_hours') }}</th>
+                        <th>{{ _('x.ha_late_mins') }}</th>
+                        <th>{{ _('x.ha_early_mins') }}</th>
+                        <th>{{ _('x.ha_presence_missing') }}</th>
+                        <th>{{ _('x.ha_hperm_hours') }}</th>
+                        <th>{{ _('x.ha_ot_hours') }}</th>
+                        <th>{{ _('x.ha_rest_unpaid') }}</th>
+                        <th>{{ _('x.pm_actual_hours') }}</th>
+                        <th class="table-warning">{{ _('x.ha_partial_days') }}</th>
+                        <th>{{ _('x.ha_absent_days') }}</th>
+                        <th>{{ _('x.ha_sick_days') }}</th>
+                        <th>{{ _('x.ha_unpaid_days') }}</th>
+                        <th>{{ _('x.ha_excuse_days') }}</th>
+                        <th style="min-width:140px">{{ _('x.ha_note') }}</th>
+                        <th style="min-width:150px">{{ _('x.p_status') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="haBody">
+                    <tr><td colspan="23" class="text-center py-5">
+                        <div class="spinner-border text-primary"></div>
+                    </td></tr>
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const HA_API = {{ url_for('payroll.api_hours_approval')|tojson }};
+    const HA_APPROVE = {{ url_for('payroll.api_hours_approve')|tojson }};
+    const HA_UNAPPROVE = {{ url_for('payroll.api_hours_unapprove')|tojson }};
+    const HA_DAYS = {{ url_for('payroll.api_hours_employee_days')|tojson }};
+    const ACT_EXCUSE = {{ url_for('payroll.day_action_excuse')|tojson }};
+    const ACT_LEAVE = {{ url_for('payroll.day_action_leave')|tojson }};
+    const ACT_HOURLY = {{ url_for('payroll.day_action_hourly_perm')|tojson }};
+    const HA_AR = {{ (L == 'ar')|tojson }};
+    const HT = {
+        approved: {{ _('x.ha_status_approved')|tojson }},
+        stale: {{ _('x.ha_status_stale')|tojson }},
+        staleHint: {{ _('x.ha_stale_hint')|tojson }},
+        pending: {{ _('x.ha_status_pending')|tojson }},
+        unapprove: {{ _('x.ha_unapprove')|tojson }},
+        payrollSaved: {{ _('x.ha_payroll_saved_note')|tojson }},
+        okTitle: {{ _('x.ha_attested_ok')|tojson }},
+        failTitle: {{ _('x.pm_save_failed')|tojson }},
+        nothingSelected: {{ _('x.ha_nothing_selected')|tojson }},
+        noEmployees: {{ _('x.pm_no_employees')|tojson }},
+        chipApproved: {{ _('x.ha_status_approved')|tojson }},
+        chipStale: {{ _('x.ha_status_stale')|tojson }},
+        chipPending: {{ _('x.ha_status_pending')|tojson }},
+        dayStatus: {
+            present: {{ _('x.ds_present')|tojson }},
+            partial: {{ _('x.ds_partial')|tojson }},
+            absent: {{ _('x.ds_absent')|tojson }},
+            weekly_off: {{ _('x.ds_weekly_off')|tojson }},
+            holiday: {{ _('x.ds_holiday')|tojson }},
+            leave_sick: {{ _('x.ds_sick')|tojson }},
+            leave_unpaid: {{ _('x.ds_unpaid')|tojson }},
+            leave_paid: {{ _('x.ds_leave')|tojson }},
+            excused: {{ _('x.ds_excused')|tojson }},
+            not_hired: {{ _('x.ds_not_hired')|tojson }},
+            ended: {{ _('x.ds_ended')|tojson }}
+        },
+        weekdays: {{ ([_('day.sun'), _('day.mon'), _('day.tue'), _('day.wed'), _('day.thu'), _('day.fri'), _('day.sat')])|tojson }},
+        actExcuse: {{ _('x.act_excuse')|tojson }},
+        actSick: {{ _('x.act_sick')|tojson }},
+        actUnpaid: {{ _('x.act_unpaid')|tojson }},
+        reasonLabel: {{ _('x.act_reason')|tojson }},
+        reasonRequired: {{ _('x.act_reason_required')|tojson }},
+        sideLabel: {{ _('x.act_excuse_side')|tojson }},
+        sideIn: {{ _('x.side_in')|tojson }},
+        sideOut: {{ _('x.side_out')|tojson }},
+        excIn: {{ _('x.exc_in')|tojson }},
+        excOut: {{ _('x.exc_out')|tojson }},
+        nLate: {{ _('x.n_late')|tojson }},
+        nEarly: {{ _('x.n_early')|tojson }},
+        minUnit: {{ _('x.min_unit')|tojson }},
+        nPresence: {{ _('x.n_presence')|tojson }},
+        nPresenceOk: {{ _('x.n_presence_ok')|tojson }},
+        presMissShort: {{ _('x.n_pres_missing_short')|tojson }},
+        actHourly: {{ _('x.act_hperm')|tojson }},
+        hpFrom: {{ _('x.hp_from')|tojson }},
+        hpTo: {{ _('x.hp_to')|tojson }},
+        hpBadTimes: {{ _('x.err_hp_times')|tojson }},
+        hpBadge: {{ _('x.n_hperm')|tojson }},
+        nOT: {{ _('x.n_ot')|tojson }},
+        restUnpaid: {{ _('x.n_rest_unpaid')|tojson }},
+        manualBadge: {{ _('x.act_manual_badge')|tojson }},
+        confirmBtn: {{ _('x.pm_confirm_btn')|tojson }},
+        cancelBtn: {{ _('x.cancel')|tojson }},
+        errAlreadyExcused: {{ _('x.err_already_excused')|tojson }},
+        errLeaveExists: {{ _('x.err_leave_exists')|tojson }},
+        errHasPunches: {{ _('x.err_has_punches')|tojson }},
+        errSideRequired: {{ _('x.err_side_required')|tojson }},
+        errHpHours: {{ _('x.err_hp_hours')|tojson }},
+        errHpLimit: {{ _('x.err_hp_limit')|tojson }},
+        errHpDup: {{ _('x.err_hp_dup')|tojson }},
+        errHpNoPunch: {{ _('x.err_hp_nopunch')|tojson }},
+        errTypeMissing: {{ _('x.err_leave_type_missing')|tojson }},
+        colDate: {{ _('x.p_date')|tojson }},
+        colIn: {{ _('x.ds_in')|tojson }},
+        colOut: {{ _('x.ds_out')|tojson }},
+        colHours: {{ _('x.ds_hours')|tojson }},
+        colAction: {{ _('x.ds_action')|tojson }}
+    };
+
+    let haRows = [], haLoading = false, haOpenEmp = null;
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g,
+            c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function nm(r) { return HA_AR ? (r.arabic_name || r.name) : (r.name || r.arabic_name); }
+    function hrs(v) { return (Math.round((Number(v) || 0) * 100) / 100).toLocaleString(); }
+
+    function stateBadge(r) {
+        if (r.state === 'approved') {
+            const a = r.approval || {};
+            return `<span class="badge bg-success mb-1 d-inline-block">
+                        <i class="fas fa-check me-1"></i>${esc(HT.approved)}</span>
+                    <div class="small text-muted">${esc(a.approved_by_name || '')} ${esc((a.approved_at || '').slice(0, 16))}</div>
+                    <button class="btn btn-sm btn-outline-danger mt-1" onclick="haUnapprove(${r.employee_id})">
+                        ${esc(HT.unapprove)}</button>`;
+        }
+        if (r.state === 'stale') {
+            return `<span class="badge bg-warning text-dark" title="${esc(HT.staleHint)}">
+                        <i class="fas fa-exclamation-triangle me-1"></i>${esc(HT.stale)}</span>
+                    <div class="small text-muted">${esc(HT.staleHint)}</div>`;
+        }
+        return `<span class="badge bg-secondary">${esc(HT.pending)}</span>`;
+    }
+
+    function haRender() {
+        const body = document.getElementById('haBody');
+        if (!haRows.length) {
+            body.innerHTML = '<tr><td colspan="23" class="text-muted py-4">' + esc(HT.noEmployees) + '</td></tr>';
+            return;
+        }
+        if (false) {}
+        const q = (document.getElementById('haSearch').value || '').trim().toLowerCase();
+        const visible = haRows.map((r, i) => [r, i]).filter(([r]) => {
+            if (!q) return true;
+            return String(r.employee_number || '').toLowerCase().includes(q)
+                || String(r.name || '').toLowerCase().includes(q)
+                || String(r.arabic_name || '').toLowerCase().includes(q);
+        });
+        body.innerHTML = visible.map(([r, i]) => {
+            const m = r.metrics || {};
+            const partial = m.partial_days > 0
+                ? `<span class="badge bg-warning text-dark">${m.partial_days}</span>` : '0';
+            const absent = m.absent_days > 0
+                ? `<span class="badge bg-danger">${m.absent_days}</span>` : '0';
+            const note = r.approval ? (r.approval.notes || '') : '';
+            return `
+            <tr class="${r.state === 'approved' ? '' : (r.state === 'stale' ? 'table-warning' : 'table-light')}">
+                <td><input type="checkbox" class="form-check-input ha-check" data-i="${i}"
+                           ${r.state === 'approved' ? '' : 'checked'}></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="haToggleDays(${r.employee_id}, ${i})">
+                        <i class="fas fa-chevron-down" id="chev-${r.employee_id}"></i>
+                    </button>
+                </td>
+                <td>${esc(r.employee_number)}</td>
+                <td class="text-start fw-semibold">${esc(nm(r))}
+                    <div class="text-muted small fw-normal">${esc(r.department)}</div></td>
+                <td>${m.required_days ?? 0}</td>
+                <td>${m.actual_days ?? 0}</td>
+                <td class="text-muted">${m.weekly_off_days ?? 0}</td>
+                <td class="text-muted">${m.holiday_days ?? 0}</td>
+                <td>${hrs(m.required_hours)}</td>
+                <td>${m.late_mins ? `<span class="text-danger">${m.late_mins}</span>` : 0}</td>
+                <td>${m.early_mins ? `<span class="text-danger">${m.early_mins}</span>` : 0}</td>
+                <td>${m.presence_missing ? `<span class="text-danger fw-bold">${m.presence_missing}</span>` : 0}</td>
+                <td>${m.hourly_perm_hours ? hrs(m.hourly_perm_hours) : 0}</td>
+                <td>${(() => { const t = ((m.ot_weekday_mins||0)+(m.ot_weekend_mins||0)+(m.ot_holiday_mins||0))/60;
+                               return t ? `<span class="text-success fw-bold">${hrs(t)}</span>` : 0; })()}</td>
+                <td>${m.unentitled_rest_days ? `<span class="text-danger fw-bold">${m.unentitled_rest_days}</span>` : 0}</td>
+                <td>${hrs(m.actual_hours)}</td>
+                <td>${partial}</td>
+                <td>${absent}</td>
+                <td>${m.sick_days ?? 0}</td>
+                <td>${m.unpaid_days ?? 0}</td>
+                <td>${m.excuse_days ?? 0}</td>
+                <td><input type="text" class="form-control form-control-sm" id="haN-${i}"
+                           value="${esc(note)}"></td>
+                <td>${stateBadge(r)}</td>
+            </tr>
+            <tr id="days-${r.employee_id}" style="display:none">
+                <td colspan="23" class="bg-body-tertiary p-0"></td>
+            </tr>`;
+        }).join('');
+        if (haOpenEmp) {
+            const again = haOpenEmp; haOpenEmp = null;
+            const idx = haRows.findIndex(x => x.employee_id === again);
+            if (idx >= 0) haToggleDays(again, idx);
+        }
+    }
+
+    function haRenderChips(counts, total, payrollSaved) {
+        document.getElementById('chipApproved').textContent = `${HT.chipApproved}: ${counts.approved} / ${total}`;
+        const cs = document.getElementById('chipStale');
+        if (counts.stale > 0) { cs.classList.remove('d-none'); cs.textContent = `${HT.chipStale}: ${counts.stale}`; }
+        else cs.classList.add('d-none');
+        document.getElementById('chipPending').textContent = `${HT.chipPending}: ${counts.pending}`;
+        const pc = document.getElementById('haPayrollChip');
+        if (payrollSaved) {
+            pc.classList.remove('d-none');
+            pc.innerHTML = '<i class="fas fa-lock me-1"></i>' + esc(HT.payrollSaved);
+        } else pc.classList.add('d-none');
+    }
+
+    function haToggleAll(checked) {
+        document.querySelectorAll('.ha-check').forEach(c => c.checked = checked);
+    }
+
+    function haLoad() {
+        if (haLoading) return;
+        haLoading = true;
+        const m = document.getElementById('haMonth').value;
+        const y = document.getElementById('haYear').value;
+        const d = document.getElementById('haDept').value;
+        document.getElementById('haBody').innerHTML =
+            '<tr><td colspan="23" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+        document.getElementById('haPrintBtn').href =
+            {{ url_for('payroll.hours_approval_print')|tojson }} +
+            `?month=${m}&year=${y}&dept=${encodeURIComponent(d)}`;
+        fetch(`${HA_API}?month=${m}&year=${y}&dept=${encodeURIComponent(d)}`,
+              { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                haLoading = false;
+                if (!res.success) {
+                    document.getElementById('haBody').innerHTML =
+                        '<tr><td colspan="23" class="text-danger py-4">' + esc(res.message || 'Error') + '</td></tr>';
+                    return;
+                }
+                haRows = res.rows;
+                haRender();
+                haRenderChips(res.counts, res.total, res.payroll_saved);
+                if (res.period)
+                    document.getElementById('haPeriodChip').textContent =
+                        res.period.start + ' \u2192 ' + res.period.end;
+            })
+            .catch(e => {
+                haLoading = false;
+                document.getElementById('haBody').innerHTML =
+                    '<tr><td colspan="23" class="text-danger py-4">' + esc(String(e)) + '</td></tr>';
+            });
+    }
+
+    // ---------- day drill-down ----------
+    const dayBadgeCls = {
+        present: 'bg-success', partial: 'bg-warning text-dark', absent: 'bg-danger',
+        weekly_off: 'bg-secondary', holiday: 'bg-info text-dark',
+        leave_sick: 'bg-primary', leave_unpaid: 'bg-dark text-white',
+        leave_paid: 'bg-info text-dark', excused: 'bg-white border text-dark',
+        not_hired: 'bg-white border text-muted',
+        ended: 'bg-white border text-muted'
+    };
+
+    function dayActions(empId, d) {
+        const items = [];
+        if (d.status === 'absent') {
+            // No punches: whole-day instruments only
+            items.push(`<button class="dropdown-item" onclick="actExcuse(${empId},'${d.date}',null)">${esc(HT.actExcuse)}</button>`);
+            items.push(`<button class="dropdown-item" onclick="actLeave(${empId},'${d.date}','sick')">${esc(HT.actSick)}</button>`);
+            items.push(`<button class="dropdown-item" onclick="actLeave(${empId},'${d.date}','unpaid')">${esc(HT.actUnpaid)}</button>`);
+        }
+        if ((d.status === 'partial' || d.status === 'present') && !d.hourly_perm) {
+            items.push(`<button class="dropdown-item" onclick="actHourly(${empId},'${d.date}')">${esc(HT.actHourly)}</button>`);
+        }
+        if ((d.status === 'partial' || d.status === 'present') && !d.excuse) {
+            // Punched day: the excuse targets a punch side; default = the missing side
+            const def = (d.check_in !== '--' && d.check_out === '--') ? 'out'
+                      : (d.check_in === '--' ? 'in' : 'out');
+            items.push(`<button class="dropdown-item" onclick="actExcuse(${empId},'${d.date}','${def}')">${esc(HT.actExcuse)}</button>`);
+        }
+        if (!items.length) return '';
+        return `<div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        ${esc(HT.colAction)}</button>
+                    <ul class="dropdown-menu">${items.map(x => '<li>' + x + '</li>').join('')}</ul>
+                </div>`;
+    }
+
+    function haToggleDays(empId, idx) {
+        const row = document.getElementById('days-' + empId);
+        const chev = document.getElementById('chev-' + empId);
+        if (row.style.display !== 'none') {
+            row.style.display = 'none';
+            chev.className = 'fas fa-chevron-down';
+            if (haOpenEmp === empId) haOpenEmp = null;
+            return;
+        }
+        document.querySelectorAll('tr[id^="days-"]').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('i[id^="chev-"]').forEach(c => c.className = 'fas fa-chevron-down');
+        row.style.display = '';
+        chev.className = 'fas fa-chevron-up';
+        haOpenEmp = empId;
+        const cell = row.firstElementChild;
+        cell.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+        const m = document.getElementById('haMonth').value;
+        const y = document.getElementById('haYear').value;
+        fetch(`${HA_DAYS}?employee_id=${empId}&month=${m}&year=${y}`,
+              { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) { cell.innerHTML = '<div class="text-danger p-3">' + esc(res.message) + '</div>'; return; }
+                const showPres = !!res.presence_required;
+                cell.innerHTML = `
+                <div class="p-2">
+                <div class="day-scroll"><table class="table table-sm table-bordered text-center mb-0 day-inner">
+                    <thead class="sticky-top">
+                        <tr><th>${esc(HT.colDate)}</th><th></th><th>${esc(HT.colIn)}</th>
+                            <th>${esc(HT.colOut)}</th>${showPres ? `<th>${esc(HT.nPresenceOk)}</th>` : ''}<th>${esc(HT.colHours)}</th>
+                            <th class="text-start">{{ _('x.p_reason') }}</th><th>${esc(HT.colAction)}</th></tr>
+                    </thead>
+                    <tbody>` + res.days.map(d => {
+                        let label = HT.dayStatus[d.status] || d.status;
+                        if (d.status === 'holiday' && d.holiday_name) label += ': ' + d.holiday_name;
+                        if (d.status.startsWith('leave') && d.leave_type) label = d.leave_type;
+                        let info = '';
+                        if (d.excuse) {
+                            const sTag = d.excuse.side === 'in' ? HT.excIn
+                                       : d.excuse.side === 'out' ? HT.excOut : HT.actExcuse;
+                            info = `<span class="badge bg-white border text-dark me-1">${esc(sTag)}</span>`
+                                 + esc(d.excuse.reason || '')
+                                 + (d.excuse.by ? ` <span class="text-muted">(${esc(d.excuse.by)})</span>` : '');
+                        } else if (d.leave_reason) {
+                            info = esc(d.leave_reason);
+                        }
+                        if (d.rest_unpaid) info += ` <span class="badge bg-danger">${esc(HT.restUnpaid)}</span>`;
+                        if (d.ot_mins) info += ` <span class="badge bg-white border text-success">${esc(HT.nOT)} ${d.ot_mins} ${esc(HT.minUnit)}</span>`;
+                        if (d.hourly_perm) info += ` <span class="badge bg-info text-dark">${esc(HT.hpBadge)} ${d.hourly_perm.hours} (${esc(d.hourly_perm.from)}-${esc(d.hourly_perm.to)})</span>`;
+                        if (d.late_mins) info += ` <span class="badge bg-white border text-danger">${esc(HT.nLate)} ${d.late_mins} ${esc(HT.minUnit)}</span>`;
+                        if (d.early_mins) info += ` <span class="badge bg-white border text-danger">${esc(HT.nEarly)} ${d.early_mins} ${esc(HT.minUnit)}</span>`;
+                        const presTd = !showPres ? '' : ('<td>' + (
+                            d.presence_in
+                                ? `<span class="text-success fw-bold">${esc(d.presence_in)}${d.presence_out ? ' - ' + esc(d.presence_out) : ''}</span>`
+                                : d.presence_missing
+                                    ? `<span class="text-danger fw-bold">${esc(HT.presMissShort)}</span>`
+                                    : '<span class="text-muted">—</span>') + '</td>');
+                        const manual = d.has_manual
+                            ? ` <span class="badge bg-warning text-dark" style="font-size:0.65rem">${esc(HT.manualBadge)}</span>` : '';
+                        return `<tr>
+                            <td>${d.date.slice(8)}/${d.date.slice(5, 7)}
+                                <small class="text-muted d-block">${esc(HT.weekdays[d.weekday])}</small></td>
+                            <td><span class="badge ${dayBadgeCls[d.status] || 'bg-secondary'}">${esc(label)}</span></td>
+                            <td>${esc(d.check_in)}${manual}</td>
+                            <td>${esc(d.check_out)}</td>
+                            ${presTd}
+                            <td>${d.hours ? hrs(d.hours) : '--'}</td>
+                            <td class="text-start small rsn">${info}</td>
+                            <td>${dayActions(empId, d)}</td>
+                        </tr>`;
+                    }).join('') + `</tbody></table></div>`;
+            });
+    }
+
+    // ---------- documented instruments ----------
+    function postAction(url, payload) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).then(d => {
+            if (d.success) { haLoad(); return; }
+            const msg = d.code === 'already_excused' ? HT.errAlreadyExcused
+                : d.code === 'leave_exists' ? HT.errLeaveExists
+                : d.code === 'leave_type_missing' ? HT.errTypeMissing
+                : d.code === 'reason_required' ? HT.reasonRequired
+                : d.code === 'has_punches' ? HT.errHasPunches
+                : d.code === 'side_required' ? HT.errSideRequired
+                : d.code === 'hp_hours' ? (HT.errHpHours + (d.limit ? ' (' + d.limit + ')' : ''))
+                : d.code === 'hp_limit' ? (HT.errHpLimit + (d.limit ? ' (' + d.limit + ')' : ''))
+                : d.code === 'hp_dup' ? HT.errHpDup
+                : d.code === 'hp_nopunch' ? HT.errHpNoPunch
+                : d.code === 'hp_bad_times' ? HT.hpBadTimes
+                : (d.message || 'Error');
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: msg });
+        });
+    }
+
+    function askReason(title) {
+        return Swal.fire({
+            title: title, input: 'text', inputLabel: HT.reasonLabel,
+            showCancelButton: true, confirmButtonText: HT.confirmBtn, cancelButtonText: HT.cancelBtn,
+            inputValidator: v => (!v || v.trim().length < 3) ? HT.reasonRequired : undefined
+        });
+    }
+
+    function actExcuse(empId, date, defaultSide) {
+        const needSide = defaultSide !== null;
+        Swal.fire({
+            title: HT.actExcuse + ' \u2014 ' + date,
+            html: `<div class="text-start">` + (needSide ? `
+                     <label class="form-label small">${esc(HT.sideLabel)}</label>
+                     <select id="swSide" class="form-select mb-2">
+                         <option value="in" ${defaultSide === 'in' ? 'selected' : ''}>${esc(HT.sideIn)}</option>
+                         <option value="out" ${defaultSide === 'out' ? 'selected' : ''}>${esc(HT.sideOut)}</option>
+                     </select>` : '') + `
+                     <label class="form-label small">${esc(HT.reasonLabel)}</label>
+                     <input type="text" id="swRS" class="form-control">
+                   </div>`,
+            showCancelButton: true, confirmButtonText: HT.confirmBtn, cancelButtonText: HT.cancelBtn,
+            preConfirm: () => {
+                const rs = document.getElementById('swRS').value;
+                if (!rs || rs.trim().length < 3) { Swal.showValidationMessage(HT.reasonRequired); return false; }
+                return { reason: rs.trim(),
+                         side: needSide ? document.getElementById('swSide').value : null };
+            }
+        }).then(res => {
+            if (res.isConfirmed)
+                postAction(ACT_EXCUSE, Object.assign({ employee_id: empId, date: date }, res.value));
+        });
+    }
+
+    function actHourly(empId, date) {
+        Swal.fire({
+            title: HT.actHourly + ' \u2014 ' + date,
+            html: `<div class="text-start">
+                     <label class="form-label small">${esc(HT.hpFrom)}</label>
+                     <input type="time" id="swHF" class="form-control mb-2">
+                     <label class="form-label small">${esc(HT.hpTo)}</label>
+                     <input type="time" id="swHT" class="form-control mb-2">
+                     <label class="form-label small">${esc(HT.reasonLabel)}</label>
+                     <input type="text" id="swHR" class="form-control">
+                   </div>`,
+            showCancelButton: true, confirmButtonText: HT.confirmBtn, cancelButtonText: HT.cancelBtn,
+            preConfirm: () => {
+                const f = document.getElementById('swHF').value;
+                const t = document.getElementById('swHT').value;
+                const rs = document.getElementById('swHR').value;
+                if (!f || !t) { Swal.showValidationMessage(HT.hpBadTimes); return false; }
+                if (!rs || rs.trim().length < 3) { Swal.showValidationMessage(HT.reasonRequired); return false; }
+                return { from: f, to: t, reason: rs.trim() };
+            }
+        }).then(res => {
+            if (res.isConfirmed)
+                postAction(ACT_HOURLY, Object.assign({ employee_id: empId, date: date }, res.value));
+        });
+    }
+
+    function actLeave(empId, date, kind) {
+        askReason((kind === 'sick' ? HT.actSick : HT.actUnpaid) + ' \u2014 ' + date).then(res => {
+            if (res.isConfirmed)
+                postAction(ACT_LEAVE, { employee_id: empId, date: date, kind: kind, reason: res.value });
+        });
+    }
+
+    // ---------- attestation ----------
+    function haApproveSelected() {
+        const picked = [];
+        document.querySelectorAll('.ha-check:checked').forEach(c => {
+            const i = parseInt(c.dataset.i);
+            picked.push({
+                employee_id: haRows[i].employee_id,
+                notes: (document.getElementById('haN-' + i) || {}).value || ''
+            });
+        });
+        if (!picked.length) {
+            if (typeof Swal !== 'undefined')
+                Swal.fire({ icon: 'info', title: HT.nothingSelected, timer: 1800, showConfirmButton: false });
+            return;
+        }
+        const btn = document.getElementById('haApproveBtn');
+        btn.disabled = true;
+        fetch(HA_APPROVE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({
+                month: parseInt(document.getElementById('haMonth').value),
+                year: parseInt(document.getElementById('haYear').value),
+                rows: picked
+            })
+        }).then(r => r.json()).then(d => {
+            btn.disabled = false;
+            if (d.success) {
+                if (typeof Swal !== 'undefined')
+                    Swal.fire({ icon: 'success', title: HT.okTitle, timer: 1600, showConfirmButton: false });
+                haLoad();
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: HT.failTitle, text: d.message || '' });
+            }
+        }).catch(() => { btn.disabled = false; });
+    }
+
+    function haUnapprove(empId) {
+        fetch(HA_UNAPPROVE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({
+                month: parseInt(document.getElementById('haMonth').value),
+                year: parseInt(document.getElementById('haYear').value),
+                employee_id: empId
+            })
+        }).then(r => r.json()).then(d => { if (d.success) haLoad(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', haLoad);
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ _('x.leave_balance_menu') }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h4 class="mb-0"><i class="fas fa-wallet me-2"></i>{{ _('x.leave_balance_menu') }}</h4>
+        <span class="text-muted small">{{ _('x.lb_formula') }}</span>
+        <input type="text" class="form-control form-control-sm ms-auto" style="max-width:240px"
+               id="lbSearch" placeholder="{{ _('x.search') }}" oninput="lbFilter()">
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="lbTable">
+                <thead>
+                    <tr>
+                        <th>{{ _('x.hp_employee') }}</th>
+                        <th>{{ _('x.hp_date') }}</th>
+                        <th>{{ _('x.lb_months') }}</th>
+                        <th>{{ _('x.lb_accrued') }}</th>
+                        <th>{{ _('x.lb_taken') }}</th>
+                        <th>{{ _('x.lb_adjusted') }}</th>
+                        <th>{{ _('x.lb_balance') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr data-emp="{{ r.emp.employee_number }} {{ r.emp.arabic_name or '' }} {{ r.emp.name or '' }}"
+                        data-id="{{ r.emp.id }}">
+                        <td>
+                            <b>{{ r.emp.employee_number }}</b> — {{ r.emp.arabic_name or r.emp.name }}
+                            {% if not r.emp.is_active %}
+                            <span class="badge bg-secondary">{{ _('x.ds_ended') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ (r.emp.hire_date or '')|string|truncate(10, True, '') }}
+                            ← {{ r.b.as_of }}</td>
+                        <td>{{ '%.1f'|format(r.b.service_months) }}</td>
+                        <td>{{ '%.2f'|format(r.b.accrued) }}</td>
+                        <td class="text-danger">{{ '%.2f'|format(r.b.taken) }}</td>
+                        <td>{{ '%.2f'|format(r.b.adjusted) }}</td>
+                        <td class="fw-bold {% if r.b.balance < 0 %}text-danger{% else %}text-success{% endif %}"
+                            id="bal-{{ r.emp.id }}">{{ '%.2f'|format(r.b.balance) }}</td>
+                        <td class="text-nowrap">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    onclick="lbAdjust({{ r.emp.id }}, this)">
+                                <i class="fas fa-plus-minus"></i> {{ _('x.lb_adjust') }}</button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    onclick="lbLog({{ r.emp.id }})">
+                                <i class="fas fa-list"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const LBT = {
+        adjTitle: {{ _('x.lb_adjust')|tojson }},
+        daysLabel: {{ _('x.lb_days_signed')|tojson }},
+        reasonLabel: {{ _('x.p_reason')|tojson }},
+        ok: {{ _('x.success')|tojson }},
+        err: {{ _('x.error')|tojson }},
+        reasonReq: {{ _('x.err_reason_required')|tojson }},
+        logTitle: {{ _('x.lb_log')|tojson }},
+        by: {{ _('x.hp_by')|tojson }},
+        empty: {{ _('x.lb_log_empty')|tojson }},
+        confirmBtn: {{ _('x.pm_confirm_btn')|tojson }},
+        cancelBtn: {{ _('x.cancel')|tojson }}
+    };
+    const API_ADJ = {{ url_for('leave.api_leave_balance_adjust')|tojson }};
+    const API_LOG = {{ url_for('leave.api_leave_balance_adjustments')|tojson }};
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function lbFilter() {
+        const q = (document.getElementById('lbSearch').value || '').trim();
+        document.querySelectorAll('#lbTable tbody tr').forEach(tr => {
+            tr.style.display = (!q || tr.dataset.emp.includes(q)) ? '' : 'none';
+        });
+    }
+
+    function lbAdjust(empId) {
+        Swal.fire({
+            title: LBT.adjTitle,
+            html: `<input id="swDays" type="number" step="0.5" class="form-control mb-2"
+                          placeholder="${esc(LBT.daysLabel)}">
+                   <input id="swReason" type="text" class="form-control"
+                          placeholder="${esc(LBT.reasonLabel)}">`,
+            showCancelButton: true,
+            confirmButtonText: LBT.confirmBtn,
+            cancelButtonText: LBT.cancelBtn,
+            preConfirm: () => ({
+                days: parseFloat(document.getElementById('swDays').value),
+                reason: (document.getElementById('swReason').value || '').trim()
+            })
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            const p = res.value;
+            if (!p.days || !p.reason || p.reason.length < 3) {
+                Swal.fire(LBT.err, LBT.reasonReq, 'error');
+                return;
+            }
+            fetch(API_ADJ, { method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ employee_id: empId,
+                                                    days: p.days,
+                                                    reason: p.reason }) })
+                .then(r => r.json())
+                .then(out => {
+                    if (!out.success) {
+                        Swal.fire(LBT.err, out.message || out.code || '', 'error');
+                        return;
+                    }
+                    const cell = document.getElementById('bal-' + empId);
+                    cell.innerText = out.balance.balance.toFixed(2);
+                    cell.classList.toggle('text-danger', out.balance.balance < 0);
+                    cell.classList.toggle('text-success', out.balance.balance >= 0);
+                    Swal.fire(LBT.ok, '', 'success');
+                });
+        });
+    }
+
+    function lbLog(empId) {
+        fetch(`${API_LOG}?employee_id=${empId}`)
+            .then(r => r.json())
+            .then(out => {
+                const rows = out.rows || [];
+                const body = rows.length
+                    ? '<table class="table table-sm text-start"><tbody>' + rows.map(a => `
+                        <tr><td>${a.days > 0 ? '+' : ''}${a.days}</td>
+                            <td>${esc(a.reason)}</td>
+                            <td class="text-muted small">${esc(a.by_name || '\u2014')}
+                                \u2022 ${esc(String(a.created_at).slice(0, 16))}</td></tr>`).join('')
+                      + '</tbody></table>'
+                    : `<div class="text-muted">${esc(LBT.empty)}</div>`;
+                Swal.fire({ title: LBT.logTitle, html: body, width: 620 });
+            });
+    }
+</script>
+{% endblock %}

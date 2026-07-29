@@ -1,0 +1,854 @@
+{% extends "base.html" %}
+{% block title %}{{ _('page.title.add_employee') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('x.add_new_employee') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('employee.employees') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-2"></i>{{ _('x.back_to_list') }}
+        </a>
+    </div>
+</div>
+
+<style>
+/* ===== Modern SaaS form shell ===== */
+.emp-form-page > .col-lg-12 > .card { border: 1px solid var(--paper-line); border-radius: 18px; box-shadow: 0 14px 40px -24px rgba(22,63,50,.28); overflow: visible; }
+.emp-form-page .card-body { padding: 1.9rem; }
+.emp-shell { display: flex; gap: 1.75rem; align-items: flex-start; }
+.emp-shell > form { flex: 1; min-width: 0; }
+
+/* side rail */
+.emp-rail { flex: 0 0 236px; position: sticky; top: 96px; display: flex; flex-direction: column; gap: .3rem; padding: .45rem; background: var(--paper); border: 1px solid var(--paper-line); border-radius: 14px; }
+.emp-rail .nav-item { width: 100%; }
+.emp-rail .nav-link { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .72rem .95rem; border: 0; border-radius: 10px; color: var(--ink-muted); font-weight: 600; font-size: .92rem; text-align: start; transition: all .15s; }
+.emp-rail .nav-link i { width: 1.2rem; text-align: center; opacity: .7; }
+.emp-rail .nav-link:hover { background: var(--ledger-light); color: var(--ledger-dark); }
+.emp-rail .nav-link.active { background: var(--ledger); color: #fff; box-shadow: 0 8px 18px -8px rgba(22,63,50,.5); }
+.emp-rail .nav-link.active i { opacity: 1; }
+
+/* identity hero (edit) */
+.emp-hero { display: flex; align-items: center; gap: 1rem; padding: 1.05rem 1.35rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--ledger-light), var(--paper-raised) 70%); border: 1px solid var(--paper-line); border-radius: 14px; }
+.emp-avatar { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 50%; background: var(--ledger); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.3rem; }
+.emp-hero-name { font-weight: 700; font-size: 1.06rem; color: var(--ink); }
+.emp-hero-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .3rem; }
+.emp-hero-meta .badge { font-weight: 600; padding: .38em .7em; border-radius: 999px; }
+.emp-badge-num { background: var(--paper-raised); color: var(--ink); border: 1px solid var(--paper-line); font-family: var(--font-mono); }
+.emp-pill-on { background: var(--ledger-light); color: var(--ledger-dark); }
+.emp-pill-off { background: #F7E4E0; color: var(--debit); }
+.emp-pill-soft { background: var(--paper); color: var(--ink-muted); border: 1px solid var(--paper-line); }
+
+/* sections */
+.emp-form-page .tab-pane { padding-top: .35rem; }
+.emp-form-page .tab-pane h5, .emp-form-page .tab-pane h6 { display: flex; align-items: center; gap: .6rem; margin: 1.7rem 0 1rem; font-size: .8rem; font-weight: 700; letter-spacing: .05em; color: var(--ink-muted); border: 0; padding: 0; }
+.emp-form-page .tab-pane h5::after, .emp-form-page .tab-pane h6::after { content: ""; flex: 1; height: 1px; background: var(--paper-line); }
+
+/* fields */
+.emp-form-page .form-label { font-size: .8rem; font-weight: 600; color: var(--ink-muted); margin-bottom: .32rem; }
+.emp-form-page .form-control, .emp-form-page .form-select { background: var(--paper-raised); border: 1px solid var(--paper-line); border-radius: 10px; padding: .6rem .85rem; transition: border-color .15s, box-shadow .15s; }
+.emp-form-page .form-control:hover, .emp-form-page .form-select:hover { border-color: color-mix(in srgb, var(--ledger) 35%, var(--paper-line)); }
+.emp-form-page .form-control:focus, .emp-form-page .form-select:focus { border-color: var(--ledger); box-shadow: 0 0 0 .22rem rgba(31,92,74,.12); }
+.emp-form-page input[readonly] { background: var(--paper); color: var(--ink-muted); }
+
+/* weekly day chips */
+.emp-form-page #weekly_leave_checkboxes .form-check { border: 1px solid var(--paper-line); border-radius: 999px; padding: .5rem .95rem .5rem 2.3rem; background: var(--paper-raised); transition: all .15s; }
+[dir="rtl"] .emp-form-page #weekly_leave_checkboxes .form-check { padding: .5rem 2.3rem .5rem .95rem; }
+.emp-form-page #weekly_leave_checkboxes .form-check:hover { border-color: var(--ledger); }
+.emp-form-page #weekly_leave_checkboxes .form-check:has(input:checked) { border-color: var(--ledger); background: var(--ledger-light); box-shadow: inset 0 0 0 1px var(--ledger); }
+.emp-form-page #weekly_leave_checkboxes .form-check-label { font-weight: 600; color: var(--ink); }
+.emp-form-page .form-check-input:checked { background-color: var(--ledger); border-color: var(--ledger); }
+
+.emp-form-page .form-switch .form-check-input { width: 2.7em; height: 1.4em; }
+
+/* sticky actions */
+.emp-form-page .emp-actions { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; align-items: center; gap: .75rem; margin: 1.7rem -1.9rem -1.9rem; padding: 1rem 1.9rem; background: color-mix(in srgb, var(--paper-raised) 90%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--paper-line); border-radius: 0 0 18px 18px; }
+.emp-form-page .emp-actions .btn-success { background: var(--ledger); border-color: var(--ledger); font-weight: 600; padding: .62rem 1.7rem; border-radius: 10px; }
+.emp-form-page .emp-actions .btn-success:hover { background: var(--ledger-dark); border-color: var(--ledger-dark); }
+.emp-form-page .emp-cancel { color: var(--ink-muted); text-decoration: none; font-weight: 600; }
+.emp-form-page .emp-cancel:hover { color: var(--debit); }
+
+/* required + invalid marking */
+.emp-form-page div:has(> input[required]) > .form-label::after,
+.emp-form-page div:has(> select[required]) > .form-label::after { content: " *"; color: var(--debit); font-weight: 700; }
+.emp-form-page .form-control.is-invalid, .emp-form-page .form-select.is-invalid { border-color: var(--debit) !important; box-shadow: 0 0 0 .2rem rgba(168,64,47,.14); }
+.emp-form-page div:has(> .is-invalid) > .form-label { color: var(--debit); }
+.emp-rail .emp-tab-error { background: var(--debit); color: #fff; border-radius: 999px; font-size: .68rem; min-width: 1.2rem; height: 1.2rem; padding: 0 .3rem; display: inline-flex; align-items: center; justify-content: center; margin-inline-start: auto; font-weight: 700; }
+
+@media (max-width: 991.98px) {
+  .emp-shell { flex-direction: column; }
+  .emp-rail { position: static; width: 100%; flex-direction: row; overflow-x: auto; }
+  .emp-rail .nav-item { width: auto; }
+  .emp-rail .nav-link { white-space: nowrap; }
+}
+</style>
+<div class="row emp-form-page">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+<div class="emp-shell">
+                <!-- TABS NAV -->
+                <ul class="nav nav-pills flex-column emp-rail" id="employeeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab"><i class="fas fa-id-card me-2"></i>{{ _('x.personal_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work" type="button" role="tab"><i class="fas fa-briefcase me-2"></i>{{ _('x.job_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab"><i class="fas fa-coins me-2"></i>{{ _('x.financial_data') }}</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab"><i class="fas fa-sliders-h me-2"></i>{{ _('x.shift_fp_settings') }}</button>
+                    </li>
+
+                </ul>
+
+                <form method="POST" id="addEmployeeForm"
+
+                >
+                    <div class="tab-content" id="employeeTabsContent">
+                        
+                        <!-- TAB: PERSONAL -->
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.full_name') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="name" value="" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.name_arabic') }}</label>
+                                    <input type="text" class="form-control" name="arabic_name" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.national_id_residency') }}</label>
+                                    <input type="text" class="form-control" name="national_id" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.id_issue_date') }}</label>
+                                    <input type="date" class="form-control" name="national_id_issue_date" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.id_expiry_date') }}</label>
+                                    <input type="date" class="form-control" name="national_id_expiry_date" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.issue_place') }}</label>
+                                    <input type="text" class="form-control" name="national_id_place" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.passport_number') }}</label>
+                                    <input type="text" class="form-control" name="passport_number" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('label.passport_expiry') }}</label>
+                                    <input type="date" class="form-control" name="passport_expiry_date" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.birth_date') }}</label>
+                                    <input type="date" class="form-control" name="dob" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.birth_place') }}</label>
+                                    <input type="text" class="form-control" name="pob" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.nationality') }}</label>
+                                    <input type="text" class="form-control" name="nationality" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.religion') }}</label>
+                                    <input type="text" class="form-control" name="religion" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.gender') }}</label>
+                                    <select class="form-select" name="gender">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="male" >{{ _('x.male') }}</option>
+                                        <option value="female" >{{ _('x.female') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.marital_status') }}</label>
+                                    <select class="form-select" name="marital_status">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="single" >{{ _('x.single') }}</option>
+                                        <option value="married" >{{ _('x.married') }}</option>
+                                        <option value="divorced" >{{ _('x.divorced') }}</option>
+                                        <option value="widowed" >{{ _('x.widowed') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.military_status') }}</label>
+                                    <input type="text" class="form-control" name="military_status" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.personal_phone') }}</label>
+                                    <input type="tel" class="form-control" name="phone" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.personal_email') }}</label>
+                                    <input type="email" class="form-control" name="email" value="">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">{{ _('x.address') }}</label>
+                                    <textarea class="form-control" name="address" rows="2"></textarea>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <h5 class="mb-3">{{ _('x.emergency_education') }}</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.emergency_contact') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_name" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.relationship') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_relation" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.emergency_phone') }}</label>
+                                    <input type="text" class="form-control" name="emergency_contact_phone" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.education_level') }}</label>
+                                    <input type="text" class="form-control" name="education_level" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.university_institute') }}</label>
+                                    <input type="text" class="form-control" name="university" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.graduation_year') }}</label>
+                                    <input type="number" class="form-control" name="graduation_year" value="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: WORK -->
+                        <div class="tab-pane fade" id="work" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.job_number') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="employee_number" id="employee_number" value="" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.hire_date') }} <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="hire_date" value="" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.department') }} <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">{{ _('x.choose_department') }}</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.name }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" onclick="addDepartment()"
+                                    data-bs-toggle="tooltip" title="{{ _('x.add_new_department') }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.position') }} <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                <select class="form-select" id="position" name="position" required>
+                                    <option value="">{{ _('x.choose_position') }}</option>
+                                    {% for pos in positions %}
+                                    <option value="{{ pos.name }}">{{ pos.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" onclick="addPosition()"
+                                    data-bs-toggle="tooltip" title="{{ _('x.add_new_position') }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.direct_manager') }}</label>
+                                    <input class="form-control" list="managers_list" id="manager_search" placeholder="{{ _('x.search_name_or_number_optional') }}">
+                                    <datalist id="managers_list">
+                                        {% for mgr in managers %}
+                                        <option data-id="{{ mgr.id }}" value="{{ mgr.employee_number }} - {{ mgr.name }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                    <input type="hidden" name="manager_id" id="manager_id_hidden" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_type') }}</label>
+                                    <select class="form-select" name="contract_type">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="full_time" >{{ _('x.full_time') }}</option>
+                                        <option value="part_time" >{{ _('x.part_time') }}</option>
+                                        <option value="fixed_term" >{{ _('x.fixed_term') }}</option>
+                                        <option value="open_ended" >{{ _('x.open_ended') }}</option>
+                                        <option value="freelance" >{{ _('x.freelance') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_start_date') }}</label>
+                                    <input type="date" class="form-control" name="contract_start_date" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.contract_end_date') }}</label>
+                                    <input type="date" class="form-control" name="contract_end_date" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.employee_status') }}</label>
+                                    <select class="form-select" name="employment_status">
+                                        <option value="">{{ _('x.choose') }}</option>
+                                        <option value="probation" >{{ _('x.probation') }}</option>
+                                        <option value="active" selected>{{ _('x.active') }}</option>
+                                        <option value="suspended" >{{ _('x.suspended') }}</option>
+                                        <option value="resigned" >{{ _('x.resigned') }}</option>
+                                        <option value="terminated" >{{ _('x.terminated') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.job_grade') }}</label>
+                                    <input type="text" class="form-control" name="grade_level" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.branch') }}</label>
+                                    <input type="text" class="form-control" name="branch_location" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_email') }}</label>
+                                    <input type="email" class="form-control" name="work_email" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_phone') }}</label>
+                                    <input type="tel" class="form-control" name="work_phone" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.work_ext') }}</label>
+                                    <input type="tel" class="form-control" name="work_ext" value="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: FINANCIAL -->
+                        <div class="tab-pane fade" id="financial" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.basic_salary') }}</label>
+                                    <input type="number" class="form-control" name="salary" step="0.01" min="0" value="0">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.cost_center') }}</label>
+                                    <input type="text" class="form-control" name="cost_center" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.bank_name') }}</label>
+                                    <input type="text" class="form-control" name="bank_name" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.account_number') }}</label>
+                                    <input type="text" class="form-control" name="bank_account_number" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">IBAN</label>
+                                    <input type="text" class="form-control" name="bank_iban" value="">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.bank_swift') }}</label>
+                                    <input type="text" class="form-control" name="bank_swift" value="">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.social_security_no') }}</label>
+                                    <input type="text" class="form-control" name="social_security_number" value="">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ _('x.tax_id') }}</label>
+                                    <input type="text" class="form-control" name="tax_id" value="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: SETTINGS -->
+                        <div class="tab-pane fade" id="settings" role="tabpanel">
+                            <h6 class="mb-3"><i class="fas fa-fingerprint me-2"></i>{{ _('x.fingerprint_data') }}</h6>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.card_number') }}</label>
+                                    <input type="text" class="form-control" name="card_number" value="">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.privilege') }}</label>
+                                    <select class="form-select" name="privilege">
+                                        <option value="0" >{{ _('x.normal_user') }}</option>
+                                        <option value="14" >{{ _('x.admin') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.device_password') }}</label>
+                                    <input type="text" class="form-control" name="password" value="">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ _('x.group_id') }}</label>
+                                    <input type="text" class="form-control" name="group_id" value="">
+                                </div>
+                            </div>
+
+<!-- إعدادات الإجازة الأسبوعية -->
+                    <hr class="my-4">
+                    <h6 class="mb-3"><i class="fas fa-calendar-week me-2"></i>{{ _('x.weekly_off_settings') }}</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="weekly_leave_preset" class="form-label">{{ _('x.weekly_off_type') }}</label>
+                            <select class="form-select" id="weekly_leave_preset" onchange="updateWeeklyLeaveSettings()">
+                                <option value="custom">{{ _('x.custom') }}</option>
+                                <option value="friday_saturday" selected>{{ _('x.fri_sat') }}</option>
+                                <option value="friday_only">{{ _('x.fri_only') }}</option>
+                                <option value="saturday_sunday">{{ _('x.sat_sun') }}</option>
+                                <option value="sunday_monday">{{ _('x.sun_mon') }}</option>
+                                <option value="none">{{ _('x.no_days') }}</option>
+                            </select>
+                            <div class="form-text">{{ _('x.choose_weekly_off_or_custom') }}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="weekly_leave_days" class="form-label">{{ _('x.weekly_off_details') }}</label>
+                            <input type="hidden" id="weekly_leave_days" name="weekly_leave_days" value="2">
+                            <div class="alert alert-info py-2" id="weekly_leave_details">
+                                <i class="fas fa-calendar-week me-2"></i>
+                                <span id="leave_details_text">{{ _('x.fri_sat_two_days') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">{{ _('x.weekly_off_days') }}</label>
+                            <div class="row g-2" id="weekly_leave_checkboxes">
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="0" id="leave_sunday"
+                                            name="weekly_leave_days_checkboxes">
+                                        <label class="form-check-label" for="leave_sunday">
+                                            <i class="fas fa-sun me-1"></i>{{ _('x.sunday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="leave_monday"
+                                            name="weekly_leave_days_checkboxes">
+                                        <label class="form-check-label" for="leave_monday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.monday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="2" id="leave_tuesday"
+                                            name="weekly_leave_days_checkboxes">
+                                        <label class="form-check-label" for="leave_tuesday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.tuesday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="3" id="leave_wednesday"
+                                            name="weekly_leave_days_checkboxes">
+                                        <label class="form-check-label" for="leave_wednesday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.wednesday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="4" id="leave_thursday"
+                                            name="weekly_leave_days_checkboxes">
+                                        <label class="form-check-label" for="leave_thursday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.thursday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="5" id="leave_friday"
+                                            name="weekly_leave_days_checkboxes" checked>
+                                        <label class="form-check-label" for="leave_friday">
+                                            <i class="fas fa-mosque me-1"></i>{{ _('x.friday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="6" id="leave_saturday"
+                                            name="weekly_leave_days_checkboxes" checked>
+                                        <label class="form-check-label" for="leave_saturday">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ _('x.saturday') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">{{ _('x.choose_weekly_off_days') }}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="weekly_leave_start" class="form-label">{{ _('x.weekly_off_start') }}</label>
+                            <select class="form-select" id="weekly_leave_start" name="weekly_leave_start">
+                                <option value="0">{{ _('x.sunday') }}</option>
+                                <option value="1">{{ _('x.monday') }}</option>
+                                <option value="2">{{ _('x.tuesday') }}</option>
+                                <option value="3">{{ _('x.wednesday') }}</option>
+                                <option value="4">{{ _('x.thursday') }}</option>
+                                <option value="5" selected>{{ _('x.friday') }}</option>
+                                <option value="6">{{ _('x.saturday') }}</option>
+                            </select>
+                            <div class="form-text">{{ _('x.auto_updated_by_days') }}</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="previous_leave_balance" class="form-label">{{ _('x.opening_leave_balance') }}</label>
+                            <input type="number" class="form-control" id="previous_leave_balance"
+                                name="previous_leave_balance" step="0.5" min="0" value="0" placeholder="0">
+                            <div class="form-text">{{ _('x.accumulated_leave_days') }}</div>
+                        </div>
+                    </div>
+
+                    
+                            
+                            <hr class="my-4">
+                            <h6 class="mb-3"><i class="fas fa-clock me-2"></i>{{ _('x.shift_settings') }}</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.shift_type') }} <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="shift_type" id="shift_type" required>
+                                        {% for shift in shift_types %}
+                                        <option value="{{ shift.name }}" >{{ shift.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ _('x.opening_leave_balance') }}</label>
+                                    <input type="number" class="form-control" name="previous_leave_balance" value="0">
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div> <!-- End Tab Content -->
+                    
+                    <div class="emp-actions d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('employee.employees') }}" class="emp-cancel">{{ _('x.cancel') }}</a>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>{{ _('x.save_data') }}</button>
+                    </div>
+                </form>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('manager_search');
+        const hiddenInput = document.getElementById('manager_id_hidden');
+        const datalist = document.getElementById('managers_list');
+
+        searchInput.addEventListener('input', function() {
+            const val = this.value;
+            let foundId = '';
+            
+            for (let option of datalist.options) {
+                if (option.value === val) {
+                    foundId = option.getAttribute('data-id');
+                    break;
+                }
+            }
+            hiddenInput.value = foundId;
+        });
+    });
+</script>
+<script>
+    // Dependents & Assets JS
+    const employeeId = null;
+
+
+    // إضافة قسم جديد
+    function addDepartment() {
+        Swal.fire({
+            title: {{ _('x.add_new_department')|tojson }},
+            input: 'text',
+            inputLabel: {{ _('x.department_name')|tojson }},
+            inputPlaceholder: {{ _('x.enter_new_department_name')|tojson }},
+            showCancelButton: true,
+            confirmButtonText: {{ _('x.add')|tojson }},
+            cancelButtonText: {{ _('x.cancel')|tojson }},
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage({{ _('x.name_required')|tojson }});
+                    return false;
+                }
+                return fetch('/api/departments/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || {{ _('x.add_department_failed')|tojson }});
+                        }
+                        return { name: name, message: data.message };
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _('x.error_colon_space') }}${error.message}`);
+                    });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const select = document.getElementById('department');
+                const option = document.createElement('option');
+                option.value = result.value.name;
+                option.textContent = result.value.name;
+                option.selected = true;
+                select.appendChild(option);
+                sortSelectOptions(select);
+                Swal.fire({
+                    title: {{ _('x.added')|tojson }},
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    // إضافة منصب جديد
+    function addPosition() {
+        Swal.fire({
+            title: {{ _('x.add_new_position')|tojson }},
+            input: 'text',
+            inputLabel: {{ _('x.position_name')|tojson }},
+            inputPlaceholder: {{ _('x.enter_new_position_name')|tojson }},
+            showCancelButton: true,
+            confirmButtonText: {{ _('x.add')|tojson }},
+            cancelButtonText: {{ _('x.cancel')|tojson }},
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage({{ _('x.name_required')|tojson }});
+                    return false;
+                }
+                return fetch('/api/positions/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || {{ _('x.add_position_failed')|tojson }});
+                        }
+                        return { name: name, message: data.message };
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _('x.error_colon_space') }}${error.message}`);
+                    });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const select = document.getElementById('position');
+                const option = document.createElement('option');
+                option.value = result.value.name;
+                option.textContent = result.value.name;
+                option.selected = true;
+                select.appendChild(option);
+                sortSelectOptions(select);
+                Swal.fire({
+                    title: {{ _('x.added')|tojson }},
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    // دالة مساعدة لترتيب الخيارات
+    function sortSelectOptions(select) {
+        const options = Array.from(select.options);
+        const header = options[0];
+        const others = options.slice(1);
+        others.sort((a, b) => a.text.localeCompare(b.text, 'ar'));
+        select.innerHTML = '';
+        select.appendChild(header);
+        others.forEach(opt => select.appendChild(opt));
+        if (select.value) { select.value = select.value; }
+    }
+
+    // تحديث إعدادات الإجازة الأسبوعية
+    function updateWeeklyLeaveSettings() {
+        const preset = document.getElementById('weekly_leave_preset').value;
+        const daysInput = document.getElementById('weekly_leave_days');
+        const startSelect = document.getElementById('weekly_leave_start');
+        const detailsText = document.getElementById('leave_details_text');
+
+        // إلغاء تحديد جميع الـ checkboxes أولاً
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+
+        switch (preset) {
+            case 'friday_saturday':
+                daysInput.value = '2';
+                startSelect.value = '5'; // الجمعة
+                detailsText.textContent = {{ _('x.fri_sat_two_days')|tojson }};
+                document.getElementById('leave_friday').checked = true;
+                document.getElementById('leave_saturday').checked = true;
+                break;
+            case 'friday_only':
+                daysInput.value = '1';
+                startSelect.value = '5'; // الجمعة
+                detailsText.textContent = {{ _('x.fri_only_one_day')|tojson }};
+                document.getElementById('leave_friday').checked = true;
+                break;
+            case 'saturday_sunday':
+                daysInput.value = '2';
+                startSelect.value = '6'; // السبت
+                detailsText.textContent = {{ _('x.sat_sun_two_days')|tojson }};
+                document.getElementById('leave_saturday').checked = true;
+                document.getElementById('leave_sunday').checked = true;
+                break;
+            case 'sunday_monday':
+                daysInput.value = '2';
+                startSelect.value = '0'; // الأحد
+                detailsText.textContent = {{ _('x.sun_mon_two_days')|tojson }};
+                document.getElementById('leave_sunday').checked = true;
+                document.getElementById('leave_monday').checked = true;
+                break;
+            case 'none':
+                daysInput.value = '0';
+                startSelect.value = '5'; // الجمعة (افتراضي)
+                detailsText.textContent = {{ _('x.no_weekly_off_zero_days')|tojson }};
+                break;
+            case 'custom':
+                // في حالة المخصص، لا نغير أي شيء - المستخدم يختار من الـ checkboxes
+                updateFromCheckboxes();
+                return;
+        }
+
+        // تحديث عدد الأيام بناءً على الـ checkboxes المحددة
+        updateFromCheckboxes();
+    }
+
+    // تحديث الإعدادات من الـ checkboxes
+    function updateFromCheckboxes() {
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]:checked');
+        const daysInput = document.getElementById('weekly_leave_days');
+        const startSelect = document.getElementById('weekly_leave_start');
+        const detailsText = document.getElementById('leave_details_text');
+
+        const selectedDays = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort();
+        const daysCount = selectedDays.length;
+
+        daysInput.value = daysCount;
+
+        if (daysCount > 0) {
+            startSelect.value = selectedDays[0];
+
+            const dayNames = [{{ _('x.sunday')|tojson }}, {{ _('x.monday')|tojson }}, {{ _('x.tuesday')|tojson }}, {{ _('x.wednesday')|tojson }}, {{ _('x.thursday')|tojson }}, {{ _('x.friday')|tojson }}, {{ _('x.saturday')|tojson }}];
+            const selectedDayNames = selectedDays.map(day => dayNames[day]);
+
+            if (daysCount === 1) {
+                detailsText.textContent = `${selectedDayNames[0]} {{ _('x.only_one_day_suffix') }}`;
+            } else {
+                detailsText.textContent = `${selectedDayNames.join({{ _('x.and_spaced')|tojson }})} (${daysCount} {{ _('x.days_unit') }})`;
+            }
+        } else {
+            startSelect.value = '5';
+            detailsText.textContent = {{ _('x.no_weekly_off_zero_days')|tojson }};
+        }
+    }
+
+    // إضافة مستمعي الأحداث للـ checkboxes
+    document.addEventListener('DOMContentLoaded', function () {
+        const checkboxes = document.querySelectorAll('input[name="weekly_leave_days_checkboxes"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                // تغيير الـ preset إلى مخصص عند تغيير أي checkbox
+                document.getElementById('weekly_leave_preset').value = 'custom';
+                updateFromCheckboxes();
+            });
+        });
+
+        // تحديث الإعدادات الأولية
+        updateFromCheckboxes();
+    });
+
+
+    // ===== required-fields navigator: jump to first missing field, mark tabs =====
+    (function () {
+        const form = document.getElementById('addEmployeeForm');
+        if (!form) return;
+        form.setAttribute('novalidate', 'novalidate');
+        function tabBtnFor(pane) {
+            return document.querySelector('#employeeTabs [data-bs-target="#' + pane.id + '"]');
+        }
+        function refreshBadge(pane) {
+            const btn = tabBtnFor(pane); if (!btn) return;
+            const remaining = pane.querySelectorAll('.is-invalid').length;
+            let badge = btn.querySelector('.emp-tab-error');
+            if (remaining === 0) { if (badge) badge.remove(); return; }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'emp-tab-error'; btn.appendChild(badge); }
+            badge.textContent = remaining;
+        }
+        form.addEventListener('submit', function (e) {
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('#employeeTabs .emp-tab-error').forEach(b => b.remove());
+            const invalid = Array.from(form.querySelectorAll('input, select, textarea'))
+                .filter(el => !el.disabled && !el.checkValidity());
+            if (invalid.length === 0) return;
+            e.preventDefault();
+            const panes = new Set();
+            invalid.forEach(el => {
+                el.classList.add('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) panes.add(pane);
+            });
+            panes.forEach(refreshBadge);
+            const first = invalid[0];
+            const pane = first.closest('.tab-pane');
+            const go = () => { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); first.focus({ preventScroll: true }); };
+            if (pane && !pane.classList.contains('active')) {
+                const btn = tabBtnFor(pane);
+                if (btn && window.bootstrap) bootstrap.Tab.getOrCreateInstance(btn).show();
+                setTimeout(go, 220);
+            } else { go(); }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: {{ _('x.missing_required_title')|tojson }},
+                            text: {{ _('x.missing_required_text')|tojson }}, timer: 2600, showConfirmButton: false });
+            }
+        });
+        form.addEventListener('input', function (ev) {
+            const el = ev.target;
+            if (el.classList && el.classList.contains('is-invalid') && el.checkValidity()) {
+                el.classList.remove('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) refreshBadge(pane);
+            }
+        });
+        form.addEventListener('change', function (ev) {
+            const el = ev.target;
+            if (el.classList && el.classList.contains('is-invalid') && el.checkValidity()) {
+                el.classList.remove('is-invalid');
+                const pane = el.closest('.tab-pane');
+                if (pane) refreshBadge(pane);
+            }
+        });
+    })();
+
+</script>
+{% endblock %}

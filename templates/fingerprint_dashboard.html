@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.fp_system_dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-fingerprint me-2"></i>{{ _('fingerprint.dashboard_title') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.devices') }}" class="btn btn-outline-primary">
+                <i class="fas fa-microchip me-2"></i>{{ _('fingerprint.manage_devices') }}
+            </a>
+            <a href="{{ url_for('attendance.oracle_history') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-history me-2"></i>{{ _('x.oracle_log') }}
+            </a>
+            <a href="{{ url_for('attendance.sync_queue') }}" class="btn btn-outline-warning">
+                <i class="fas fa-list-ol me-2"></i>{{ _('x.emergency_queue') }}
+            </a>
+        </div>
+        {% if fingerprint_available %}
+        <button class="btn btn-success me-2" onclick="syncDevices()">
+            <i class="fas fa-sync-alt me-2"></i>{{ _('fingerprint.sync_now') }}
+        </button>
+        <button class="btn btn-primary" onclick="syncUsers()">
+            <i class="fas fa-users me-2"></i>{{ _('fingerprint.sync_users') }}
+        </button>
+        <a href="{{ url_for('attendance.upload_users_page') }}" class="btn btn-info text-white">
+            <i class="fas fa-users-cog me-2"></i>{{ _('x.device_users_management') }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ devices|length }}</h4>
+                        <p class="mb-0">{{ _('fingerprint.total_devices') }}</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-microchip fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0" id="activeDevicesCount">
+                            {{ devices|selectattr('is_active')|list|length }}
+                        </h4>
+                        <p class="mb-0">{{ _('fingerprint.active_devices') }}</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0" id="lastSyncTime">
+                            {% set latest_sync =
+                            devices|selectattr('last_sync_time')|map(attribute='last_sync_time')|max %}
+                            {% if latest_sync %}
+                            {{ latest_sync[:16] if latest_sync|length > 16 else latest_sync }}
+                            {% else %}
+                            {{ _('fingerprint.never_synced') }}
+                            {% endif %}
+                        </h4>
+                        <p class="mb-0">{{ _('fingerprint.last_sync') }}</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0" id="syncStatus">
+                            {% if fingerprint_available %}
+                            {{ _('fingerprint.status_ready') }}
+                            {% else %}
+                            {{ _('fingerprint.status_unavailable') }}
+                            {% endif %}
+                        </h4>
+                        <p class="mb-0">{{ _('fingerprint.system_status') }}</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i
+                            class="fas fa-{{ 'shield-alt' if fingerprint_available else 'exclamation-triangle' }} fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة الأجهزة -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>{{ _('fingerprint.devices_list') }}</h5>
+            </div>
+            <div class="card-body">
+                {% if devices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ _('fingerprint.device_name') }}</th>
+                                <th>{{ _('fingerprint.ip_address') }}</th>
+                                <th>{{ _('fingerprint.status') }}</th>
+                                <th>{{ _('fingerprint.last_sync') }}</th>
+                                <th>{{ _('fingerprint.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ device.device_name }}</strong>
+                                </td>
+                                <td>
+                                    <code>{{ device.device_ip }}:{{ device.device_port }}</code>
+                                </td>
+                                <td>
+                                    {% if device.is_active %}
+                                    <span class="badge bg-success">{{ _('fingerprint.active') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ _('fingerprint.inactive') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if device.last_sync_time %}
+                                    <small class="text-muted">{{ device.last_sync_time[:16] }}</small>
+                                    {% else %}
+                                    <small class="text-muted">{{ _('fingerprint.never') }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" onclick="testDevice({{ device.id }})">
+                                            <i class="fas fa-network-wired"></i> {{ _('btn.test') }}
+                                        </button>
+                                        <a href="{{ url_for('attendance.delete_device', id=device.id) }}"
+                                            class="btn btn-outline-danger"
+                                            onclick="return confirm('{{ _('msg.confirm_delete') }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-microchip text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 text-muted">{{ _('fingerprint.no_devices') }}</h4>
+                    <p class="text-muted">{{ _('fingerprint.start_add_device') }}</p>
+                    <a href="{{ url_for('attendance.devices') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>{{ _('fingerprint.add_device') }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- سجلات المزامنة -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>{{ _('fingerprint.sync_logs') }}</h5>
+                <a href="{{ url_for('report.fingerprint_sync_logs') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt me-1"></i>{{ _('btn.view_more') }}
+                </a>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div id="syncLogs">
+                    {% for log in sync_logs %}
+                    <div class="mb-2 p-2 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <small class="text-muted">{{ log.timestamp }}</small>
+                            <span
+                                class="badge bg-{{ 'success' if log.level == 'INFO' else 'warning' if log.level == 'WARNING' else 'danger' }}">
+                                {{ log.level }}
+                            </span>
+                        </div>
+                        <div class="small">
+                            <strong>{{ log.device_ip }}</strong>: {{ log.message }}
+                            {% if log.details %}
+                            <br><span class="text-muted">{{ log.details }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle"></i>
+                        <p class="mb-0">{{ _('fingerprint.no_logs') }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال اختبار الاتصال -->
+<div class="modal fade" id="testConnectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('fingerprint.test_connection_result') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="testResults">
+                <!-- النتائج ستظهر هنا -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // اختبار الاتصال بجهاز
+    function testDevice(deviceId) {
+        const modal = new bootstrap.Modal(document.getElementById('testConnectionModal'));
+        const resultsDiv = document.getElementById('testResults');
+
+        resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> {{ _("status.testing_connection") }}</div>';
+        modal.show();
+
+        fetch(`/fingerprint/test/${deviceId}`)
+            .then(async response => {
+                const isJson = response.headers.get('content-type')?.includes('application/json');
+                const data = isJson ? await response.json() : null;
+
+                if (!response.ok) {
+                    const error = (data && data.message) || response.statusText;
+                    return Promise.reject(error);
+                }
+
+                if (!data) {
+                    const text = await response.text();
+                    return Promise.reject(`{{ _("error.invalid_response") }}: ${text.substring(0, 100)}...`);
+                }
+
+                if (data.success) {
+                    const info = data.device_info;
+                    resultsDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-check-circle me-2"></i>{{ _("msg.connection_success") }}</h6>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6"><strong>{{ _("device.serial") }}:</strong></div>
+                        <div class="col-sm-6">${info.serial_number}</div>
+                        <div class="col-sm-6"><strong>{{ _("device.platform") }}:</strong></div>
+                        <div class="col-sm-6">${info.platform}</div>
+                        <div class="col-sm-6"><strong>{{ _("device.firmware") }}:</strong></div>
+                        <div class="col-sm-6">${info.firmware_version}</div>
+                        <div class="col-sm-6"><strong>{{ _("device.users_count") }}:</strong></div>
+                        <div class="col-sm-6">${info.users_count}</div>
+                        <div class="col-sm-6"><strong>{{ _("device.attendance_count") }}:</strong></div>
+                        <div class="col-sm-6">${info.attendance_count}</div>
+                    </div>
+                `;
+                } else {
+                    resultsDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>{{ _("error.connection_failed") }}</h6>
+                        <p class="mb-0">${data.message}</p>
+                    </div>
+                `;
+                }
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>{{ _("error.connection_error") }}</h6>
+                    <p class="mb-0">{{ _("error.details") }}: ${error.toString()}</p>
+                </div>
+            `;
+            });
+    }
+
+    // مزامنة الأجهزة
+    function syncDevices() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _("status.syncing") }}...';
+
+        fetch('/fingerprint/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`{{ _("msg.sync_success") }} ${data.users_synced} {{ _("unit.user") }}{{ _('x.comma_space') }}${data.attendance_synced} {{ _("unit.record") }}`, 'success');
+                    // تحديث الصفحة بعد ثانيتين
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showAlert(data.message || '{{ _("error.sync_failed") }}', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('{{ _("error.sync_error") }}', 'danger');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+    }
+
+    function syncUsers() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+
+        // تأكيد من المستخدم
+        if (!confirm('{{ _("msg.confirm_sync_users") }}')) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _("status.syncing_users") }}...';
+
+        fetch('/fingerprint/sync_users', {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // عرض رسالة بدء العملية في الخلفية
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                    alertDiv.style.top = '20px';
+                    alertDiv.style.right = '20px';
+                    alertDiv.style.zIndex = '9999';
+                    alertDiv.style.maxWidth = '400px';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>{{ _("msg.success_process") }}</strong><br>
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(alertDiv);
+
+                    // إزالة التنبيه بعد 5 ثوان
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.parentNode.removeChild(alertDiv);
+                        }
+                    }, 5000);
+                } else {
+                    alert(data.message || '{{ _("error.sync_users_failed") }}');
+                }
+            })
+            .catch(error => {
+                alert('{{ _("error.sync_users_error") }}');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+    }
+
+    // تحديث سجلات المزامنة كل 30 ثانية
+    setInterval(() => {
+        fetch('/fingerprint/logs/api?limit=10')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.logs.length > 0) {
+                    const logsDiv = document.getElementById('syncLogs');
+                    const newLogs = data.logs.slice(0, 5).map(log => `
+                    <div class="mb-2 p-2 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <small class="text-muted">${log.timestamp}</small>
+                            <span class="badge bg-${log.level === 'INFO' ? 'success' : log.level === 'WARNING' ? 'warning' : 'danger'}">
+                                ${log.level}
+                            </span>
+                        </div>
+                        <div class="small">
+                            <strong>${log.device_ip}</strong>: ${log.message}
+                            ${log.details ? `<br><span class="text-muted">${log.details}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+                    if (newLogs) {
+                        logsDiv.innerHTML = newLogs;
+                    }
+                }
+            })
+            .catch(() => {
+                // تجاهل أخطاء التحديث التلقائي
+            });
+    }, 30000);
+</script>
+{% endblock %}

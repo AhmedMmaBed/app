@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.monthly_attendance_range_reports') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <div><h4 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>{{ _('x.attendance_range_reports') }}</h4><div class="report-desc">{{ _('x.rdesc_smart_range') }}</div></div>
+                        <small>{{ _('x.from') }} {{ start_date }} {{ _('x.to') }} {{ end_date }} {{ _('x.time_based_only_pipe') }}</small>
+                    </div>
+                    <a href="{{ url_for('report.smart_reports_page') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>{{ _('x.back') }}
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    <!-- فلاتر التاريخ -->
+                    <form method="GET" class="row g-2 align-items-end mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('x.from_date') }}</label>
+                            <input type="date" name="start" class="form-control" value="{{ start_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('x.to_date') }}</label>
+                            <input type="date" name="end" class="form-control" value="{{ end_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('x.search_by_name_or_number') }}</label>
+                            <input type="text" name="q" class="form-control" value="{{ q or '' }}" placeholder="{{ _('x.example_name_or_number') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('x.department') }}</label>
+                            <select name="dept" id="deptSelect" class="form-select">
+                                <option value="">{{ _('x.all_departments') }}</option>
+                                {% if dept %}
+                                <option value="{{ dept }}" selected>{{ dept }}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>{{ _('x.view') }}</button>
+                            {% if has_permission('report.export') %}<button type="button" class="btn btn-outline-secondary" onclick="exportRangeToExcel()">
+                                <i class="fas fa-file-excel me-1"></i>Excel
+                            </button>{% endif %}
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                                <i class="fas fa-print me-1"></i>{{ _('x.print') }}
+                            </button>
+                            <button type="button" id="toggleDetailsBtn" class="btn btn-outline-info" onclick="toggleDetails()">
+                                <i class="fas fa-list me-1"></i>{{ _('x.show_details') }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- ملخص عام -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white"><div class="card-body text-center">
+                                <h3 class="mb-1">{{ summary.employees_count }}</h3><small>{{ _('x.employee_count') }}</small>
+                            </div></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white"><div class="card-body text-center">
+                                <h3 class="mb-1">{{ summary.days_count }}</h3><small>{{ _('x.day_count') }}</small>
+                            </div></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white"><div class="card-body text-center">
+                                <h3 class="mb-1">{{ summary.total_work_hours }}</h3><small>{{ _('x.total_work_hours') }}</small>
+                            </div></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-dark"><div class="card-body text-center">
+                                <h3 class="mb-1">{{ summary.total_late_minutes }}</h3><small>{{ _('x.total_late_minutes') }}</small>
+                            </div></div>
+                        </div>
+                    </div>
+
+                    <!-- ملخص لكل موظف -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-striped table-hover" id="summaryTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>{{ _('x.employee') }}</th>
+                                    <th>{{ _('x.employee_number') }}</th>
+                                    <th>{{ _('x.department') }}</th>
+                                    <th>{{ _('x.present') }}</th>
+                                    <th>{{ _('x.absent') }}</th>
+                                    <th>{{ _('x.partial') }}</th>
+                                    <th>{{ _('x.work_hours') }}</th>
+                                    <th>{{ _('x.late_minutes') }}</th>
+                                    <th>{{ _('x.late_checkout_minutes') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in employees_summary %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="fw-bold">{{ s.name }}</td>
+                                    <td><code>{{ s.employee_number }}</code></td>
+                                    <td>{{ s.department or _('x.not_specified') }}</td>
+                                    <td>{{ s.present_days }}</td>
+                                    <td>{{ s.absent_days }}</td>
+                                    <td>{{ s.partial_days }}</td>
+                                    <td>{{ '%.1f'|format(s.total_work_hours) }}</td>
+                                    <td>{{ s.total_late_minutes }}</td>
+                                    <td>{{ s.total_late_departure_minutes }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- عرض أسبوعي مضغوط لكل موظف -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered" id="weeklyTable">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>{{ _('x.employee') }}</th>
+                                    <th>{{ _('x.week1_paren') }}{{ week_labels[0] }})</th>
+                                    <th>{{ _('x.week2_paren') }}{{ week_labels[1] }})</th>
+                                    <th>{{ _('x.week3_paren') }}{{ week_labels[2] }})</th>
+                                    <th>{{ _('x.week4_paren') }}{{ week_labels[3] }})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for w in weekly_summaries %}
+                                <tr>
+                                    <td class="fw-bold">{{ w.name }}</td>
+                                    <td>
+                                        <div>{{ w.weeks[0] }}</div>
+                                        {% for d in w.details[0] %}
+                                            <div class="text-muted small">{{ d }}</div>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div>{{ w.weeks[1] }}</div>
+                                        {% for d in w.details[1] %}
+                                            <div class="text-muted small">{{ d }}</div>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div>{{ w.weeks[2] }}</div>
+                                        {% for d in w.details[2] %}
+                                            <div class="text-muted small">{{ d }}</div>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div>{{ w.weeks[3] }}</div>
+                                        {% for d in w.details[3] %}
+                                            <div class="text-muted small">{{ d }}</div>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تفاصيل يومية لكل موظف (مخفية افتراضياً) -->
+                    <div class="table-responsive" id="detailsSection" style="display:none;">
+                        <table class="table table-bordered" id="detailsTable">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>{{ _('x.date') }}</th>
+                                    <th>{{ _('x.employee') }}</th>
+                                    <th>{{ _('x.number') }}</th>
+                                    <th>{{ _('x.department') }}</th>
+                                    <th>{{ _('x.check_in') }}</th>
+                                    <th>{{ _('x.check_out') }}</th>
+                                    <th>{{ _('x.hours') }}</th>
+                                    <th>{{ _('x.shift_start') }}</th>
+                                    <th>{{ _('x.shift_end') }}</th>
+                                    <th>{{ _('x.late_early_arrival_min') }}</th>
+                                    <th>{{ _('x.early_late_departure_min') }}</th>
+                                    <th>{{ _('x.status') }}</th>
+                                    <th>{{ _('x.punch_count') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in rows %}
+                                <tr>
+                                    <td>{{ r.date }}</td>
+                                    <td>{{ r.name }}</td>
+                                    <td><code>{{ r.employee_number }}</code></td>
+                                    <td>{{ r.department or _('x.not_specified') }}</td>
+                                    <td>{{ r.checkin_time if r.checkin_time != '00:00' else '-' }}</td>
+                                    <td>{{ r.checkout_time if r.checkout_time != '00:00' else '-' }}</td>
+                                    <td>{{ '%.1f'|format(r.work_hours) }}</td>
+                                    <td>{{ r.scheduled_start }}</td>
+                                    <td>{{ r.scheduled_end }}</td>
+                                    <td>
+                                        {% set parts = [] %}
+                                        {% if r.early_arrival_minutes and r.early_arrival_minutes > 0 %}
+                                            {% set _ = parts.append(r.early_arrival_minutes ~ 'د مبكر') %}
+                                        {% endif %}
+                                        {% if r.late_minutes and r.late_minutes > 0 %}
+                                            {% set _ = parts.append(r.late_minutes ~ 'د تأخير') %}
+                                        {% endif %}
+                                        {{ parts|join(' / ') if parts|length > 0 else '0' }}
+                                    </td>
+                                    <td>
+                                        {% set parts = [] %}
+                                        {% if r.early_leave_minutes and r.early_leave_minutes > 0 %}
+                                            {% set _ = parts.append(r.early_leave_minutes ~ 'د مبكر') %}
+                                        {% endif %}
+                                        {% if r.late_departure_minutes and r.late_departure_minutes > 0 %}
+                                            {% set _ = parts.append(r.late_departure_minutes ~ 'د متأخر') %}
+                                        {% endif %}
+                                        {{ parts|join(' / ') if parts|length > 0 else '0' }}
+                                    </td>
+                                    <td>{{ r.status }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ r.total_records }}</span>
+                                        {% if r.all_times|length > 1 %}
+                                            <br><small class="text-muted">{{ r.all_times|join(', ') }}</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportRangeToExcel() {
+    const wb = XLSX.utils.book_new();
+    const s1 = XLSX.utils.table_to_sheet(document.getElementById('summaryTable'));
+    XLSX.utils.book_append_sheet(wb, s1, {{ _('x.summary')|tojson }});
+    XLSX.writeFile(wb, `{{ _('x.file_range_report') }}_{{ start_date }}_{{ end_date }}.xlsx`);
+}
+function toggleDetails() {
+    const section = document.getElementById('detailsSection');
+    const btn = document.getElementById('toggleDetailsBtn');
+    const visible = section.style.display !== 'none';
+    section.style.display = visible ? 'none' : '';
+    btn.innerHTML = visible ? {{ _('x.show_details_html')|tojson }} : {{ _('x.hide_details_html')|tojson }};
+}
+if (!window.XLSX) {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    document.head.appendChild(script);
+}
+
+// تحميل الأقسام ديناميكياً
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/departments')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.departments)) {
+                const sel = document.getElementById('deptSelect');
+                const current = '{{ dept or '' }}';
+                const existing = new Set(Array.from(sel.options).map(o => o.value));
+                data.departments.forEach(d => {
+                    if (!existing.has(d)) {
+                        const opt = document.createElement('option');
+                        opt.value = d;
+                        opt.textContent = d;
+                        if (current && d === current) opt.selected = true;
+                        sel.appendChild(opt);
+                    }
+                });
+            }
+        })
+        .catch(() => {});
+});
+</script>
+{% endblock %}
+
+

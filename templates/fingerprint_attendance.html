@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('attendance.fingerprint_logs_title') }}{% endblock %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-clock me-2"></i>{{ _('attendance.fingerprint_logs_header') }}
+        <small class="text-muted fs-6">(v2.1 - {{ _('label.last_update') }}: <span id="lastUpdateTime">{{
+                _('label.loading') }}</span>)</small>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('btn.back_to_dashboard') }}
+            </a>
+            <button class="btn btn-primary" onclick="forceReload()">
+                <i class="fas fa-sync-alt me-2"></i>{{ _('btn.force_refresh') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- فلاتر البحث -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-filter me-2"></i>{{ _('label.search_filters') }}</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('report.fingerprint_attendance') }}">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('label.employee') }}</label>
+                    <select name="employee_id" class="form-select">
+                        <option value="">{{ _('attendance.all_employees') }}</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if request.args.get('employee_id')==employee.id|string
+                            %}selected{% endif %}>
+                            {{ employee.name }} ({{ employee.employee_number }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('label.start_date') }}</label>
+                    <input type="date" name="start_date" class="form-control"
+                        value="{{ request.args.get('start_date', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('label.end_date') }}</label>
+                    <input type="date" name="end_date" class="form-control"
+                        value="{{ request.args.get('end_date', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>{{ _('btn.search') }}
+                        </button>
+                        <a href="{{ url_for('report.fingerprint_attendance') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>{{ _('btn.clear') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- إحصائيات -->
+{% if attendance_records %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ total_records }}</h4>
+                <p class="mb-0">{{ _('stat.total_records') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ attendance_records|selectattr('check_type', 'equalto', 1)|list|length }}</h4>
+                <p class="mb-0">{{ _('stat.check_in_records') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ attendance_records|selectattr('check_type', 'equalto', 0)|list|length }}</h4>
+                <p class="mb-0">{{ _('stat.check_out_records') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4>{{ (attendance_records|map(attribute='employee_id')|list|unique|list|length) }}</h4>
+                <p class="mb-0">{{ _('stat.active_employees') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- جدول السجلات -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>{{ _('attendance.logs_title') }}</h5>
+        {% if attendance_records %}
+        <div class="small text-muted">
+            {{ _('label.showing_records', start=((current_page - 1) * per_page + 1), end=((current_page - 1) * per_page
+            + attendance_records|length), total=total_records) }}
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if attendance_records %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ _('attendance.employee') }}</th>
+                        <th>{{ _('label.datetime') }}</th>
+                        <th>{{ _('attendance.record_type') }}</th>
+                        <th>{{ _('attendance.device') }}</th>
+                        <th>{{ _('attendance.additional_details') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ record.name }}</div>
+                                    <small class="text-muted">{{ record.employee_number }} - {{ record.department
+                                        }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ record.check_time[:10] }}</strong>
+                                <br>
+                                <span class="text-muted">{{ record.check_time[11:19] }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <!-- DEBUG: record.check_type = {{ record.check_type }} -->
+                            {% if record.check_type == 0 %}
+                            {% set check_type_desc = _('attendance.check_out') %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-sign-out-alt me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 1 %}
+                            {% set check_type_desc = _('attendance.check_in') %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-sign-in-alt me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 2 %}
+                            {% set check_type_desc = _('attendance.break_start') %}
+                            <span class="badge bg-warning text-dark fs-6">
+                                <i class="fas fa-pause me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 3 %}
+                            {% set check_type_desc = _('attendance.break_end') %}
+                            <span class="badge bg-info fs-6">
+                                <i class="fas fa-play me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 4 %}
+                            {% set check_type_desc = _('attendance.overtime_start') %}
+                            <span class="badge bg-primary fs-6">
+                                <i class="fas fa-clock me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 5 %}
+                            {% set check_type_desc = _('attendance.overtime_end') %}
+                            <span class="badge bg-dark fs-6">
+                                <i class="fas fa-stop me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% elif record.check_type == 255 %}
+                            {% set check_type_desc = _('attendance.undefined_type') %}
+                            <span class="badge bg-secondary fs-6">
+                                <i class="fas fa-question me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% else %}
+                            {% set check_type_desc = _('attendance.unknown_type') + " (" + record.check_type|string +
+                            ")" %}
+                            <span class="badge bg-light text-dark fs-6">
+                                <i class="fas fa-question me-1"></i>{{ check_type_desc }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-microchip text-primary me-2"></i>
+                                <div>
+                                    <div class="small fw-bold">{{ record.device_name }}</div>
+                                    <small class="text-muted">{{ _('attendance.device') }} #{{ record.device_id
+                                        }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">
+                                {% if record.verify_code %}
+                                <div><i class="fas fa-fingerprint me-1"></i>{{ _('attendance.verify_code') }}: {{
+                                    record.verify_code }}</div>
+                                {% endif %}
+                                {% if record.sensor_id %}
+                                <div><i class="fas fa-sensor me-1"></i>{{ _('attendance.sensor') }}: {{ record.sensor_id
+                                    }}</div>
+                                {% endif %}
+                                {% if record.work_code %}
+                                <div><i class="fas fa-briefcase me-1"></i>{{ _('attendance.work_code') }}: {{
+                                    record.work_code }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- الترقيم -->
+        {% if total_pages > 1 %}
+        <nav aria-label="{{ _('pagination.label') }}">
+            <ul class="pagination justify-content-center">
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('report.fingerprint_attendance', page=current_page-1, employee_id=request.args.get('employee_id'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in range(1, total_pages + 1) %}
+                {% if page_num == current_page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% elif page_num <= 3 or page_num> total_pages - 3 or (page_num >= current_page - 1 and page_num <=
+                        current_page + 1) %} <li class="page-item">
+                        <a class="page-link"
+                            href="{{ url_for('report.fingerprint_attendance', page=page_num, employee_id=request.args.get('employee_id'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}">{{
+                            page_num }}</a>
+                        </li>
+                        {% elif page_num == 4 or page_num == total_pages - 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if current_page < total_pages %} <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('report.fingerprint_attendance', page=current_page+1, employee_id=request.args.get('employee_id'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            </li>
+                            {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clock text-muted" style="font-size: 4rem;"></i>
+            <h3 class="mt-3 text-muted">{{ _('attendance.no_records') }}</h3>
+            <p class="text-muted">
+                {% if request.args.get('employee_id') or request.args.get('start_date') or request.args.get('end_date')
+                %}
+                {{ _('attendance.no_records_criteria') }}
+                {% else %}
+                {{ _('attendance.no_records_synced_yet') }}
+                {% endif %}
+            </p>
+            <a href="{{ url_for('attendance.fingerprint') }}" class="btn btn-primary">
+                <i class="fas fa-sync-alt me-2"></i>{{ _('btn.start_sync') }}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- معلومات أنواع البصمة -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>{{ _('attendance.check_types_meaning') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <span class="badge bg-danger me-2">0</span><strong>{{ _('attendance.check_out')
+                                    }}:</strong> {{ _('attendance.desc_check_out') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-success me-2">1</span><strong>{{ _('attendance.check_in')
+                                    }}:</strong> {{ _('attendance.desc_check_in') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-warning text-dark me-2">2</span><strong>{{
+                                    _('attendance.break_start') }}:</strong> {{ _('attendance.desc_break_start') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-info me-2">3</span><strong>{{ _('attendance.break_end')
+                                    }}:</strong> {{ _('attendance.desc_break_end') }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <span class="badge bg-primary me-2">4</span><strong>{{ _('attendance.overtime_start')
+                                    }}:</strong> {{ _('attendance.desc_overtime_start') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-dark me-2">5</span><strong>{{ _('attendance.overtime_end')
+                                    }}:</strong> {{ _('attendance.desc_overtime_end') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-secondary me-2">255</span><strong>{{
+                                    _('attendance.undefined_type') }}:</strong> {{ _('attendance.desc_undefined') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-light text-dark me-2">{{ _('x.question_mark') }}</span><strong>{{
+                                    _('attendance.unknown_type') }}:</strong> {{ _('attendance.desc_unknown') }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // فرض تحديث الصفحة للتأكد من عرض أحدث البيانات
+    console.log('Fingerprint attendance page v2.1 loaded at:', new Date().toLocaleString());
+    // alert({{ _('x.attendance_v21_loaded')|tojson }});
+
+    // تحديث وقت آخر تحديث
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('{{ get_locale().replace("_", "-") }}');
+        const lastUpdateElement = document.getElementById('lastUpdateTime');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = timeString;
+        }
+    });
+
+    // تحديث تلقائي كل دقيقة للسجلات الجديدة
+    let autoRefresh = false;
+
+    function toggleAutoRefresh() {
+        autoRefresh = !autoRefresh;
+        const btn = document.getElementById('autoRefreshBtn');
+
+        if (autoRefresh) {
+            btn.innerHTML = '<i class="fas fa-pause me-2"></i>{{ _("btn.stop_auto_refresh") }}';
+            btn.className = 'btn btn-warning btn-sm';
+            startAutoRefresh();
+        } else {
+            btn.innerHTML = '<i class="fas fa-play me-2"></i>{{ _("btn.start_auto_refresh") }}';
+            btn.className = 'btn btn-success btn-sm';
+            stopAutoRefresh();
+        }
+    }
+
+    let refreshInterval;
+
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            if (autoRefresh) {
+                window.location.reload();
+            }
+        }, 60000); // كل دقيقة
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    }
+
+    // تصدير البيانات (يمكن تطويرها لاحقاً)
+    function exportData() {
+        showAlert('{{ _("msg.export_coming_soon") }}', 'info');
+    }
+
+    // فرض تحديث الصفحة
+    function forceReload() {
+        // مسح الـ cache وإعادة تحميل الصفحة
+        window.location.reload(true);
+    }
+</script>
+{% endblock %}

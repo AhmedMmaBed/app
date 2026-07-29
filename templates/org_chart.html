@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ _('x.org_chart') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom gap-2">
+    <h1 class="h2 mb-0"><i class="fas fa-sitemap me-2"></i>{{ _('x.org_chart_hierarchy') }}</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <input type="text" class="form-control form-control-sm" style="max-width:260px"
+               id="ocSearch" placeholder="{{ _('x.oc_search') }}">
+        <button class="btn btn-sm btn-outline-secondary" onclick="ocExpandAll(true)">
+            <i class="fas fa-plus-square me-1"></i>{{ _('x.oc_expand') }}</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="ocExpandAll(false)">
+            <i class="fas fa-minus-square me-1"></i>{{ _('x.oc_collapse') }}</button>
+    </div>
+</div>
+
+<div id="ocStats" class="d-flex flex-wrap gap-2 mb-3"></div>
+<div id="ocIssues"></div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="ocTree" class="oc-tree">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const OCT = {
+        total: {{ _('x.oc_total')|tojson }},
+        roots: {{ _('x.oc_roots')|tojson }},
+        reports: {{ _('x.oc_reports')|tojson }},
+        issuesTitle: {{ _('x.oc_issues_title')|tojson }},
+        issueSelf: {{ _('x.oc_issue_self')|tojson }},
+        issueMissing: {{ _('x.oc_issue_missing')|tojson }},
+        issueCycle: {{ _('x.oc_issue_cycle')|tojson }},
+        empty: {{ _('x.oc_empty')|tojson }},
+        noMatch: {{ _('x.picker_no_results')|tojson }},
+        profile: {{ _('nav.employee_profile')|tojson }}
+    };
+    const PROFILE_URL = {{ url_for('employee.employee_profile')|tojson }};
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function nodeHtml(n) {
+        const kids = n.children || [];
+        const badge = n.issue
+            ? `<span class="badge bg-warning text-dark ms-1" title="${esc(
+                  n.issue === 'self' ? OCT.issueSelf
+                  : n.issue === 'cycle' ? OCT.issueCycle : OCT.issueMissing)}">!</span>`
+            : '';
+        return `
+        <li data-name="${esc((n.name + ' ' + n.employee_number + ' ' + n.position).toLowerCase())}">
+            <div class="oc-node">
+                ${kids.length ? `<button class="oc-toggle" onclick="ocToggle(this)"><i class="fas fa-minus"></i></button>` : '<span class="oc-dot"></span>'}
+                <a class="oc-name" href="${PROFILE_URL}?employee_id=${n.id}" title="${esc(OCT.profile)}">
+                    ${esc(n.name)}</a>
+                <span class="oc-num">#${esc(n.employee_number)}</span>${badge}
+                <div class="oc-meta">${esc(n.position)}${n.department ? ' • ' + esc(n.department) : ''}
+                    ${kids.length ? `<span class="badge bg-light text-dark border ms-1">${kids.length} ${esc(OCT.reports)}</span>` : ''}
+                </div>
+            </div>
+            ${kids.length ? `<ul>${kids.map(nodeHtml).join('')}</ul>` : ''}
+        </li>`;
+    }
+
+    function ocToggle(btn) {
+        const li = btn.closest('li');
+        const ul = li.querySelector(':scope > ul');
+        if (!ul) return;
+        const hidden = ul.classList.toggle('d-none');
+        btn.innerHTML = hidden ? '<i class="fas fa-plus"></i>' : '<i class="fas fa-minus"></i>';
+    }
+
+    function ocExpandAll(open) {
+        document.querySelectorAll('#ocTree li > ul').forEach(ul => ul.classList.toggle('d-none', !open));
+        document.querySelectorAll('#ocTree .oc-toggle').forEach(b => {
+            b.innerHTML = open ? '<i class="fas fa-minus"></i>' : '<i class="fas fa-plus"></i>';
+        });
+    }
+
+    function ocLoad() {
+        fetch({{ url_for('employee.org_chart_data')|tojson }})
+            .then(r => r.json())
+            .then(d => {
+                const tree = document.getElementById('ocTree');
+                if (!d.success) { tree.innerHTML = ''; return; }
+
+                document.getElementById('ocStats').innerHTML = `
+                    <span class="badge bg-dark">${esc(OCT.total)}: ${d.total}</span>
+                    <span class="badge bg-secondary">${esc(OCT.roots)}: ${d.unassigned}</span>`;
+
+                if (d.issues && d.issues.length) {
+                    const byType = {};
+                    d.issues.forEach(i => { (byType[i.type] = byType[i.type] || []).push(i.name); });
+                    const label = t => t === 'self' ? OCT.issueSelf
+                                    : t === 'cycle' ? OCT.issueCycle : OCT.issueMissing;
+                    document.getElementById('ocIssues').innerHTML = `
+                        <div class="alert alert-warning py-2">
+                            <b>${esc(OCT.issuesTitle)}</b>
+                            <ul class="mb-0 small">${Object.keys(byType).map(t =>
+                                `<li>${esc(label(t))}: ${byType[t].map(esc).join('، ')}</li>`).join('')}</ul>
+                        </div>`;
+                }
+
+                if (!d.roots.length) {
+                    tree.innerHTML = `<div class="text-center text-muted py-5">${esc(OCT.empty)}</div>`;
+                    return;
+                }
+                tree.innerHTML = `<ul class="oc-root">${d.roots.map(nodeHtml).join('')}</ul>`;
+            })
+            .catch(() => {
+                document.getElementById('ocTree').innerHTML =
+                    {{ _('x.org_chart_load_error_html')|tojson }};
+            });
+    }
+
+    document.getElementById('ocSearch').addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        const items = document.querySelectorAll('#ocTree li');
+        if (!q) { items.forEach(li => li.classList.remove('d-none', 'oc-hit')); return; }
+        items.forEach(li => li.classList.add('d-none'));
+        items.forEach(li => {
+            if ((li.dataset.name || '').includes(q)) {
+                li.classList.remove('d-none');
+                li.classList.add('oc-hit');
+                let p = li.parentElement.closest('li');
+                while (p) { p.classList.remove('d-none'); p = p.parentElement.closest('li'); }
+                const ul = li.querySelector(':scope > ul');
+                if (ul) ul.classList.remove('d-none');
+            } else {
+                li.classList.remove('oc-hit');
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', ocLoad);
+</script>
+
+<style>
+    .oc-tree ul { list-style: none; margin: 0; padding-inline-start: 26px; }
+    .oc-tree > ul.oc-root { padding-inline-start: 0; }
+    .oc-tree li { position: relative; padding: 4px 0; }
+    .oc-tree li::before {
+        content: ''; position: absolute; inset-inline-start: -14px; top: 0;
+        border-inline-start: 1px solid #DAD7CB; height: 100%;
+    }
+    .oc-tree > ul.oc-root > li::before { display: none; }
+    .oc-node {
+        display: inline-block; background: #FAFAF7; border: 1px solid #DAD7CB;
+        border-radius: 8px; padding: 6px 12px; min-width: 230px;
+    }
+    .oc-hit > .oc-node { border-color: var(--ledger, #1F5C4A); background: #E7F1EC; }
+    .oc-name { font-weight: 600; text-decoration: none; }
+    .oc-num { color: #888; font-size: .82em; margin-inline-start: 6px; }
+    .oc-meta { color: #666; font-size: .8em; margin-top: 2px; }
+    .oc-toggle {
+        border: 1px solid #DAD7CB; background: #fff; border-radius: 4px;
+        width: 20px; height: 20px; line-height: 1; padding: 0; font-size: .7em;
+        margin-inline-end: 6px;
+    }
+    .oc-dot {
+        display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: #DAD7CB; margin-inline-end: 10px; vertical-align: middle;
+    }
+</style>
+{% endblock %}

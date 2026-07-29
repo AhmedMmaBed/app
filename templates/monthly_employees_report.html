@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.monthly_report') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>{{ _('header.monthly_report') }} - {{
+                month_name }} {{ year }}</h5>
+            <div class="d-flex gap-2">
+                <form class="d-flex gap-2" method="GET">
+                    <select name="year" class="form-select w-auto">
+                        {% for y in range(year-2, year+3) %}
+                        <option value="{{ y }}" {% if y==year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="month" class="form-select w-auto">
+                        {% set months = ['',
+                        'January','February','March','April','May','June','July','August','September','October','November','December']
+                        %}
+                        {% for i in range(1,13) %}
+                        <option value="{{ i }}" {% if i==month %}selected{% endif %}>{{ _('month.' +
+                            (months[i]|lower)[:3]) }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="dept" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_departments') }}</option>
+                        {% for d in departments %}
+                        <option value="{{ d }}" {% if d==selected_dept %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="pos" class="form-select w-auto">
+                        <option value="">{{ _('filter.all_positions') }}</option>
+                        {% for p in positions %}
+                        <!-- Use loop.index or just p as it's a string list -->
+                        <option value="{{ p }}" {% if p==selected_pos %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary" type="submit">{{ _('btn.view') }}</button>
+                </form>
+                <button class="btn btn-success" id="btnExportExcel" disabled>
+                    <i class="fas fa-file-excel me-2"></i>{{ _('btn.export_excel') }}
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 75vh;">
+                <table class="table table-bordered table-striped table-hover align-middle text-center mb-0"
+                    id="reportTable" style="font-size: 0.85rem;">
+                    <thead class="table-dark sticky-top" style="z-index: 5;">
+                        <tr>
+                            <th rowspan="2" class="align-middle" style="min-width:60px;">{{ _('tbl.header.file_number')
+                                }}</th>
+                            <th rowspan="2" class="align-middle"
+                                style="min-width:150px; position:sticky; left:0; z-index:6; background:var(--bs-dark);">
+                                {{ _('tbl.header.name') }}</th>
+                            <th rowspan="2" class="align-middle">{{ _('tbl.header.department') }}</th>
+                            <th rowspan="2" class="align-middle">{{ _('tbl.header.position') }}</th>
+                            <!-- Ø£Ø¹Ù…Ø¯Ø© Ø¬Ø¯ÙŠØ¯Ø© -->
+                            <th rowspan="2" class="align-middle bg-light" style="min-width:60px; font-size:0.8rem;">{{
+                                _('tbl.header.work_days') }}</th>
+                            <th rowspan="2" class="align-middle bg-light" style="min-width:60px; font-size:0.8rem;">
+                                {{ _('tbl.header.sick_emergency') }}</th>
+                            <!-- Ø£ÙŠØ§Ù… Ø§Ù„Ø´Ù‡Ø± -->
+                            {% for d in range(1, days_in_month + 1) %}
+                            <th class="px-1" style="min-width:25px; font-size:0.75rem;">{{ d }}</th>
+                            {% endfor %}
+                            <!-- Ø§Ù„Ù…Ø¬Ø§Ù…ÙŠØ¹ -->
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.req_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.act_basic') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-danger text-white">{{ _('tbl.header.miss_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.ot_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.total_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.late_hrs') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.present_days')
+                                }}</th>
+                            <th rowspan="2" class="align-middle bg-secondary text-white">{{ _('tbl.header.absent_days')
+                                }}</th>
+                            <!-- Ø§Ù„Ù…Ø§Ù„ÙŠ -->
+                            <th rowspan="2" class="align-middle bg-info text-white" style="min-width:80px">{{
+                                _('tbl.header.basic_salary') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-success text-white" style="min-width:80px">{{
+                                _('tbl.header.ot_value') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-danger text-white" style="min-width:80px">{{
+                                _('tbl.header.total_deductions') }}
+                            </th>
+                            <th rowspan="2" class="align-middle bg-primary text-white" style="min-width:90px">{{
+                                _('tbl.header.net_salary') }}
+                            </th>
+                        </tr>
+                        <tr>
+                            <!-- ØµÙ Ø«Ø§Ù†ÙˆÙŠ Ù„Ù„Ø£ÙŠØ§Ù… -->
+                            {% for d_name in days_names %}
+                            <th style="font-size:0.6rem; padding:0;" class="text-muted">{{ _('day.' + d_name|lower) }}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody id="pbody">
+                        <!-- Shimmer Loader -->
+                        {% for i in range(5) %}
+                        <tr>
+                            <td colspan="{{ 4 + 2 + days_in_month + 12 }}" class="p-3">
+                                <div class="placeholder-glow">
+                                    <span class="placeholder col-12 py-3 bg-secondary opacity-25 rounded"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadReportData();
+    });
+
+    async function loadReportData() {
+        const params = new URLSearchParams(window.location.search);
+        try {
+            const res = await fetch(`/api/fingerprint/monthly_employees_report?${params.toString()}`);
+            const data = await res.json();
+
+            if (data.success) {
+                renderTable(data.rows);
+                document.getElementById('btnExportExcel').disabled = false;
+            } else {
+                document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">{{ _('error.generic') }}: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('pbody').innerHTML = `<tr><td colspan="100%" class="text-danger py-5">{{ _('error.server_connection') }}</td></tr>`;
+        }
+    }
+
+    function renderTable(rows) {
+        const tbody = document.getElementById('pbody');
+        tbody.innerHTML = '';
+
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="100%">{{ _('msg.no_data') }}</td></tr>`;
+            return;
+        }
+
+        rows.forEach(r => {
+            let daysHtml = '';
+            r.daily_hours.forEach((h, index) => {
+                let cellContent = '';
+                let cellClass = '';
+                let val = h;
+                let tooltip = '';
+
+                if (typeof h === 'object' && h !== null) {
+                    if (h.is_mission) {
+                        val = h.hours;
+                        cellClass = 'bg-primary bg-opacity-10 text-primary fw-bold';
+                    } else {
+                        val = h.code;
+                    }
+                    tooltip = h.tooltip || '';
+                }
+
+                let dayNum = index + 1;
+                const urlParams = new URLSearchParams(window.location.search);
+                const rYear = urlParams.get('year') || new Date().getFullYear();
+                const rMonth = urlParams.get('month') || (new Date().getMonth() + 1);
+                const dateStr = `${rYear}-${String(rMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+
+                let clickAction = '';
+                let cellStyle = '';
+
+                if (val === 'H') { cellContent = {{ _("symbol.holiday") | tojson }}; cellClass = 'bg-warning bg-opacity-25 text-warning fw-bold'; }
+                else if (val === 'L') { cellContent = {{ _("symbol.leave") | tojson }}; cellClass = 'bg-info bg-opacity-25 text-info fw-bold'; }
+                else if (val === 'W') { cellContent = {{ _("symbol.weekend") | tojson }}; cellClass = 'bg-secondary bg-opacity-10 text-muted fw-bold'; }
+                else if (val === 'A') { cellContent = {{ _("symbol.absent") | tojson }}; cellClass = 'bg-danger bg-opacity-25 text-danger fw-bold'; clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${dateStr}', 'absent')"`; cellStyle = 'cursor:pointer;'; }
+                else if (val === 'I') { cellContent = {{ _("symbol.invalid") | tojson }}; cellClass = 'bg-danger text-white fw-bold'; tooltip += ' ({{ _("tooltip.missing_punch") }})'; clickAction = `onclick="openActionModal('${r.id}', '${r.name}', '${dateStr}', 'invalid')"`; cellStyle = 'cursor:pointer;'; }
+                else if (val > 0) { cellContent = val; }
+                else if (typeof val === 'number') { cellContent = val > 0 ? val : '<span class="text-muted opacity-25">-</span>'; }
+                else { cellContent = '<span class="text-muted opacity-25">-</span>'; }
+
+                daysHtml += `<td class="${cellClass}" title="${tooltip}" style="${cellStyle}" ${clickAction}>${cellContent}</td>`;
+            });
+
+    let deductionTooltip = `{{ _("tooltip.total_deductions") }}: ${r.total_deduction}`;
+    if (r.deduction_details) {
+        const d = r.deduction_details;
+            deductionTooltip += `\n{{ _("tooltip.late") }}: ${d.late || 0}`;
+            deductionTooltip += `\n{{ _("tooltip.early_leave") }}: ${d.early || 0}`;
+            deductionTooltip += `\n{{ _("tooltip.absent") }}: ${d.absent || 0}`;
+            if (d.penalties) deductionTooltip += `\n{{ _("tooltip.penalties") }}: ${d.penalties}`;
+            Object.keys(d).forEach(k => {
+                if (k.startsWith('penalty_')) {
+                    deductionTooltip += `\n${k.replace('penalty_', '{{ _("tooltip.penalty") }} ')}: ${d[k]}`;
+                }
+            });
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+                    <td class="fw-bold text-muted">${r.file_number || ''}</td>
+                    <td class="text-start fw-bold" style="position:sticky; left:0; background:#fff; z-index:1;">
+                        ${r.name}
+                        ${r.arabic_name ? `<div class="text-dark fw-bold small">${r.arabic_name}</div>` : ''}
+                    </td>
+                    <td>${r.department || ''}</td>
+                    <td><small>${r.position || ''}</small></td>
+                    <td class="align-middle fw-bold text-primary">${r.expected_work_days || 0}</td>
+                    <td class="align-middle fw-bold text-danger">${r.sick_emergency_leaves || 0}</td>
+                    ${daysHtml}
+                    <td class="fw-bold text-muted bg-light border-end">${r.required_hours}</td>
+                    <td class="fw-bold text-secondary">${r.basic_work_hours}</td>
+                    <td class="fw-bold text-danger">${r.missing_hours}</td>
+                    <td class="fw-bold text-success">${r.ot_hours}</td>
+                    <td class="fw-bold text-dark border-start">${r.total_work_hours}</td>
+                    <td class="text-danger">${r.total_late_hours}</td>
+                    <td class="text-success">${r.present_days}</td>
+                    <td class="text-danger">${r.absent_days}</td>
+                    <td class="text-info fw-bold">${r.salary}</td>
+                    <td class="text-success fw-bold">${r.ot_amount || 0}</td>
+                    <td class="text-danger fw-bold" title="${deductionTooltip}" data-bs-toggle="tooltip">${r.total_deduction}</td>
+                    <td class="text-primary fw-bold text-decoration-underline">${r.net_salary}</td>
+                `;
+        tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('btnExportExcel').addEventListener('click', function () {
+        const wb = XLSX.utils.book_new();
+        const table = document.getElementById('reportTable');
+        // Ø§Ø³ØªØ®Ø¯Ù… raw: true Ù„Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ø§Ù„Ø£Ø±Ù‚Ø§Ù…
+        const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+        XLSX.utils.book_append_sheet(wb, ws, "Monthly Report");
+        XLSX.writeFile(wb, "Monthly_Employees_Report_{{ year }}_{{ month }}.xlsx");
+    });
+</script>
+
+<style>
+    /* ØªØ­Ø³ÙŠÙ†Ø§Øª Ù„Ù„Ø¬Ø¯ÙˆÙ„ */
+    th,
+    td {
+        white-space: nowrap;
+    }
+
+    .placeholder-glow .placeholder {
+        min-height: 40px;
+    }
+</style>
+
+
+<!-- ØªÙØ§Ø¹Ù„ÙŠØ© Ø§Ù„ØªÙ‚Ø±ÙŠØ±: Ù†ÙˆØ§ÙØ° Ø¥Ø¶Ø§ÙØ© Ø¥Ø¬Ø§Ø²Ø©/Ø¹Ø°Ø± -->
+
+<!-- Add Leave Modal -->
+<div class="modal fade" id="addLeaveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('leave.add_leave_request') }}" method="POST">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark">{{ _('modal.title.add_leave_absence') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="leave_employee_id">
+                    <div class="mb-3">
+                        <label class="fw-bold">{{ _('label.employee_col') }}:</label>
+                        <span id="leave_employee_name" class="text-primary"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('label.from_date') }}</label>
+                            <input type="date" class="form-control" name="start_date" id="leave_start_date">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('label.to_date') }}</label>
+                            <input type="date" class="form-control" name="end_date" id="leave_end_date" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.leave_type') }}</label>
+                        <select class="form-select" name="leave_type_id" required>
+                            <option value="">{{ _('option.select_placeholder') }}</option>
+                            {% for lt in leave_types %}
+                            <option value="{{ lt.id }}">{{ lt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.reason') }}</label>
+                        <textarea class="form-control" name="reason"
+                            rows="2">{{ _('placeholder.monthly_report_reason') }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('btn.save_leave') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Excuse Modal -->
+<div class="modal fade" id="addExcuseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('attendance_excuses.add_excuse') }}" method="POST">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title text-white">{{ _('modal.title.add_excuse_mission') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="excuse_employee_id">
+                    <!-- Default to 'mission' for single punch correction usually -->
+                    <input type="hidden" name="type" value="mission">
+
+                    <div class="mb-3">
+                        <label class="fw-bold">{{ _('label.employee_col') }}:</label>
+                        <span id="excuse_employee_name" class="text-primary"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.date') }}</label>
+                        <input type="date" class="form-control" name="date" id="excuse_date" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.excuse_type') }}</label>
+                        <select class="form-select" name="type_selector" id="excuse_type_selector"
+                            onchange="document.getElementsByName('type')[1].value = this.value">
+                            <option value="mission">{{ _('option.mission_full') }}</option>
+                            <option value="manual_override">{{ _('option.other_excuse') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('label.notes_reason') }}</label>
+                        <textarea class="form-control" name="reason"
+                            rows="2">{{ _('placeholder.fix_missing_punch') }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">{{ _('btn.save_excuse') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Handle opening modals from cells
+    function openActionModal(empId, empName, dateStr, status) {
+        if (status === 'absent') {
+            // Open Leave Modal
+            document.getElementById('leave_employee_id').value = empId;
+            document.getElementById('leave_employee_name').innerText = empName;
+            document.getElementById('leave_start_date').value = dateStr;
+            document.getElementById('leave_end_date').value = dateStr; // 1 day default
+
+            var modal = new bootstrap.Modal(document.getElementById('addLeaveModal'));
+            modal.show();
+        } else if (status === 'invalid' || status === 'single_punch') {
+            // Open Excuse Modal
+            document.getElementById('excuse_employee_id').value = empId;
+            document.getElementById('excuse_employee_name').innerText = empName;
+            document.getElementById('excuse_date').value = dateStr;
+
+            var modal = new bootstrap.Modal(document.getElementById('addExcuseModal'));
+            modal.show();
+        }
+    }
+</script>
+
+{% endblock %}

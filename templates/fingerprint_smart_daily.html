@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.smart_daily_report_dash') }} {{ target_date }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <div><h4 class="mb-0">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            {{ _('x.smart_daily_report') }}
+                        </h4><div class="report-desc">{{ _('x.rdesc_smart_daily') }}</div></div>
+                        <small>{{ _('x.date_colon_short') }} {{ target_date }} {{ _('x.time_based_only_pipe') }}</small>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('report.smart_reports_page') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>{{ _('x.back') }}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- إحصائيات سريعة -->
+                <div class="card-body pb-2">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-1">{{ stats.total_employees }}</h3>
+                                    <small>{{ _('x.total_employees') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-1">{{ stats.present }}</h3>
+                                    <small>{{ _('x.present_paren') }}{{ stats.present_percentage }}%)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-1">{{ stats.absent }}</h3>
+                                    <small>{{ _('x.absent_paren') }}{{ stats.absent_percentage }}%)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-1">{{ stats.partial }}</h3>
+                                    <small>{{ _('x.partial_attendance') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- فيلتر التاريخ -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <form method="GET" class="d-flex gap-2">
+                                <input type="date" name="date" class="form-control" value="{{ target_date }}" required>
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-search me-1"></i>{{ _('x.view') }}
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group" role="group">
+                                {% if has_permission('report.export') %}<button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="exportToExcel()">
+                                    <i class="fas fa-file-excel me-1"></i>Excel
+                                </button>{% endif %}
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                                    <i class="fas fa-print me-1"></i>{{ _('x.print') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول التقرير -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0" id="reportTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>{{ _('x.employee') }}</th>
+                                <th>{{ _('x.employee_number') }}</th>
+                                <th>{{ _('x.department') }}</th>
+                                <th>{{ _('x.check_in') }}</th>
+                                <th>{{ _('x.check_out') }}</th>
+                                <th>{{ _('x.work_hours') }}</th>
+                                <th>{{ _('x.shift_time') }}</th>
+                                <th>{{ _('x.lateness') }}</th>
+                                <th>{{ _('x.status') }}</th>
+                                <th>{{ _('x.punch_count') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in report %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td class="fw-bold">{{ record.name }}</td>
+                                <td><code>{{ record.employee_number }}</code></td>
+                                <td>{{ record.department or _('x.not_specified') }}</td>
+
+                                <!-- الدخول -->
+                                <td>
+                                    {% if record.checkin_time != '00:00' %}
+                                    <span class="badge bg-success">{{ record.checkin_time }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- الخروج -->
+                                <td>
+                                    {% if record.checkout_time != '00:00' %}
+                                    <span class="badge bg-danger">{{ record.checkout_time }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- ساعات العمل -->
+                                <td>
+                                    {% if record.work_hours > 0 %}
+                                    <strong class="text-primary">{{ "%.1f"|format(record.work_hours) }} {{ _('x.hour') }}</strong>
+                                    {% else %}
+                                    <span class="text-muted">{{ _('x.zero_hours') }}</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- وقت الشفت -->
+                                <td>
+                                    <small class="text-muted">
+                                        <strong>{{ record.shift_type_name or 'عادي' }}</strong><br>
+                                        {{ record.scheduled_start or '09:00' }} - {{ record.scheduled_end or '17:00' }}
+                                        {% if record.shift_source == 'employee_data' %}
+                                        <i class="fas fa-user text-success" title="{{ _('x.from_employee_data') }}"></i>
+                                        {% else %}
+                                        <i class="fas fa-exclamation-triangle text-warning" title="{{ _('x.default_shift') }}"></i>
+                                        {% endif %}
+                                    </small>
+                                </td>
+
+                                <!-- التأخير والوصول المبكر -->
+                                <td>
+                                    {% set parts = [] %}
+                                    {% if record.early_arrival_minutes and record.early_arrival_minutes > 0 %}
+                                    {% set _ = parts.append('وصول مبكر ' ~ record.early_arrival_minutes ~ 'د') %}
+                                    {% endif %}
+                                    {% if record.late_minutes and record.late_minutes > 0 %}
+                                    {% set _ = parts.append('تأخير ' ~ record.late_minutes ~ 'د') %}
+                                    {% endif %}
+                                    {% if record.early_leave_minutes and record.early_leave_minutes > 0 %}
+                                    {% set _ = parts.append('انصراف مبكر ' ~ record.early_leave_minutes ~ 'د') %}
+                                    {% endif %}
+                                    {% if parts|length > 0 %}
+                                    <span class="badge bg-secondary">{{ parts|join(' - ') }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- الحالة -->
+                                <td>
+                                    {% if record.status == 'حاضر' %}
+                                    <span class="badge bg-success">{{ _('x.present') }}</span>
+                                    {% elif record.status == 'غائب' %}
+                                    <span class="badge bg-danger">{{ _('x.absent') }}</span>
+                                    {% elif record.status == 'دخول فقط' %}
+                                    <span class="badge bg-warning text-dark">{{ _('x.check_in_only') }}</span>
+                                    {% elif record.status == 'خروج فقط' %}
+                                    <span class="badge bg-info">{{ _('x.check_out_only') }}</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- عدد البصمات -->
+                                <td>
+                                    <span class="badge bg-secondary">{{ record.total_records }}</span>
+                                    {% if record.all_times|length > 1 %}
+                                    <br><small class="text-muted">{{ record.all_times|join(', ') }}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ملاحظات -->
+                <div class="card-footer bg-light">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                {{ _('x.report_time_based_note') }}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <small class="text-muted">
+                                {{ _('x.report_date_colon') }} {{ target_date }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // تصدير إلى Excel
+    function exportToExcel() {
+        const table = document.getElementById('reportTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: {{ _('x.daily_report')|tojson }} });
+        const fileName = `{{ _('x.file_daily_report') }}_{{ target_date }}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    }
+
+    // إضافة XLSX للتصدير
+    if (!window.XLSX) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        document.head.appendChild(script);
+    }
+
+    // تحديث تلقائي للوقت
+    document.addEventListener('DOMContentLoaded', function () {
+        // تمييز البيانات بألوان مختلفة
+        const rows = document.querySelectorAll('#reportTable tbody tr');
+        rows.forEach(row => {
+            const statusBadge = row.querySelector('td:nth-last-child(2) .badge');
+            if (statusBadge) {
+                const status = statusBadge.textContent.trim();
+                if (status === {{ _('x.present')|tojson }}) {
+                    row.classList.add('table-success');
+                } else if (status === {{ _('x.absent')|tojson }}) {
+                    row.classList.add('table-danger');
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    @media print {
+
+        .btn,
+        .card-header .btn {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}

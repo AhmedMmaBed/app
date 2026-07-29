@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.employee_detailed_report') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div><h5 class="mb-0">
+                        <i class="fas fa-user-chart me-2"></i>
+                        {{ _('x.employee_detailed_report_full') }}
+                    </h5><div class="report-desc">{{ _('x.rdesc_emp_detail') }}</div></div>
+                </div>
+
+                <div class="card-body">
+                    <!-- فلاتر البحث -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="employee_search" class="form-label">{{ _('x.employee_search') }} <span
+                                    class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="employee_search"
+                                        placeholder="{{ _('x.search_name_or_emp_number') }}" autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary" id="clear_search"
+                                        onclick="clearSearch()" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div id="search_results" class="dropdown-menu w-100 shadow"
+                                    style="max-height: 200px; overflow-y: auto; z-index: 1050;"></div>
+                            </div>
+                            <small class="form-text text-muted">{{ _('x.type_two_chars_to_search') }}</small>
+                            <input type="hidden" id="selected_employee_id" value="">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="month_select" class="form-label">{{ _('x.month') }}</label>
+                            <select class="form-select" id="month_select">
+                                <option value="1">{{ _('x.january') }}</option>
+                                <option value="2">{{ _('x.february') }}</option>
+                                <option value="3">{{ _('x.march') }}</option>
+                                <option value="4">{{ _('x.april') }}</option>
+                                <option value="5">{{ _('x.may') }}</option>
+                                <option value="6">{{ _('x.june') }}</option>
+                                <option value="7">{{ _('x.july') }}</option>
+                                <option value="8">{{ _('x.august') }}</option>
+                                <option value="9">{{ _('x.september') }}</option>
+                                <option value="10">{{ _('x.october') }}</option>
+                                <option value="11">{{ _('x.november') }}</option>
+                                <option value="12">{{ _('x.december') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year_select" class="form-label">{{ _('x.year') }}</label>
+                            <select class="form-select" id="year_select">
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026" selected>2026</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" onclick="generateReport()">
+                                <i class="fas fa-search me-2"></i>{{ _('x.view_report') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- منطقة التقرير -->
+                    <div id="report_container" style="display: none;">
+                        <!-- بيانات الموظف -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-user me-2"></i>{{ _('x.employee_data') }}</h6>
+                                        <div id="employee_info"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-clock me-2"></i>{{ _('x.shift_info') }}</h6>
+                                        <div id="shift_info"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إحصائيات الشهر -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_worked" class="mb-0">0</h2>
+                                        <small>{{ _('x.work_day') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_on_leave" class="mb-0">0</h2>
+                                        <small>{{ _('x.leave_day') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-danger text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_absent" class="mb-0">0</h2>
+                                        <small>{{ _('x.absence_day') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-secondary text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="total_work_hours" class="mb-0">0</h2>
+                                        <small>{{ _('x.work_hour') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تفاصيل الحضور -->
+                        <div class="row">
+                            <!-- الحضور اليومي -->
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar-check me-2"></i>{{ _('x.attendance_details_part1') }}
+                                            {{ _('x.attendance_details_part2') }}</h6>                                    </div>
+                                    <div class="card-body">
+                                        <div id="daily_attendance" class="table-responsive">
+                                            <!-- سيتم تعبئتها بـ JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الإجازات -->
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar-times me-2"></i>{{ _('x.leaves_in_month') }}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="leaves_list">
+                                            <!-- سيتم تعبئتها بـ JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loading_spinner" style="display: none;" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('x.loading') }}</span>
+                        </div>
+                        <p class="mt-2 text-muted">{{ _('x.preparing_report') }}</p>
+                    </div>
+
+                    <!-- رسالة عدم وجود بيانات -->
+                    <div id="no_data_message" style="display: none;" class="text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">{{ _('x.no_data_to_show') }}</h5>
+                        <p class="text-muted">{{ _('x.choose_employee_month') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // قائمة الموظفين
+    let employees = {{ employees | tojson }};
+
+    // تعيين الشهر والسنة الحاليين كافتراضي
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        document.getElementById('month_select').value = now.getMonth() + 1;
+        document.getElementById('year_select').value = now.getFullYear();
+
+        // إعداد البحث
+        setupEmployeeSearch();
+    });
+
+    function setupEmployeeSearch() {
+        const searchInput = document.getElementById('employee_search');
+        const searchResults = document.getElementById('search_results');
+        const selectedEmployeeId = document.getElementById('selected_employee_id');
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+
+            // إظهار/إخفاء زر المسح
+            if (query.length > 0) {
+                document.getElementById('clear_search').style.display = 'block';
+            } else {
+                document.getElementById('clear_search').style.display = 'none';
+                selectedEmployeeId.value = '';
+            }
+
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            // فلترة الموظفين
+            const filteredEmployees = employees.filter(emp =>
+                emp.name.toLowerCase().includes(query) ||
+                emp.employee_number.toLowerCase().includes(query)
+            );
+
+            // عرض النتائج
+            if (filteredEmployees.length > 0) {
+                let resultsHtml = '';
+                filteredEmployees.slice(0, 10).forEach(emp => { // أقصى 10 نتائج
+                    resultsHtml += `
+                    <a href="#" class="dropdown-item" onclick="selectEmployee(${emp.id}, '${emp.name}', '${emp.employee_number}')">
+                        <strong>${emp.name}</strong><br>
+                        ${emp.arabic_name ? `<small class="text-muted d-block">${emp.arabic_name}</small>` : ''}
+                        <small class="text-muted">{{ _('x.employee_number') }}: ${emp.employee_number}</small>
+                    </a>
+                `;
+                });
+                searchResults.innerHTML = resultsHtml;
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = {{ _('x.no_results_item_html')|tojson }};
+                searchResults.style.display = 'block';
+            }
+        });
+
+        // إخفاء النتائج عند النقر خارج البحث
+        document.addEventListener('click', function (event) {
+            if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    function selectEmployee(id, name, employeeNumber) {
+        document.getElementById('employee_search').value = `${name} (${employeeNumber})`;
+        document.getElementById('selected_employee_id').value = id;
+        document.getElementById('search_results').style.display = 'none';
+        document.getElementById('clear_search').style.display = 'block';
+    }
+
+    function clearSearch() {
+        document.getElementById('employee_search').value = '';
+        document.getElementById('selected_employee_id').value = '';
+        document.getElementById('search_results').style.display = 'none';
+        document.getElementById('clear_search').style.display = 'none';
+        document.getElementById('employee_search').focus();
+    }
+
+    function generateReport() {
+        const employeeId = document.getElementById('selected_employee_id').value;
+        const month = document.getElementById('month_select').value;
+        const year = document.getElementById('year_select').value;
+
+        if (!employeeId) {
+            alert({{ _('x.choose_employee_from_results')|tojson }});
+            return;
+        }
+
+        // إخفاء التقرير وإظهار التحميل
+        document.getElementById('report_container').style.display = 'none';
+        document.getElementById('no_data_message').style.display = 'none';
+        document.getElementById('loading_spinner').style.display = 'block';
+
+        // جلب البيانات
+        fetch(`/fingerprint/employee_report/api?employee_id=${employeeId}&month=${month}&year=${year}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading_spinner').style.display = 'none';
+
+                if (data.success) {
+                    displayReport(data);
+                } else {
+                    alert({{ _('x.error_colon_space')|tojson }} + data.message);
+                    document.getElementById('no_data_message').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading_spinner').style.display = 'none';
+                alert({{ _('x.connection_error_colon_space')|tojson }} + error);
+                document.getElementById('no_data_message').style.display = 'block';
+            });
+    }
+
+    function displayReport(data) {
+        // عرض بيانات الموظف
+        document.getElementById('employee_info').innerHTML = `
+        <strong>${data.employee.name}</strong><br>
+        ${data.employee.arabic_name ? `<div class="text-white-50 small mb-2">${data.employee.arabic_name}</div>` : ''}
+        {{ _('x.employee_number') }}: ${data.employee.employee_number}<br>
+        {{ _('x.department') }}: ${data.employee.department}<br>
+        {{ _('x.position') }}: ${data.employee.position}
+    `;
+
+        // عرض معلومات الشفت
+        document.getElementById('shift_info').innerHTML = `
+        {{ _('x.shift_type') }}: <strong>${data.employee.shift_type_name || {{ _('x.not_specified')|tojson }}}</strong><br>
+        {{ _('x.from') }}: ${data.employee.start_time || {{ _('x.not_specified')|tojson }}}<br>
+        {{ _('x.to') }}: ${data.employee.end_time || {{ _('x.not_specified')|tojson }}}<br>
+        {{ _('x.the_hours') }}: ${data.employee.hours_per_day || 8} {{ _('x.hour_per_day') }}
+    `;
+
+        // حساب الإحصائيات
+        const attendanceData = data.attendance_data;
+        const daysWorked = attendanceData ? attendanceData.days_worked : 0;
+        const totalLeaves = data.total_leave_days || 0;
+        const totalWorkDays = data.total_work_days;
+        const daysAbsent = totalWorkDays - daysWorked - totalLeaves;
+        const totalHours = attendanceData ? attendanceData.total_hours : 0;
+
+        // عرض الإحصائيات
+        document.getElementById('days_worked').textContent = daysWorked;
+        document.getElementById('days_on_leave').textContent = totalLeaves;
+        document.getElementById('days_absent').textContent = Math.max(0, daysAbsent);
+        document.getElementById('total_work_hours').textContent = totalHours.toFixed(1);
+
+        // عرض الحضور اليومي
+        displayDailyAttendance(data);
+
+        // عرض الإجازات
+        displayLeaves(data.leaves);
+
+        // عرض التقرير
+        document.getElementById('report_container').style.display = 'block';
+    }
+
+    function displayDailyAttendance(data) {
+        const dailyContainer = document.getElementById('daily_attendance');
+
+        // Use the details directly from the API response (V3 Logic)
+        const details = data.salary_calculations ? data.salary_calculations.details : [];
+
+        if (!details || details.length === 0) {
+            dailyContainer.innerHTML = {{ _('x.no_attendance_data_html')|tojson }};
+            return;
+        }
+
+        let tableHtml = `
+        <table class="table table-sm table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>{{ _('x.date') }}</th>
+                    <th>{{ _('x.day_col') }}</th>
+                    <th>{{ _('x.in') }}</th>
+                    <th>{{ _('x.out') }}</th>
+                    <th>{{ _('x.hours') }}</th>
+                    <th>{{ _('x.status') }}</th>
+                    <th>{{ _('x.notes') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+        // Sort by date just in case
+        details.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        details.forEach(record => {
+            const recordDate = new Date(record.date);
+            const dayName = recordDate.toLocaleDateString('ar-EG', { weekday: 'short' });
+
+            let statusBadge = '';
+            // Map statuses to badges
+            if (record.status === 'Present') {
+                statusBadge = {{ _('x.badge_present_html')|tojson }};
+            } else if (record.status === 'Leave') {
+                statusBadge = {{ _('x.badge_leave_html')|tojson }};
+            } else if (record.status === 'Absent') {
+                statusBadge = {{ _('x.badge_absent_html')|tojson }};
+            } else if (record.status === 'Holiday') {
+                statusBadge = {{ _('x.badge_official_holiday_html')|tojson }};
+            } else if (record.status === 'Weekend') {
+                statusBadge = {{ _('x.badge_weekly_off_html')|tojson }};
+            } else if (record.status === 'Rest Day') {
+                statusBadge = {{ _('x.badge_rest_html')|tojson }};
+            } else {
+                // Fallback for other statuses or bilingual handling if needed
+                // The backend V3 usually returns English statuses like 'Present', 'Absent' etc.
+                // We can map 'Present' -> {{ _('x.present')|tojson }} etc.
+                const statusMap = {
+                    'Present': {{ _('x.present')|tojson }},
+                    'Absent': {{ _('x.absent')|tojson }},
+                    'Leave': {{ _('x.leave')|tojson }},
+                    'Holiday': {{ _('x.official_holiday')|tojson }},
+                    'Weekend': {{ _('x.weekly_off')|tojson }},
+                    'Rest Day': {{ _('x.rest')|tojson }},
+                    'Mission': {{ _('x.assignment')|tojson }},
+                    'Holiday Work': {{ _('x.work_on_holiday')|tojson }}
+                };
+                const label = statusMap[record.status] || record.status;
+                const color = ['Weekend', 'Rest Day'].includes(record.status) ? 'bg-secondary' : 'bg-warning text-dark';
+                statusBadge = `<span class="badge ${color}">${label}</span>`;
+            }
+
+            // Note column
+            let notes = '';
+            if (record.leave_type) {
+                notes = `<span class="text-info">${record.leave_type}</span>`;
+            }
+            if (record.late_minutes > 0) {
+                notes += `<br><span class="text-danger small">{{ _('x.late_word') }}: ${record.late_minutes}{{ _('x.minute_abbr') }}</span>`;
+            }
+            if (record.early_minutes > 0) {
+                notes += `<br><span class="text-danger small">{{ _('x.early_exit') }}: ${record.early_minutes}{{ _('x.minute_abbr') }}</span>`;
+            }
+
+            tableHtml += `
+            <tr>
+                <td>${record.date}</td>
+                <td>${dayName}</td>
+                <td>${record.check_in || '-'}</td>
+                <td>${record.check_out || '-'}</td>
+                <td>${record.work_hours > 0 ? record.work_hours.toFixed(1) + {{ _('x.hour_abbr_space')|tojson }} : '-'}</td>
+                <td>${statusBadge}</td>
+                <td>${notes}</td>
+            </tr>
+        `;
+        });
+
+        tableHtml += '</tbody></table>';
+        dailyContainer.innerHTML = tableHtml;
+    }
+
+    function displayLeaves(leaves) {
+        const leavesContainer = document.getElementById('leaves_list');
+
+        if (leaves.length === 0) {
+            leavesContainer.innerHTML = {{ _('x.no_leaves_month_html')|tojson }};
+            return;
+        }
+
+        let leavesHtml = '';
+        leaves.forEach(leave => {
+            leavesHtml += `
+            <div class="border rounded p-2 mb-2 bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-primary">${leave.leave_type}</strong>
+                    <span class="badge bg-warning">${leave.days_in_month} {{ _('x.day') }}</span>
+                </div>
+                <small class="text-muted">
+                    {{ _('x.from') }} ${leave.start_date} {{ _('x.to') }} ${leave.end_date}
+                </small>
+                ${leave.reason ? `<br><small class="text-secondary">${leave.reason}</small>` : ''}
+            </div>
+        `;
+        });
+
+        leavesContainer.innerHTML = leavesHtml;
+    }
+
+    // وظائف التصدير
+    function exportToPDF() {
+        // هنا يمكن إضافة وظيفة تصدير PDF لاحقاً
+        alert({{ _('x.export_coming_later')|tojson }});
+    }
+
+    function exportToExcel() {
+        // هنا يمكن إضافة وظيفة تصدير Excel لاحقاً
+        alert({{ _('x.export_coming_later')|tojson }});
+    }
+</script>
+{% endblock %}

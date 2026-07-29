@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.employees') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('page.header.employees') }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('employee.add_employee') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>{{ _('btn.add_new_employee') }}
+            </a>
+            <a href="{{ url_for('employee.import_employees') }}" class="btn btn-outline-success">
+                <i class="fas fa-file-excel me-2"></i>{{ _('btn.import_excel') }}
+            </a>
+            {% if has_permission('employee.delete') %}
+            <form action="{{ url_for('employee.delete_all_employees') }}" method="POST"
+                onsubmit="return confirmDeleteAll();">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="fas fa-trash-alt me-2"></i>{{ _('btn.delete_all_employees') }}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        <!-- تم إزالة أزرار مزامنة البصمة -->
+    </div>
+</div>
+
+<!-- فلتر البحث -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" id="searchName" class="form-control"
+                    placeholder="{{ _('placeholder.search_employee') }}">
+            </div>
+            <div class="col-md-3">
+                <select id="searchDepartment" class="form-select">
+                    <option value="">{{ _('filter.all_departments') }}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="searchPosition" class="form-select">
+                    <option value="">{{ _('filter.all_positions') }}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="badge bg-info fs-6" id="employeeCount">
+                    {{ _('label.employee_count') }}: {{ employees|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تم إزالة قسم مستخدمي البصمة -->
+
+<!-- جدول الموظفين -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>{{ _('header.employee_list') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="employeesTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('th.emp_number') }}</th>
+                        <th>{{ _('th.name') }}</th>
+                        <th>{{ _('th.cost_center') }}</th>
+                        <th>{{ _('th.phone') }}</th>
+                        <th>{{ _('th.department') }}</th>
+                        <th>{{ _('th.position') }}</th>
+                        <th>{{ _('th.hire_date') }}</th>
+                        <th>{{ _('th.salary') }}</th>
+                        <th>{{ _('th.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="employeesTableBody">
+                    <!-- Loading Skeleton -->
+                    <tr class="skeleton-row">
+                        <td colspan="10" class="text-center py-5">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <div class="text-muted">{{ _('msg.loading_employees') }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State (Hidden) -->
+        <div id="emptyState" class="text-center py-5 d-none">
+            <i class="fas fa-users text-muted" style="font-size: 3rem;"></i>
+            <h4 class="mt-3 text-muted">{{ _('msg.no_employees_found') }}</h4>
+            <p class="text-muted">{{ _('msg.start_adding_employees') }}</p>
+            <a href="{{ url_for('employee.add_employee') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>{{ _('btn.add_first_employee') }}
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allEmployees = [];
+    const hasDeletePermission = "{{ 'true' if has_permission('employee.delete') else 'false' }}" === 'true';
+
+    // Fetch Employees Data
+    function loadEmployees() {
+        fetch('/api/employees')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('employeesTableBody');
+                tbody.innerHTML = ''; // Clear skeleton
+
+                if (data.success && data.employees.length > 0) {
+                    allEmployees = data.employees;
+                    renderEmployees(allEmployees);
+                    document.getElementById('emptyState').classList.add('d-none');
+                    document.getElementById('employeesTable').classList.remove('d-none');
+                } else {
+                    document.getElementById('employeesTable').classList.add('d-none');
+                    document.getElementById('emptyState').classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading employees:', error);
+                const tbody = document.getElementById('employeesTableBody');
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-danger py-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ _('x.load_error_refresh') }}
+                    </td>
+                </tr>
+            `;
+            });
+    }
+
+    function renderEmployees(employees) {
+        const tbody = document.getElementById('employeesTableBody');
+        tbody.innerHTML = '';
+
+        let orderNumber = 1;
+
+        employees.forEach(emp => {
+            const tr = document.createElement('tr');
+
+            // Handle fields safely
+            const email = emp.email || {{ _('x.no_email')|tojson }};
+            const costCenter = emp.cost_center || '-';
+            const phone = emp.phone || {{ _('x.not_specified')|tojson }};
+            const salary = parseFloat(emp.salary).toFixed(2);
+
+            tr.innerHTML = `
+            <td><span class="badge bg-primary">${orderNumber}</span></td>
+            <td><span class="badge bg-secondary">${emp.employee_number}</span></td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar me-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user text-muted"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="fw-bold">${emp.name}</div>
+                        ${emp.arabic_name ? `<div class="text-dark fw-bold">${emp.arabic_name}</div>` : ''}
+                        <small class="text-muted">${email}</small>
+                    </div>
+                </div>
+            </td>
+            <td>${costCenter}</td>
+            <td>${phone}</td>
+            <td><span class="badge bg-secondary">${emp.department}</span></td>
+            <td>${emp.position}</td>
+            <td>${emp.hire_date}</td>
+            <td><strong>${salary} {{ currency_symbol }}</strong></td>
+            <td>
+                <div class="btn-group" role="group">
+                    <a href="/employees/profile?employee_id=${emp.id}" class="btn btn-sm btn-outline-secondary" title="{{ _('nav.employee_profile') }}">
+                        <i class="fas fa-id-card"></i>
+                    </a>
+                    <a href="/employees/edit/${emp.id}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> {{ _('x.edit') }}
+                    </a>
+                    ${hasDeletePermission ? `
+                    <a href="/employees/delete/${emp.id}" 
+                       class="btn btn-sm btn-outline-danger"
+                       onclick={{ _('x.onclick_confirm_delete_employee')|tojson }}>
+                        <i class="fas fa-trash"></i> {{ _('x.delete') }}
+                    </a>` : ''}
+                </div>
+            </td>
+        `;
+            tbody.appendChild(tr);
+            orderNumber++;
+        });
+
+        updateCounter(employees.length);
+    }
+
+    function updateCounter(count) {
+        const counter = document.getElementById('employeeCount');
+        if (counter) {
+            counter.textContent = `{{ _('x.employee_count') }}: ${count}`;
+        }
+    }
+
+    // Client-side Filter
+    function filterEmployees() {
+        const query = document.getElementById('searchName').value.toLowerCase();
+        const deptFilter = document.getElementById('searchDepartment').value;
+        const posFilter = document.getElementById('searchPosition').value;
+
+        const filtered = allEmployees.filter(emp => {
+            const name = emp.name ? emp.name.toLowerCase() : '';
+            const arname = emp.arabic_name ? emp.arabic_name.toLowerCase() : '';
+            const number = emp.employee_number ? emp.employee_number.toString() : '';
+
+            const matchQuery = !query || name.includes(query) || arname.includes(query) || number.includes(query);
+            const matchDept = !deptFilter || emp.department === deptFilter;
+            const matchPos = !posFilter || emp.position === posFilter;
+            return matchQuery && matchDept && matchPos;
+        });
+
+        renderEmployees(filtered);
+    }
+
+    // Initial Setup
+    document.addEventListener('DOMContentLoaded', function () {
+        loadEmployees();
+
+        const searchName = document.getElementById('searchName');
+        const searchDepartment = document.getElementById('searchDepartment');
+        const searchPosition = document.getElementById('searchPosition');
+
+        if (searchName) searchName.addEventListener('input', filterEmployees);
+        if (searchDepartment) searchDepartment.addEventListener('change', filterEmployees);
+        if (searchPosition) searchPosition.addEventListener('change', filterEmployees);
+
+        // Load Filters (Existing Logic Updated to use correct API if needed, keeping simple for now)
+        // ... (Code for loading filter options remains similar, served by existing APIs)
+        fetch('/api/departments')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && Array.isArray(data.departments)) {
+                    const sel = document.getElementById('searchDepartment');
+                    data.departments.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d;
+                        opt.textContent = d;
+                        sel.appendChild(opt);
+                    });
+                }
+            });
+
+        fetch('/api/positions')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && Array.isArray(data.positions)) {
+                    const sel = document.getElementById('searchPosition');
+                    data.positions.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        sel.appendChild(opt);
+                    });
+                }
+            });
+    });
+
+    function confirmDeleteAll() {
+        return confirm({{ _('x.severe_warning_delete_all')|tojson }});
+    }
+</script>
+{% endblock %}

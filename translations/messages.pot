@@ -1,0 +1,343 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-02 10:18+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: templates/base.html:8 templates/base.html:142 templates/base.html:144
+msgid "app.name"
+msgstr ""
+
+#: templates/base.html:157
+msgid "nav.alerts.docs_expiry"
+msgstr ""
+
+#: templates/base.html:169
+msgid "nav.alerts.late_arrival"
+msgstr ""
+
+#: templates/base.html:177
+msgid "nav.license_status"
+msgstr ""
+
+#: templates/base.html:180 templates/base.html:181 templates/base.html:184
+msgid "msg.license_days"
+msgstr ""
+
+#: templates/base.html:188
+msgid "btn.activate_license"
+msgstr ""
+
+#: templates/base.html:206
+msgid "auth.logout"
+msgstr ""
+
+#: templates/base.html:225
+msgid "nav.home"
+msgstr ""
+
+#: templates/base.html:233
+msgid "nav.employees"
+msgstr ""
+
+#: templates/base.html:242
+msgid "nav.salaries"
+msgstr ""
+
+#: templates/base.html:251
+msgid "nav.structure"
+msgstr ""
+
+#: templates/base.html:258
+msgid "nav.add_dept"
+msgstr ""
+
+#: templates/base.html:264
+msgid "nav.add_pos"
+msgstr ""
+
+#: templates/base.html:278
+msgid "nav.leaves"
+msgstr ""
+
+#: templates/base.html:287
+msgid "nav.leave_cancellations"
+msgstr ""
+
+#: templates/base.html:296
+msgid "nav.official_holidays"
+msgstr ""
+
+#: templates/base.html:305
+msgid "nav.leave_settings"
+msgstr ""
+
+#: templates/base.html:314
+msgid "nav.shift_types"
+msgstr ""
+
+#: templates/base.html:324
+msgid "nav.fingerprint"
+msgstr ""
+
+#: templates/base.html:333
+msgid "nav.attendance_excuses"
+msgstr ""
+
+#: templates/base.html:342
+msgid "nav.reports"
+msgstr ""
+
+#: templates/base.html:352
+msgid "nav.documents"
+msgstr ""
+
+#: templates/base.html:364
+msgid "nav.admin"
+msgstr ""
+
+#: templates/base.html:372
+msgid "nav.roles"
+msgstr ""
+
+#: templates/base.html:379
+msgid "nav.users"
+msgstr ""
+
+#: templates/base.html:393
+msgid "nav.settings"
+msgstr ""
+
+#: templates/base.html:402
+msgid "nav.salary_settings_v2"
+msgstr ""
+
+#: templates/base.html:423
+msgid "msg.success"
+msgstr ""
+
+#: templates/base.html:423
+msgid "msg.alert"
+msgstr ""
+
+#: templates/base.html:426
+msgid "btn.ok"
+msgstr ""
+
+#: templates/base.html:438
+msgid "msg.confirm"
+msgstr ""
+
+#: templates/base.html:450
+msgid "footer.rights_reserved"
+msgstr ""
+
+#: templates/base.html:454
+msgid "footer.developed_by"
+msgstr ""
+
+#: templates/base.html:455
+msgid "footer.company"
+msgstr ""
+
+#: templates/index.html:3
+msgid "dashboard.title"
+msgstr ""
+
+#: templates/index.html:7
+msgid "dashboard.header"
+msgstr ""
+
+#: templates/index.html:10
+msgid "dashboard.welcome_msg"
+msgstr ""
+
+#: templates/index.html:26
+msgid "alert.docs_expiry.title"
+msgstr ""
+
+#: templates/index.html:48
+msgid "btn.view_all_docs"
+msgstr ""
+
+#: templates/index.html:51
+msgid "btn.upload_new_doc"
+msgstr ""
+
+#: templates/index.html:65
+msgid "stats.total_employees"
+msgstr ""
+
+#: templates/index.html:72
+msgid "stats.total_salaries"
+msgstr ""
+
+#: templates/index.html:79
+msgid "stats.total_salary_amount"
+msgstr ""
+
+#: templates/index.html:86
+msgid "stats.pending_leaves"
+msgstr ""
+
+#: templates/index.html:93
+msgid "stats.total_documents"
+msgstr ""
+
+#: templates/index.html:104
+msgid "dashboard.quick_actions"
+msgstr ""
+
+#: templates/index.html:109
+msgid "btn.add_employee"
+msgstr ""
+
+#: templates/index.html:112
+msgid "btn.manage_salaries"
+msgstr ""
+
+#: templates/index.html:115
+msgid "btn.manage_leaves"
+msgstr ""
+
+#: templates/index.html:118
+msgid "btn.shift_types"
+msgstr ""
+
+#: templates/index.html:128
+msgid "dashboard.recent_activities"
+msgstr ""
+
+#: templates/index.html:134
+msgid "msg.loading"
+msgstr ""
+
+#: templates/index.html:147
+msgid "dashboard.system_info"
+msgstr ""
+
+#: templates/index.html:152
+msgid "dashboard.system_features"
+msgstr ""
+
+#: templates/index.html:154
+msgid "feature.emp_management"
+msgstr ""
+
+#: templates/index.html:155
+msgid "feature.salary_calc"
+msgstr ""
+
+#: templates/index.html:156
+msgid "feature.leave_system"
+msgstr ""
+
+#: templates/index.html:157
+msgid "feature.shift_tracking"
+msgstr ""
+
+#: templates/index.html:158
+msgid "feature.doc_management"
+msgstr ""
+
+#: templates/index.html:162
+msgid "dashboard.company_info"
+msgstr ""
+
+#: templates/index.html:176
+msgid "unit.hours_daily"
+msgstr ""
+
+#: templates/index.html:216
+msgid "activity.new_employee"
+msgstr ""
+
+#: templates/index.html:217
+msgid "activity.leave_request"
+msgstr ""
+
+#: templates/index.html:218
+msgid "activity.salary_month"
+msgstr ""
+
+#: templates/index.html:219
+msgid "activity.net_salary"
+msgstr ""
+
+#: templates/index.html:220
+msgid "msg.no_activities"
+msgstr ""
+
+#: templates/index.html:221
+msgid "msg.error_loading"
+msgstr ""
+
+#: templates/index.html:260
+msgid "unit.days"
+msgstr ""
+
+#: templates/login.html:7
+msgid "page.title.login"
+msgstr ""
+
+#: templates/login.html:114
+msgid "login.header"
+msgstr ""
+
+#: templates/login.html:115
+msgid "login.welcome"
+msgstr ""
+
+#: templates/login.html:134
+msgid "login.username_placeholder"
+msgstr ""
+
+#: templates/login.html:136
+msgid "login.username_label"
+msgstr ""
+
+#: templates/login.html:142
+msgid "login.password_placeholder"
+msgstr ""
+
+#: templates/login.html:144
+msgid "login.password_label"
+msgstr ""
+
+#: templates/login.html:151
+msgid "login.remember_me"
+msgstr ""
+
+#: templates/login.html:156
+msgid "login.submit"
+msgstr ""
+
+#: templates/login.html:163
+msgid "login.footer_info"
+msgstr ""
+
+#: templates/login.html:171
+msgid "js.hide_alerts_comment"
+msgstr ""
+
+#: templates/login.html:180
+msgid "js.prevent_resubmit_comment"
+msgstr ""
+
+#: templates/login.html:184
+msgid "login.verifying"
+msgstr ""
+

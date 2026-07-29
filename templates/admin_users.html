@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+
+{% block title %}{{ _('page.title.admin_users') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ _('header.admin_users') }}</h1>
+        <button class="btn btn-primary" onclick="openUserModal()">
+            <i class="fas fa-plus fa-sm"></i> {{ _('btn.new_user') }}
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{{ _('header.users_list') }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="usersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>{{ _('tbl.header.username') }}</th>
+                            <th>{{ _('tbl.header.full_name') }}</th>
+                            <th>{{ _('x.linked_employee') }}</th>
+                            <th>{{ _('x.user_type') }}</th>
+                            <th>{{ _('x.managed_department') }}</th>
+                            <th>{{ _('tbl.header.roles') }}</th>
+                            <th>{{ _('tbl.header.status') }}</th>
+                            <th>{{ _('tbl.header.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>
+                                {% if user.employee_id %}
+                                {{ user.employee_name }}
+                                {% else %}
+                                <span class="text-muted small">{{ _('x.not_linked') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                <span class="badge badge-primary">{{ _('x.general_manager') }}</span>
+                                {% elif user.role == 'department_manager' %}
+                                <span class="badge badge-warning">{{ _('x.department_manager') }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ user.role }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.managed_department_id %}
+                                {{ user.managed_department_name }}
+                                {% else %}
+                                <span class="text-muted small">{{ _('x.all_departments_full') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.roles_list %}
+                                {% for r in user.roles_list.split(', ') %}
+                                <span class="badge badge-info">{{ r }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-muted small">{{ _('status.no_roles') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge-success">{{ _('status.active') }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ _('status.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick='editUser({{ user | tojson }})'>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if user.username != 'admin' %}
+                                <button class="btn btn-sm btn-danger" onclick="deleteUser({{ user.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">{{ _('modal.title.new_user') }}</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" name="user_id" id="userId">
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('label.username') }}</label>
+                        <input type="text" class="form-control" name="username" id="username" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('label.full_name') }}</label>
+                        <input type="text" class="form-control" name="full_name" id="fullName" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('label.password') }} <small class="text-muted" id="passHint">({{
+                                _('help.password_change_hint') }})</small></label>
+                        <input type="text" class="form-control" name="password" id="password">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('x.user_type') }}</label>
+                        <select class="form-control" name="role" id="roleSelect" onchange="toggleDepartmentSelect()">
+                            <option value="admin">{{ _('x.gm_full_permissions') }}</option>
+                            <option value="department_manager">{{ _('x.dm_limited') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3" id="departmentGroup" style="display: none;">
+                        <label>{{ _('x.managed_department') }}</label>
+                        <select class="form-control" name="managed_department_id" id="managedDepartmentId">
+                            <option value="">{{ _('x.choose_department_dashes') }}</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('x.link_to_employee_optional') }}</label>
+                        {{ employee_picker('employeeId', scope='all') }}
+                        <small class="text-muted">{{ _('x.link_account_to_employee') }}</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>{{ _('label.assign_roles') }}</label>
+                        <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                            {% for role in roles %}
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input role-check" id="role_{{ role.id }}"
+                                    name="roles" value="{{ role.id }}">
+                                <label class="custom-control-label" for="role_{{ role.id }}">
+                                    {{ role.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">{{ _('btn.save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleDepartmentSelect() {
+        if ($('#roleSelect').val() === 'department_manager') {
+            $('#departmentGroup').show();
+        } else {
+            $('#departmentGroup').hide();
+            $('#managedDepartmentId').val('');
+        }
+    }
+
+    function openUserModal() {
+        $('#userModalTitle').text('{{ _("modal.title.new_user") }}');
+        $('#userId').val('');
+        $('#username').val('');
+        $('#fullName').val('');
+        $('#password').val('');
+        $('#roleSelect').val('admin');
+        $('#managedDepartmentId').val('');
+        $('#employeeId').val('');
+        $('#passHint').hide();
+        $('.role-check').prop('checked', false);
+        toggleDepartmentSelect();
+
+        var myModal = new bootstrap.Modal(document.getElementById('userModal'));
+        myModal.show();
+    }
+
+    function editUser(user) {
+        $('#userModalTitle').text('{{ _("modal.title.edit_user") }}');
+        $('#userId').val(user.id);
+        $('#username').val(user.username);
+        $('#fullName').val(user.full_name);
+        $('#password').val('');
+        $('#roleSelect').val(user.role || 'admin');
+        $('#managedDepartmentId').val(user.managed_department_id || '');
+        $('#employeeId').val(user.employee_id || '');
+        $('#passHint').show();
+        toggleDepartmentSelect();
+
+        // Reset checks
+        $('.role-check').prop('checked', false);
+
+        // Check roles
+        if (user.role_ids) {
+            var ids = String(user.role_ids).split(',');
+            ids.forEach(function (id) {
+                $('#role_' + id).prop('checked', true);
+            });
+        }
+
+        var myModal = new bootstrap.Modal(document.getElementById('userModal'));
+        myModal.show();
+    }
+
+    $(document).ready(function () {
+        $('#saveUserBtn').click(function () {
+            $.post("{{ url_for('admin.save_user') }}", $('#userForm').serialize(), function (res) {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert('{{ _("error.generic") }}: ' + res.message);
+                }
+            });
+        });
+    });
+
+    function deleteUser(id) {
+        if (confirm('{{ _("msg.confirm_delete_user") }}')) {
+            $.post("/admin/users/delete/" + id, function (res) {
+                if (res.success) location.reload();
+                else alert('{{ _("error.generic") }}: ' + res.message);
+            });
+        }
+    }
+</script>
+{{ employee_picker_assets() }}
+{% endblock %}

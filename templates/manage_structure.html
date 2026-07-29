@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.structure') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('page.header.structure') }}</h1>
+</div>
+
+<div class="row">
+    <!-- الأقسام -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>{{ _('header.departments') }}</h5>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="addDepartment()">
+                        <i class="fas fa-plus me-1"></i>{{ _('btn.add_department') }}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="list-group" id="departmentsList">
+                    <div class="text-center py-3 text-muted">Thinking...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- المسميات الوظيفية -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>{{ _('header.positions') }}</h5>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="addPosition()">
+                        <i class="fas fa-plus me-1"></i>{{ _('btn.add_position') }}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="list-group" id="positionsList">
+                    <div class="text-center py-3 text-muted">Thinking...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadDepartments();
+        loadPositions();
+
+        // Check for auto-trigger actions from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+
+        if (action === 'add_dept') {
+            setTimeout(addDepartment, 500); // Small delay to ensure page is ready
+        } else if (action === 'add_pos') {
+            setTimeout(addPosition, 500);
+        }
+    });
+
+    function renderStructureList(kind) {
+        const isDept = kind === 'department';
+        const list = document.getElementById(isDept ? 'departmentsList' : 'positionsList');
+        const url = isDept ? '/api/departments' : '/api/positions';
+        const emptyMsg = isDept ? {{ _("msg.no_departments")|tojson }} : {{ _("msg.no_positions")|tojson }};
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    list.innerHTML = `<div class="alert alert-danger">${esc(data.message || '')}</div>`;
+                    return;
+                }
+                const items = data.items || [];
+                if (!items.length) {
+                    list.innerHTML = `<div class="text-center py-3 text-muted">${esc(emptyMsg)}</div>`;
+                    return;
+                }
+                list.innerHTML = items.map(it => `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            ${esc(it.name)}
+                            ${it.employees_count
+                                ? `<span class="badge bg-secondary ms-2">${it.employees_count} ${esc(ST.employees)}</span>`
+                                : `<span class="badge bg-light text-muted border ms-2">${esc(ST.unused)}</span>`}
+                        </span>
+                        <span class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary"
+                                    onclick="renameStructure('${kind}', ${it.id}, ${JSON.stringify(it.name).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger"
+                                    onclick="deleteStructure('${kind}', ${it.id}, ${JSON.stringify(it.name).replace(/"/g, '&quot;')}, ${it.employees_count})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </span>
+                    </div>`).join('');
+            })
+            .catch(() => {
+                list.innerHTML = `<div class="alert alert-danger">{{ _("error.loading_failed") }}</div>`;
+            });
+    }
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const ST = {
+        employees: {{ _('x.st_employees')|tojson }},
+        unused: {{ _('x.st_unused')|tojson }},
+        renameTitle: {{ _('x.st_rename_title')|tojson }},
+        renameNote: {{ _('x.st_rename_note')|tojson }},
+        deleteTitle: {{ _('x.st_delete_title')|tojson }},
+        deleteConfirm: {{ _('x.st_delete_confirm')|tojson }},
+        moved: {{ _('x.st_moved')|tojson }},
+        confirm: {{ _('x.confirm')|tojson }},
+        cancel: {{ _('x.cancel')|tojson }}
+    };
+
+    function loadDepartments() { renderStructureList('department'); }
+    function loadPositions() { renderStructureList('position'); }
+
+    function renameStructure(kind, id, currentName) {
+        Swal.fire({
+            title: ST.renameTitle,
+            input: 'text',
+            inputValue: currentName,
+            html: `<div class="small text-muted">${esc(ST.renameNote)}</div>`,
+            showCancelButton: true,
+            confirmButtonText: ST.confirm,
+            cancelButtonText: ST.cancel,
+            inputValidator: v => (!v || v.trim().length < 2) ? ' ' : undefined
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            fetch(`/api/structure/${kind}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: res.value.trim() })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    Swal.fire({ icon: 'success',
+                        title: d.moved ? `${ST.moved}: ${d.moved}` : ST.confirm,
+                        timer: 1800, showConfirmButton: false });
+                    loadDepartments(); loadPositions();
+                } else {
+                    Swal.fire({ icon: 'error', title: d.message || 'Error' });
+                }
+            });
+        });
+    }
+
+    function deleteStructure(kind, id, name, count) {
+        if (count > 0) {
+            Swal.fire({ icon: 'warning', title: ST.deleteTitle,
+                        text: `${name} — ${count} ${ST.employees}` });
+            return;
+        }
+        Swal.fire({
+            title: ST.deleteTitle, text: `${ST.deleteConfirm} ${name}`,
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: ST.confirm, cancelButtonText: ST.cancel
+        }).then(res => {
+            if (!res.isConfirmed) return;
+            fetch(`/api/structure/${kind}/${id}`, { method: 'DELETE' })
+                .then(r => r.json()).then(d => {
+                    if (d.success) { loadDepartments(); loadPositions(); }
+                    else Swal.fire({ icon: 'error', title: d.message || 'Error' });
+                });
+        });
+    }
+
+    
+
+    
+
+    function addDepartment() {
+        Swal.fire({
+            title: '{{ _("title.add_department") }}',
+            input: 'text',
+            inputLabel: '{{ _("label.department_name") }}',
+            inputPlaceholder: '{{ _("placeholder.department_name") }}',
+            showCancelButton: true,
+            confirmButtonText: '{{ _("btn.add") }}',
+            cancelButtonText: '{{ _("btn.cancel") }}',
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage('{{ _("msg.name_required") }}');
+                    return false;
+                }
+                return fetch('/api/departments/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) throw new Error(data.message);
+                        return data;
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _("error.prefix") }} ${error.message}`);
+                    });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: '{{ _("title.added_success") }}',
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadDepartments();
+            }
+        });
+    }
+
+    function addPosition() {
+        Swal.fire({
+            title: '{{ _("title.add_position") }}',
+            input: 'text',
+            inputLabel: '{{ _("label.position_name") }}',
+            inputPlaceholder: '{{ _("placeholder.position_name") }}',
+            showCancelButton: true,
+            confirmButtonText: '{{ _("btn.add") }}',
+            cancelButtonText: '{{ _("btn.cancel") }}',
+            showLoaderOnConfirm: true,
+            preConfirm: (name) => {
+                if (!name) {
+                    Swal.showValidationMessage('{{ _("msg.name_required") }}');
+                    return false;
+                }
+                return fetch('/api/positions/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) throw new Error(data.message);
+                        return data;
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`{{ _("error.prefix") }} ${error.message}`);
+                    });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: '{{ _("title.added_success") }}',
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadPositions();
+            }
+        });
+    }
+
+    
+
+    
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="{{ get_locale() }}" dir="{{ get_direction() }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('page.title.login') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% if get_direction() == 'rtl' %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    {% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+
+        :root {
+            color-scheme: light;
+            --paper: #FAFAF7;
+            --paper-raised: #FFFFFF;
+            --paper-line: #E3E0D3;
+            --ink: #1A2420;
+            --ink-muted: #5F6B62;
+            --ink-faint: #98A199;
+            --ledger: #1F5C4A;
+            --ledger-dark: #163F32;
+            --ledger-light: #E7F1EC;
+            --debit: #A8402F;
+            --debit-light: #F5E6E2;
+            --border: #DAD7CB;
+            --font-sans: -apple-system, "Segoe UI", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-sans);
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image: repeating-linear-gradient(to bottom, transparent 0 38px, var(--paper-line) 38px 39px);
+            overflow-x: hidden;
+        }
+
+        /* bqa3 lwnya khafta khalf alzujaj */
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before { background: rgba(31, 92, 74, 0.28); top: -100px; inset-inline-start: -80px; }
+        body::after  { background: rgba(168, 64, 47, 0.20); bottom: -140px; inset-inline-end: 6%; }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        /* bataqat aldukhul: zujaj fawq waraq */
+        .login-card {
+            background: rgba(255, 255, 255, 0.72);
+            background: color-mix(in srgb, var(--paper-raised) 70%, transparent);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            backdrop-filter: blur(22px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 22px;
+            box-shadow: 0 20px 40px -12px rgba(22, 63, 50, 0.22), 0 2px 6px rgba(22, 63, 50, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            max-width: 400px;
+            width: 100%;
+            padding: 2rem;
+        }
+
+        .login-header { text-align: center; margin-bottom: 2rem; }
+        .login-header i { font-size: 3rem; color: var(--ledger); margin-bottom: 1rem; }
+        .login-header h2 { color: var(--ledger-dark); font-weight: 700; margin-bottom: 0.5rem; }
+        .login-header p { color: var(--ink-muted); font-size: 0.9rem; }
+
+        .form-floating { margin-bottom: 1rem; }
+        .form-floating input {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background-color: var(--paper-raised);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-floating input:focus {
+            border-color: var(--ledger);
+            box-shadow: 0 0 0 0.2rem rgba(31, 92, 74, 0.18);
+        }
+        .form-floating label { color: var(--ink-muted); }
+        .form-check-input:checked { background-color: var(--ledger); border-color: var(--ledger); }
+        .form-check-label { color: var(--ink-muted); }
+
+        .btn-login {
+            background: linear-gradient(180deg, var(--ledger) 0%, var(--ledger-dark) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            background: var(--ledger-dark);
+            box-shadow: 0 10px 25px rgba(22, 63, 50, 0.30);
+        }
+
+        .alert { border-radius: 12px; border: none; }
+        .alert-danger  { background-color: var(--debit-light); color: var(--debit); border-inline-start: 3px solid var(--debit); }
+        .alert-success { background-color: var(--ledger-light); color: var(--ledger-dark); border-inline-start: 3px solid var(--ledger); }
+
+        /* azrar allugha ala waraq fatih */
+        .lang-switch .btn-light {
+            background-color: var(--ledger);
+            border-color: var(--ledger);
+            color: #fff;
+        }
+        .lang-switch .btn-outline-light {
+            color: var(--ledger-dark);
+            border-color: var(--border);
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        .lang-switch .btn-outline-light:hover { background-color: var(--ledger-light); color: var(--ledger-dark); }
+
+        .system-info {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--paper-line);
+        }
+        .system-info small { color: var(--ink-faint); }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Language Switcher -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1000;">
+        <div class="btn-group shadow-sm lang-switch">
+            <a href="{{ url_for('main.set_language', code='ar') }}"
+                class="btn {{ 'btn-light' if get_locale() == 'ar' else 'btn-outline-light' }}">{{ _('x.arabic_short') }}</a>
+            <a href="{{ url_for('main.set_language', code='en') }}"
+                class="btn {{ 'btn-light' if get_locale() == 'en' else 'btn-outline-light' }}">English</a>
+        </div>
+    </div>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-user-shield"></i>
+                <h2>{{ _('login.header') }}</h2>
+                <p>{{ _('login.welcome') }}</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show"
+                role="alert">
+                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="username" name="username"
+                        placeholder="{{ _('login.username_placeholder') }}" required>
+                    <label for="username">
+                        <i class="fas fa-user me-2"></i>{{ _('login.username_label') }}
+                    </label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" name="password"
+                        placeholder="{{ _('login.password_placeholder') }}" required>
+                    <label for="password">
+                        <i class="fas fa-lock me-2"></i>{{ _('login.password_label') }}
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                    <label class="form-check-label" for="remember">
+                        {{ _('login.remember_me') }}
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>{{ _('login.submit') }}
+                </button>
+            </form>
+
+            <div class="system-info">
+                <small>
+                    <i class="fas fa-shield-alt me-1"></i>
+                    {{ _('login.footer_info') }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // {{ _('js.hide_alerts_comment') }}
+        setTimeout(function () {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // {{ _('js.prevent_resubmit_comment') }}
+        document.querySelector('form').addEventListener('submit', function () {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + "{{ _('login.verifying') }}";
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('x.system_license') }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px">
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="fas fa-key me-2"></i>{{ _('x.activate_license') }}</h5>
+    </div>
+    <div class="card-body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show"
+        role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+      <div class="mb-3">
+        {% if license_info and license_info.ok %}
+        <div class="alert alert-success mb-2">
+          {{ _('x.license_active_expires') }} <strong>{{ license_info.expiry }}</strong> {{ _('x.remaining_paren') }} <strong>{{ license_info.days_left            }}</strong> {{ _('x.day_close_paren') }}
+        </div>
+        {% else %}
+        <div class="alert alert-warning mb-2">{{ _('x.no_active_license') }}</div>
+        {% endif %}
+
+      </div>
+      <ul class="nav nav-tabs mb-3" id="licenseTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="key-tab" data-bs-toggle="tab" data-bs-target="#key-div" type="button"
+            role="tab" aria-controls="key-div" aria-selected="true">{{ _('x.activate_by_key') }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account-div" type="button"
+            role="tab" aria-controls="account-div" aria-selected="false">{{ _('x.activate_by_account') }}</button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="myTabContent">
+        <!-- Key Activation Tab -->
+        <div class="tab-pane fade show active" id="key-div" role="tabpanel" aria-labelledby="key-tab">
+          <form method="POST" autocomplete="off" action="{{ url_for('main.license_page') }}">
+            <input type="hidden" name="type" value="key">
+            <div class="mb-3">
+              <label class="form-label">{{ _('x.license_key_serial') }}</label>
+              <input type="password" name="license_key" class="form-control" placeholder="••••••••••••••••"
+                value="{{ saved_key and '****************' or '' }}" required>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary">{{ _('x.activate_key') }}</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Account Login Tab -->
+        <div class="tab-pane fade" id="account-div" role="tabpanel" aria-labelledby="account-tab">
+          {% if license_info and license_info.ok and license_info.username %}
+          <!-- Connected State -->
+          <div class="text-center py-4">
+            <div class="mb-3">
+              <i class="fas fa-user-check fa-4x text-success"></i>
+            </div>
+            <h4>{{ _('x.activated_by_account') }}</h4>
+            <p class="lead">{{ license_info.username }}</p>
+
+            <form method="POST" action="{{ url_for('main.license_page') }}">
+              <input type="hidden" name="type" value="logout">
+              <button type="submit" class="btn btn-danger mt-2">
+                <i class="fas fa-sign-out-alt me-2"></i>{{ _('x.disconnect_deactivate') }}
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <!-- Login Form -->
+          <form method="POST" autocomplete="off" action="{{ url_for('main.license_page') }}">
+            <input type="hidden" name="type" value="login">
+            <div class="mb-3">
+              <label class="form-label">{{ _('x.username_onz') }}</label>
+              <input type="text" name="username" class="form-control" placeholder="user@onz.one" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ _('x.password') }}</label>
+              <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <div class="alert alert-info py-2 small">
+              <i class="fas fa-info-circle"></i> {{ _('x.serial_auto_fetched') }}
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-success">{{ _('x.login_and_activate') }}</button>
+            </div>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-start mt-4">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">{{ _('x.back_to_home') }}</a>
+      </div>
+
+      <hr>
+      <small class="text-muted">{{ _('x.license_expiry_redirect_note') }}</small>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.salary_reports') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div><h5 class="mb-0">
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        {{ _('header.detailed_salary_report') }}
+                    </h5><div class="report-desc">{{ _('x.rdesc_payroll') }}</div></div>
+                </div>
+
+                <div class="card-body">
+                    <!-- فلاتر البحث -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="employee_search" class="form-label">{{ _('label.search_employee') }} <span
+                                    class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="employee_search"
+                                        placeholder="{{ _('placeholder.search_employee') }}" autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary" id="clear_search"
+                                        onclick="clearSearch()" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div id="search_results" class="dropdown-menu w-100 shadow"
+                                    style="max-height: 200px; overflow-y: auto; z-index: 1050;"></div>
+                            </div>
+                            <small class="form-text text-muted">{{ _('help.search_min_chars') }}</small>
+                            <input type="hidden" id="selected_employee_id" value="">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="month_select" class="form-label">{{ _('label.month') }}</label>
+                            <select class="form-select" id="month_select">
+                                <option value="1">{{ _('month.jan') }}</option>
+                                <option value="2">{{ _('month.feb') }}</option>
+                                <option value="3">{{ _('month.mar') }}</option>
+                                <option value="4">{{ _('month.apr') }}</option>
+                                <option value="5">{{ _('month.may') }}</option>
+                                <option value="6">{{ _('month.jun') }}</option>
+                                <option value="7">{{ _('month.jul') }}</option>
+                                <option value="8">{{ _('month.aug') }}</option>
+                                <option value="9">{{ _('month.sep') }}</option>
+                                <option value="10">{{ _('month.oct') }}</option>
+                                <option value="11">{{ _('month.nov') }}</option>
+                                <option value="12">{{ _('month.dec') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="year_select" class="form-label">{{ _('label.year') }}</label>
+                            <select class="form-select" id="year_select">
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025" selected>2025</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" onclick="generateReport()">
+                                <i class="fas fa-search me-2"></i>{{ _('btn.view_report') }}
+                            </button>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <a href="{{ url_for('salary.salary_settings_v2_route') }}"
+                                class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cog me-2"></i>{{ _('btn.settings') }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- أزرار الطباعة (تظهر بعد عرض التقرير) -->
+                    <div id="print_buttons" style="display: none;" class="row mb-3">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title mb-3">
+                                        <i class="fas fa-print me-2"></i>{{ _('header.print_options') }}
+                                    </h6>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="printReport()">
+                                            <i class="fas fa-print me-2"></i>{{ _('btn.print_direct') }}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success" onclick="exportToPDF()">
+                                            <i class="fas fa-file-pdf me-2"></i>{{ _('btn.export_pdf') }}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info" onclick="printSalarySlip()">
+                                            <i class="fas fa-receipt me-2"></i>{{ _('btn.salary_slip') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- منطقة التقرير -->
+                    <div id="report_container" style="display: none;">
+                        <!-- بيانات الموظف -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-user me-2"></i>{{ _('header.employee_info') }}</h6>
+                                        <div id="employee_info"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-clock me-2"></i>{{ _('header.shift_info') }}</h6>
+                                        <div id="shift_info"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إحصائيات الشهر -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_worked" class="mb-0">0</h2>
+                                        <small>{{ _('label.days_worked') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_on_leave" class="mb-0">0</h2>
+                                        <small>{{ _('label.days_on_leave') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-danger text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="days_absent" class="mb-0">0</h2>
+                                        <small>{{ _('label.days_absent') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-secondary text-white text-center">
+                                    <div class="card-body">
+                                        <h2 id="total_work_hours" class="mb-0">0</h2>
+                                        <small>{{ _('label.total_work_hours') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تفاصيل الحضور -->
+                        <div class="row">
+                            <!-- الحضور اليومي -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar-check me-2"></i>{{ _('header.daily_attendance_details') }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="daily_attendance" class="table-responsive">
+                                            <!-- سيتم تعبئتها بـ JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الإجازات -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar-times me-2"></i>{{ _('header.monthly_leaves') }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="leaves_list">
+                                            <!-- سيتم تعبئتها بـ JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- حساب الرواتب -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>{{ _('header.salary_calculation') }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="salary_calculations">
+                                            <!-- سيتم تعبئتها بـ JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loading_spinner" style="display: none;" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('status.loading') }}...</span>
+                        </div>
+                        <p class="mt-2 text-muted">{{ _('status.preparing_report') }}...</p>
+                    </div>
+
+                    <!-- رسالة عدم وجود بيانات -->
+                    <div id="no_data_message" style="display: none;" class="text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">{{ _('msg.no_data_to_display') }}</h5>
+                        <p class="text-muted">{{ _('desc.select_employee_report') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- مكتبة jsPDF لإنشاء ملفات PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    // قائمة الموظفين
+    let employees = {{ employees | tojson }};
+
+    // متغيرات عامة لتخزين بيانات التقرير الحالي
+    let currentEmployeeId = null;
+    let currentMonth = null;
+    let currentYear = null;
+    let currentSalaryData = null;
+
+    // تعيين الشهر والسنة الحاليين كافتراضي
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        document.getElementById('month_select').value = now.getMonth() + 1;
+        document.getElementById('year_select').value = now.getFullYear();
+
+        // إعداد البحث
+        setupEmployeeSearch();
+    });
+
+    function setupEmployeeSearch() {
+        const searchInput = document.getElementById('employee_search');
+        const searchResults = document.getElementById('search_results');
+        const selectedEmployeeId = document.getElementById('selected_employee_id');
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+
+            // إظهار/إخفاء زر المسح
+            if (query.length > 0) {
+                document.getElementById('clear_search').style.display = 'block';
+            } else {
+                document.getElementById('clear_search').style.display = 'none';
+                selectedEmployeeId.value = '';
+            }
+
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            // فلترة الموظفين
+            const filteredEmployees = employees.filter(emp =>
+                emp.name.toLowerCase().includes(query) ||
+                emp.employee_number.toLowerCase().includes(query)
+            );
+
+            // عرض النتائج
+            if (filteredEmployees.length > 0) {
+                let resultsHtml = '';
+                filteredEmployees.slice(0, 10).forEach(emp => { // أقصى 10 نتائج
+                    resultsHtml += `
+                    <a href="#" class="dropdown-item" onclick="selectEmployee(${emp.id}, '${emp.name}', '${emp.employee_number}')">
+                        <strong>${emp.name}</strong><br>
+                        ${emp.arabic_name ? `<small class="text-muted d-block">${emp.arabic_name}</small>` : ''}
+                        <small class="text-muted">{{ _('label.employee_number') }}: ${emp.employee_number}</small>
+                    </a>
+                `;
+                });
+                searchResults.innerHTML = resultsHtml;
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = '<div class="dropdown-item text-muted">{{ _('msg.no_search_results') }}</div>';
+                searchResults.style.display = 'block';
+            }
+        });
+
+        // إخفاء النتائج عند النقر خارج البحث
+        document.addEventListener('click', function (event) {
+            if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    function selectEmployee(id, name, employeeNumber) {
+        document.getElementById('employee_search').value = `${name} (${employeeNumber})`;
+        document.getElementById('selected_employee_id').value = id;
+        document.getElementById('search_results').style.display = 'none';
+        document.getElementById('clear_search').style.display = 'block';
+    }
+
+    function clearSearch() {
+        document.getElementById('employee_search').value = '';
+        document.getElementById('selected_employee_id').value = '';
+        document.getElementById('search_results').style.display = 'none';
+        document.getElementById('clear_search').style.display = 'none';
+        document.getElementById('employee_search').focus();
+    }
+
+    function generateReport() {
+        const employeeId = document.getElementById('selected_employee_id').value;
+        const month = document.getElementById('month_select').value;
+        const year = document.getElementById('year_select').value;
+
+        if (!employeeId) {
+            alert('{{ _('error.select_employee_result') }}');
+            return;
+        }
+
+        // إخفاء التقرير وإظهار التحميل
+        document.getElementById('report_container').style.display = 'none';
+        document.getElementById('no_data_message').style.display = 'none';
+        document.getElementById('loading_spinner').style.display = 'block';
+
+        // جلب البيانات
+        fetch(`/fingerprint/salary_reports/api?employee_id=${employeeId}&month=${month}&year=${year}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading_spinner').style.display = 'none';
+
+                if (data.success) {
+                    displayReport(data);
+                } else {
+                    alert('{{ _('error.generic') }}: ' + data.message);
+                    document.getElementById('no_data_message').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading_spinner').style.display = 'none';
+                alert('{{ _('error.connection_error') }}: ' + error);
+                document.getElementById('no_data_message').style.display = 'block';
+            });
+    }
+
+    function displayReport(data) {
+        // تخزين البيانات الحالية
+        currentEmployeeId = data.employee.id;
+        currentMonth = data.month;
+        currentYear = data.year;
+        currentSalaryData = data.salary_calculations;
+
+        // عرض بيانات الموظف
+        document.getElementById('employee_info').innerHTML = `
+        <strong>${data.employee.name}</strong><br>
+        ${data.employee.arabic_name ? `<div class="text-white-50 small mb-2">${data.employee.arabic_name}</div>` : ''}
+        {{ _('label.employee_number') }}: ${data.employee.employee_number}<br>
+        {{ _('label.department') }}: ${data.employee.department}<br>
+        {{ _('label.job_title') }}: ${data.employee.position}
+    `;
+
+        // عرض معلومات الشفت
+        document.getElementById('shift_info').innerHTML = `
+        {{ _('label.shift_type') }}: <strong>${data.employee.shift_type_name || '{{ _('status.undefined') }}'}</strong><br>
+        {{ _('label.from') }}: ${data.employee.start_time || '{{ _('status.undefined') }}'}<br>
+        {{ _('label.to') }}: ${data.employee.end_time || '{{ _('status.undefined') }}'}<br>
+        {{ _('label.hours') }}: ${data.employee.hours_per_day || 8} {{ _('unit.hour_day') }}
+    `;
+
+        // حساب الإحصائيات
+        const attendanceData = data.attendance_data;
+        const daysWorked = attendanceData ? attendanceData.days_worked : 0;
+        const totalLeaves = data.total_leave_days || 0;
+        const totalWorkDays = data.total_work_days;
+        const daysAbsent = totalWorkDays - daysWorked - totalLeaves;
+        const totalHours = attendanceData ? attendanceData.total_hours : 0;
+
+        // عرض الإحصائيات
+        document.getElementById('days_worked').textContent = daysWorked;
+        document.getElementById('days_on_leave').textContent = totalLeaves;
+        document.getElementById('days_absent').textContent = Math.max(0, daysAbsent);
+        document.getElementById('total_work_hours').textContent = totalHours.toFixed(1);
+
+        // عرض الحضور اليومي
+        displayDailyAttendance(data);
+
+        // عرض الإجازات
+        displayLeaves(data.leaves);
+
+        // عرض حسابات الرواتب
+        displaySalaryCalculations(data.salary_calculations);
+
+        // عرض التقرير
+        document.getElementById('report_container').style.display = 'block';
+        document.getElementById('print_buttons').style.display = 'block'; // إظهار أزرار الطباعة
+    }
+
+    function displayDailyAttendance(data) {
+        const dailyContainer = document.getElementById('daily_attendance');
+        const month = data.month;
+        const year = data.year;
+        const employeeId = data.employee.id;
+
+        // جلب البيانات اليومية للشهر - كل يوم على حدة
+        const daysInMonth = new Date(year, month, 0).getDate();
+        let employeeRecords = [];
+        let processedDays = 0;
+
+        // عرض رسالة تحميل
+        dailyContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">{{ _('status.loading_daily_data') }}...</p></div>';
+
+        // إنشاء مصفوفة لجميع أيام الشهر
+        for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+            // التحقق من الإجازات أولاً
+            const leaveRecord = checkLeaveForDate(currentDate, data.leaves);
+            if (leaveRecord) {
+                employeeRecords.push(leaveRecord);
+                processedDays++;
+
+                // إذا تم معالجة جميع الأيام، عرض النتائج
+                if (processedDays === daysInMonth) {
+                    displayDailyAttendanceTable(employeeRecords, dailyContainer);
+                }
+            } else {
+                // جلب بيانات الحضور من API
+                fetch(`/api/daily_attendance?date=${currentDate}&employee_id=${employeeId}`)
+                    .then(response => response.json())
+                    .then(dailyData => {
+                        processedDays++;
+
+                        if (dailyData.success && dailyData.attendance) {
+                            // إضافة بيانات الحضور
+                            employeeRecords.push({
+                                date: currentDate,
+                                status: dailyData.attendance.status || '{{ _('status.present') }}',
+                                checkin_time: dailyData.attendance.checkin_time || '-',
+                                checkout_time: dailyData.attendance.checkout_time || '-',
+                                work_hours: dailyData.attendance.work_hours || 0
+                            });
+                        } else {
+                            // إضافة سجل غياب
+                            employeeRecords.push({
+                                date: currentDate,
+                                status: '{{ _('status.absent') }}',
+                                checkin_time: '-',
+                                checkout_time: '-',
+                                work_hours: 0
+                            });
+                        }
+
+                        // إذا تم معالجة جميع الأيام، عرض النتائج
+                        if (processedDays === daysInMonth) {
+                            displayDailyAttendanceTable(employeeRecords, dailyContainer);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Data fetch error:', error);
+                        processedDays++;
+
+                        // إضافة سجل غياب في حالة الخطأ
+                        employeeRecords.push({
+                            date: currentDate,
+                            status: '{{ _('status.absent') }}',
+                            checkin_time: '-',
+                            checkout_time: '-',
+                            work_hours: 0
+                        });
+
+                        if (processedDays === daysInMonth) {
+                            displayDailyAttendanceTable(employeeRecords, dailyContainer);
+                        }
+                    });
+            }
+        }
+    }
+
+    function checkLeaveForDate(date, leaves) {
+        // التحقق من وجود إجازة في التاريخ المحدد
+        for (let leave of leaves) {
+            const startDate = new Date(leave.start_date);
+            const endDate = new Date(leave.end_date);
+            const checkDate = new Date(date);
+
+            if (checkDate >= startDate && checkDate <= endDate) {
+                return {
+                    date: date,
+                    status: '{{ _('status.on_leave') }}',
+                    checkin_time: '-',
+                    checkout_time: '-',
+                    work_hours: 0,
+                    leave_type: leave.leave_type,
+                    leave_reason: leave.reason
+                };
+            }
+        }
+        return null;
+    }
+
+    function displayDailyAttendanceTable(employeeRecords, dailyContainer) {
+        // ترتيب البيانات حسب التاريخ
+        employeeRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (employeeRecords.length === 0) {
+            dailyContainer.innerHTML = '<p class="text-muted text-center">{{ _('msg.no_attendance_data') }}</p>';
+            return;
+        }
+
+        let tableHtml = `
+        <table class="table table-sm table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>{{ _('tbl.header.date') }}</th>
+                    <th>{{ _('tbl.header.day') }}</th>
+                    <th>{{ _('tbl.header.check_in') }}</th>
+                    <th>{{ _('tbl.header.check_out') }}</th>
+                    <th>{{ _('tbl.header.hours') }}</th>
+                    <th>{{ _('tbl.header.status') }}</th>
+                    <th>{{ _('tbl.header.leave_type') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+        // ترتيب البيانات حسب التاريخ
+        employeeRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        employeeRecords.forEach(record => {
+            const recordDate = new Date(record.date);
+            const dayName = recordDate.toLocaleDateString('ar-EG', { weekday: 'short' });
+
+            let statusBadge = '';
+            if (record.status === '{{ _('status.present') }}' || record.status === 'Present' || record.status === {{ _('x.present')|tojson }}) {
+                statusBadge = '<span class="badge bg-success">{{ _('status.present') }}</span>';
+            } else if (record.status === '{{ _('status.on_leave') }}' || record.status === 'On Leave' || record.status === {{ _('x.on_leave')|tojson }}) {
+                statusBadge = '<span class="badge bg-info">{{ _('status.on_leave') }}</span>';
+            } else if (record.status === {{ _('x.check_in_only')|tojson }} || record.status === 'Check-in Only') {
+                statusBadge = '<span class="badge bg-warning text-dark">{{ _('status.checkin_only') }}</span>';
+            } else if (record.status === {{ _('x.weekly_off')|tojson }} || record.status === 'Weekend') {
+                statusBadge = '<span class="badge bg-secondary">{{ _('status.weekend') }}</span>';
+            } else if (record.status === '{{ _('status.absent') }}' || record.status === 'Absent' || record.status === {{ _('x.absent')|tojson }}) {
+                statusBadge = '<span class="badge bg-danger">{{ _('status.absent') }}</span>';
+            } else {
+                statusBadge = '<span class="badge bg-warning text-dark">' + record.status + '</span>';
+            }
+
+            // عرض نوع الإجازة
+            let leaveType = '-';
+            if (record.status && (record.status.includes({{ _('x.leave')|tojson }}) || record.status.includes('Leave')) && record.leave_type) {
+                leaveType = `<span class="text-info">
+                <i class="fas fa-calendar-alt me-1"></i>
+                ${record.leave_type}
+            </span>`;
+                if (record.leave_reason) {
+                    leaveType += `<br><small class="text-muted">${record.leave_reason}</small>`;
+                }
+            }
+
+            tableHtml += `
+             <tr>
+                 <td>${record.date}</td>
+                 <td>${dayName}</td>
+                 <td>${record.checkin_time && record.checkin_time !== '-' ? record.checkin_time : '-'}</td>
+                 <td>${record.checkout_time && record.checkout_time !== '-' ? record.checkout_time : '-'}</td>
+                 <td>${record.work_hours > 0 ? record.work_hours.toFixed(1) + ' {{ _('unit.hour_short') }}' : '-'}</td>
+                 <td>${statusBadge}</td>
+                 <td>${leaveType}</td>
+             </tr>
+         `;
+        });
+
+        tableHtml += '</tbody></table>';
+        dailyContainer.innerHTML = tableHtml;
+    }
+
+    function displayLeaves(leaves) {
+        const leavesContainer = document.getElementById('leaves_list');
+
+        if (leaves.length === 0) {
+            leavesContainer.innerHTML = '<p class="text-muted text-center">{{ _('msg.no_leaves_in_month') }}</p>';
+            return;
+        }
+
+        let leavesHtml = '';
+        leaves.forEach(leave => {
+            leavesHtml += `
+            <div class="border rounded p-2 mb-2 bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-primary">${leave.leave_type}</strong>
+                    <span class="badge bg-warning">${leave.days_in_month} {{ _('unit.day') }}</span>
+                </div>
+                <small class="text-muted">
+                    {{ _('label.from') }} ${leave.start_date} {{ _('label.to') }} ${leave.end_date}
+                </small>
+                ${leave.reason ? `<br><small class="text-secondary">${leave.reason}</small>` : ''}
+            </div>
+        `;
+        });
+
+        leavesContainer.innerHTML = leavesHtml;
+    }
+
+    function displaySalaryCalculations(salaryData) {
+        if (!salaryData) return;
+
+        const currency = salaryData.currency ? salaryData.currency.symbol : '{{ _('currency.default') }}';
+
+        // V3 Logic: Use 'deductions' and 'stats' objects
+        const deductions = salaryData.deductions || {};
+        const stats = salaryData.stats || {};
+
+        let salaryHtml = `
+            <div class="mb-3">
+                <h6 class="text-primary mb-2">{{ _('header.salary_details') }}</h6>
+                
+                <!-- Basic Salary -->
+                <div class="d-flex justify-content-between">
+                    <span>{{ _('label.basic_salary') }}:</span>
+                    <strong>${(salaryData.base_salary || 0).toFixed(2)} ${currency}</strong>
+                </div>
+                 <div class="d-flex justify-content-between text-muted small">
+                    <span>({{ _('label.daily_salary') }}):</span>
+                    <span>${(deductions.absent / (stats.absent_days || 1) || 0).toFixed(3)}</span>
+                </div>
+                <hr>
+
+                <!-- Allowance / Overtime -->
+                <h6 class="text-success mb-2">{{ _('header.allowances_overtime') }}</h6>
+                <div class="d-flex justify-content-between">
+                    <span>{{ _('label.overtime_hours') }} (${stats.ot_mins || 0} {{ _('unit.minute') }}):</span>
+                    <strong class="text-success">+${(salaryData.ot_amount || 0).toFixed(3)} ${currency}</strong>
+                </div>
+                 <hr>
+
+                <!-- Deductions -->
+                <h6 class="text-danger mb-2">{{ _('header.deductions') }}</h6>
+                <div class="d-flex justify-content-between">
+                    <span>{{ _('label.late_deduction') }} (${stats.late_mins || 0} {{ _('unit.minute') }}):</span>
+                    <strong class="text-danger">-${(deductions.late || 0).toFixed(3)} ${currency}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>{{ _('label.early_leave_deduction') }} (${stats.early_mins || 0} {{ _('unit.minute') }}):</span>
+                    <strong class="text-danger">-${(deductions.early || 0).toFixed(3)} ${currency}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>{{ _('label.absence_deduction') }} (${stats.absent_days || 0} {{ _('unit.day') }}):</span>
+                    <strong class="text-danger">-${(deductions.absent || 0).toFixed(3)} ${currency}</strong>
+                </div>
+                
+                <hr>
+                <!-- Net Salary -->
+                <div class="d-flex justify-content-between bg-light p-2 rounded">
+                    <span class="fw-bold">{{ _('label.net_salary') }}:</span>
+                    <strong class="text-primary fs-5">${(salaryData.net_salary || 0).toFixed(3)} ${currency}</strong>
+                </div>
+            </div>
+            
+            <!-- Stats Summary -->
+            <div class="mt-3 small text-muted">
+                <div>{{ _('label.present_days') }}: ${stats.present_days || 0}</div>
+                <div>{{ _('label.leave_days') }}: ${stats.official_leaves || 0}</div>
+                <div>{{ _('label.holidays') }}: ${stats.holidays || 0}</div>
+                <div class="text-danger fw-bold">{{ _('label.invalid_days') }}: ${stats.invalid_days || 0}</div>
+            </div>
+            
+             <!-- زر دفع الراتب -->
+             <div class="text-center mt-3">
+                 <button type="button" class="btn btn-success btn-lg" onclick="paySalary(${currentEmployeeId}, ${currentMonth}, ${currentYear})">
+                     <i class="fas fa-money-bill-wave me-2"></i>
+                     {{ _('btn.pay_salary') }}
+                 </button>
+             </div>
+        `;
+
+        document.getElementById('salary_calculations').innerHTML = salaryHtml;
+    }
+
+    // وظائف الطباعة والتصدير
+    function printReport() {
+        // استخدام route الطباعة المخصص
+        if (currentEmployeeId && currentMonth && currentYear) {
+            const printUrl = `/fingerprint/salary_reports/print/${currentEmployeeId}/${currentMonth}/${currentYear}`;
+            const printWindow = window.open(printUrl, '_blank');
+
+            if (printWindow) {
+                printWindow.focus();
+                // انتظار تحميل الصفحة ثم الطباعة
+                setTimeout(() => {
+                    printWindow.print();
+                }, 1000);
+            } else {
+                alert('{{ _('error.popup_blocked') }}');
+            }
+        } else {
+            alert('{{ _('error.select_employee_first') }}');
+        }
+    }
+
+    function exportToPDF() {
+        // استخدام jsPDF لإنشاء PDF
+        if (typeof window.jspdf === 'undefined') {
+            // إذا لم يكن jsPDF متوفر، استخدم الطباعة كبديل
+            alert('{{ _('status.loading_pdf_lib') }}');
+            printReport();
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            // إعداد الخط الإنجليزي لتجنب مشاكل العربية
+            doc.setFont('helvetica');
+
+            // إضافة العنوان باللغة الإنجليزية
+            doc.setFontSize(20);
+            doc.text('Salary Report', 105, 20, { align: 'center' });
+
+            doc.setFontSize(12);
+            const employeeName = employees.find(emp => emp.id == currentEmployeeId)?.name || '';
+            doc.text(`Employee: ${employeeName} `, 20, 40);
+            doc.text(`Month: ${currentMonth}/${currentYear}`, 20, 50);
+            doc.text(`Report Date: ${new Date().toLocaleDateString('en-US')}`, 20, 60);
+
+            // إضافة تفاصيل الراتب
+            if (currentSalaryData) {
+                let y = 80;
+                doc.setFontSize(14);
+                doc.text('Salary Details:', 20, y);
+                y += 10;
+
+                doc.setFontSize(10);
+                doc.text(`Basic Salary: ${currentSalaryData.base_salary.toFixed(2)} ${currentSalaryData.currency ? currentSalaryData.currency.symbol : ''}`, 20, y);
+                y += 7;
+                doc.text(`Net Salary: ${currentSalaryData.net_salary.toFixed(2)} ${currentSalaryData.currency ? currentSalaryData.currency.symbol : ''}`, 20, y);
+                y += 7;
+
+                if (currentSalaryData.attendance_allowance) {
+                    doc.text(`Attendance Allowance: ${currentSalaryData.attendance_allowance.total.toFixed(2)} ${currentSalaryData.currency ? currentSalaryData.currency.symbol : ''}`, 20, y);
+                    y += 7;
+                }
+
+                if (currentSalaryData.leave_deductions) {
+                    doc.text(`Leave Deductions: ${currentSalaryData.leave_deductions.total.toFixed(2)} ${currentSalaryData.currency ? currentSalaryData.currency.symbol : ''}`, 20, y);
+                    y += 7;
+                }
+            }
+
+            // حفظ الملف
+            const fileName = `Salary_Report_${employeeName}_${currentMonth}_${currentYear}.pdf`;
+            doc.save(fileName);
+        } catch (error) {
+            console.error('PDF creation error:', error);
+            alert('{{ _('error.pdf_creation_error') }}');
+            printReport();
+        }
+    }
+
+    function printSalarySlip() {
+       // Logic to print salary slip (can be similar to printReport but targeting a different view or generating content dynamically)
+       // Since printReport uses the dedicated print route, we can reuse it or create a specific one.
+       // The original code used window.open with dynamic content write.
+       // Internationalizing dynamic content inside JS strings is tricky if it's large HTML.
+       // Ideally, we route to a template (like print_salary_report.html which acts as the slip).
+       // The existing 'printReport' function ALREADY routes to `/fingerprint/salary_reports/print/...`.
+       // That route renders `print_salary_report.html`!
+       // So `printReport` IS printing the salary slip.
+       // The `printSalarySlip` function in the original code generated a SIMPLIFIED slip via document.write.
+       // I will point it to the same route for now or just alert that it uses the standard print.
+       // Or I can keep the simplified logic but use translated keys.
+       
+       // For simple "salary slip" function, I will redirect to the print route as well, as it's cleaner than maintaining raw HTML in JS.
+       printReport();
+    }
+</script>
+{% endblock %}

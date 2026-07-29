@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ _('x.ledger_menu') }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <h4 class="mb-0"><i class="fas fa-book me-2"></i>{{ _('x.ledger_menu') }}</h4>
+        <button class="btn btn-sm btn-outline-success ms-auto" onclick="lgVerify()">
+            <i class="fas fa-shield-alt me-1"></i>{{ _('x.lg_verify') }}
+        </button>
+        <span id="lgVerdict"></span>
+    </div>
+    <div class="text-muted small mb-3">{{ _('x.lg_hint') }}</div>
+    <div id="lgList">
+        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+    </div>
+</div>
+
+<script>
+    const LGT = {
+        ok: {{ _('x.lg_ok')|tojson }},
+        broken: {{ _('x.lg_broken')|tojson }},
+        by: {{ _('x.lg_posted_by')|tojson }},
+        chain: {{ _('x.lg_chain')|tojson }},
+        none: {{ _('x.lg_none')|tojson }},
+        lines: {{ _('x.lg_lines')|tojson }},
+        postingsN: {{ _('x.lg_postings_n')|tojson }},
+        emp: {{ _('x.hp_employee')|tojson }},
+        basic: {{ _('x.pm_basic')|tojson }},
+        allow: {{ _('x.pm_allowances')|tojson }},
+        ded: {{ _('x.pm_deductions')|tojson }},
+        net: {{ _('x.pm_net')|tojson }}
+    };
+    const API_LIST = {{ url_for('payroll.api_ledger_list')|tojson }};
+    const API_VERIFY = {{ url_for('payroll.api_ledger_verify')|tojson }};
+
+    function esc(x) {
+        return String(x ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const money = v => (Math.round((v ?? 0) * 1000) / 1000).toLocaleString();
+
+    function lgLoad() {
+        fetch(API_LIST, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                const box = document.getElementById('lgList');
+                const ps = res.postings || [];
+                if (!ps.length) {
+                    box.innerHTML = `<div class="text-center text-muted py-5">${esc(LGT.none)}</div>`;
+                    return;
+                }
+                const perMonth = {};
+                ps.forEach(p => {
+                    const k = p.month + '/' + p.year;
+                    perMonth[k] = (perMonth[k] || 0) + 1;
+                });
+                box.innerHTML = ps.map(p => `
+                    <div class="card mb-3">
+                        <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                            <b>${String(p.month).padStart(2,'0')}/${p.year}</b>
+                            <span class="badge bg-secondary">${esc(p.period_start)} \u2190 ${esc(p.period_end)}</span>
+                            <span class="badge bg-dark">${p.employees_count} \u0645\u0648\u0638\u0641</span>
+                            ${perMonth[p.month + '/' + p.year] > 1
+                                ? `<span class="badge bg-warning text-dark">${perMonth[p.month + '/' + p.year]} ${esc(LGT.postingsN)}</span>` : ''}
+                            <span class="ms-auto small text-muted">
+                                ${esc(LGT.by)}: ${esc(p.by || '\u2014')} \u2022 ${esc(p.posted_at)}
+                            </span>
+                        </div>
+                        <div class="card-body py-2">
+                            ${p.note ? `<div class="alert alert-warning py-1 px-2 small mb-2">${esc(p.note)}</div>` : ''}
+                            <div class="d-flex flex-wrap gap-3 small mb-2">
+                                <span>${esc(LGT.basic)}: <b>${money(p.total_basic)}</b></span>
+                                <span class="text-success">${esc(LGT.allow)}: <b>${money(p.total_allowances)}</b></span>
+                                <span class="text-danger">${esc(LGT.ded)}: <b>${money(p.total_deductions)}</b></span>
+                                <span>${esc(LGT.net)}: <b>${money(p.total_net)}</b></span>
+                            </div>
+                            <details>
+                                <summary class="small text-muted">${esc(LGT.lines)}</summary>
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-bordered text-center mb-1">
+                                        <thead><tr>
+                                            <th>${esc(LGT.emp)}</th><th>${esc(LGT.basic)}</th>
+                                            <th>${esc(LGT.allow)}</th><th>${esc(LGT.ded)}</th>
+                                            <th>${esc(LGT.net)}</th>
+                                        </tr></thead>
+                                        <tbody>${p.lines.map(l => `
+                                            <tr>
+                                                <td class="text-start">${esc(l.employee_number)} \u2014 ${esc(l.arabic_name || l.name)}</td>
+                                                <td>${money(l.basic)}</td>
+                                                <td class="text-success">${money(l.allow)}</td>
+                                                <td class="text-danger">${money(l.ded)}</td>
+                                                <td><b>${money(l.net)}</b></td>
+                                            </tr>`).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+                            <div class="small text-muted mt-1" style="word-break:break-all">
+                                ${esc(LGT.chain)}: <code>${esc(p.chain_hash)}</code>
+                            </div>
+                        </div>
+                    </div>`).join('');
+            });
+    }
+
+    function lgVerify() {
+        fetch(API_VERIFY, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(res => {
+                const v = document.getElementById('lgVerdict');
+                v.innerHTML = res.ok
+                    ? `<span class="badge bg-success">${esc(LGT.ok)}</span>`
+                    : `<span class="badge bg-danger">${esc(LGT.broken)} ${res.broken_posting_id}</span>`;
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', lgLoad);
+</script>
+{% endblock %}

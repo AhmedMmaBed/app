@@ -1,0 +1,1956 @@
+# Arabic translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-02 11:52+0300\n"
+"PO-Revision-Date: 2026-01-02 10:12+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ar\n"
+"Language-Team: ar <LL@li.org>\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=0 && n%100<=2 ? 4 : 5);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#~ msgid "page.title.add_employee"
+#~ msgstr ""
+
+#~ msgid "page.header.add_employee"
+#~ msgstr ""
+
+#~ msgid "btn.back_to_list"
+#~ msgstr ""
+
+#~ msgid "header.basic_info"
+#~ msgstr ""
+
+#~ msgid "label.employee_number"
+#~ msgstr ""
+
+#~ msgid "help.employee_number_unique"
+#~ msgstr ""
+
+#~ msgid "label.full_name"
+#~ msgstr ""
+
+#~ msgid "label.arabic_name"
+#~ msgstr ""
+
+#~ msgid "placeholder.arabic_name"
+#~ msgstr ""
+
+#~ msgid "label.department"
+#~ msgstr ""
+
+#~ msgid "option.select_department"
+#~ msgstr ""
+
+#~ msgid "tooltip.add_new_department"
+#~ msgstr ""
+
+#~ msgid "label.position"
+#~ msgstr ""
+
+#~ msgid "option.select_position"
+#~ msgstr ""
+
+#~ msgid "tooltip.add_new_position"
+#~ msgstr ""
+
+#~ msgid "label.hire_date"
+#~ msgstr ""
+
+#~ msgid "label.basic_salary"
+#~ msgstr ""
+
+#~ msgid "label.shift_type"
+#~ msgstr ""
+
+#~ msgid "help.select_shift"
+#~ msgstr ""
+
+#~ msgid "label.shift_start"
+#~ msgstr ""
+
+#~ msgid "label.shift_end"
+#~ msgstr ""
+
+#~ msgid "label.phone_number"
+#~ msgstr ""
+
+#~ msgid "placeholder.phone"
+#~ msgstr ""
+
+#~ msgid "label.email"
+#~ msgstr ""
+
+#~ msgid "placeholder.email"
+#~ msgstr ""
+
+#~ msgid "label.address"
+#~ msgstr ""
+
+#~ msgid "placeholder.address"
+#~ msgstr ""
+
+#~ msgid "header.fingerprint_data"
+#~ msgstr ""
+
+#~ msgid "label.card_number"
+#~ msgstr ""
+
+#~ msgid "label.privilege"
+#~ msgstr ""
+
+#~ msgid "option.user_normal"
+#~ msgstr ""
+
+#~ msgid "option.user_admin"
+#~ msgstr ""
+
+#~ msgid "label.device_password"
+#~ msgstr ""
+
+#~ msgid "label.group_id"
+#~ msgstr ""
+
+#~ msgid "header.weekly_leave_settings"
+#~ msgstr ""
+
+#~ msgid "label.weekly_leave_type"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_custom"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_fri_sat"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_fri"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_sat_sun"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_sun_mon"
+#~ msgstr ""
+
+#~ msgid "option.weekly_leave_none"
+#~ msgstr ""
+
+#~ msgid "help.weekly_leave_type"
+#~ msgstr ""
+
+#~ msgid "label.weekly_leave_details"
+#~ msgstr ""
+
+#~ msgid "text.weekly_leave_fri_sat_desc"
+#~ msgstr ""
+
+#~ msgid "label.weekly_leave_days"
+#~ msgstr ""
+
+#~ msgid "day.sunday"
+#~ msgstr ""
+
+#~ msgid "day.monday"
+#~ msgstr ""
+
+#~ msgid "day.tuesday"
+#~ msgstr ""
+
+#~ msgid "day.wednesday"
+#~ msgstr ""
+
+#~ msgid "day.thursday"
+#~ msgstr ""
+
+#~ msgid "day.friday"
+#~ msgstr ""
+
+#~ msgid "day.saturday"
+#~ msgstr ""
+
+#~ msgid "help.select_weekly_leave_days"
+#~ msgstr ""
+
+#~ msgid "label.weekly_leave_start"
+#~ msgstr ""
+
+#~ msgid "help.weekly_leave_start_auto"
+#~ msgstr ""
+
+#~ msgid "label.previous_leave_balance"
+#~ msgstr ""
+
+#~ msgid "help.previous_leave_balance"
+#~ msgstr ""
+
+#~ msgid "label.add_initial_salary_record"
+#~ msgstr ""
+
+#~ msgid "label.salary_month"
+#~ msgstr ""
+
+#~ msgid "placeholder.month"
+#~ msgstr ""
+
+#~ msgid "label.salary_year"
+#~ msgstr ""
+
+#~ msgid "placeholder.year"
+#~ msgstr ""
+
+#~ msgid "label.allowances"
+#~ msgstr ""
+
+#~ msgid "label.deductions"
+#~ msgstr ""
+
+#~ msgid "btn.reset"
+#~ msgstr ""
+
+#~ msgid "btn.save_employee"
+#~ msgstr ""
+
+#~ msgid "app.name"
+#~ msgstr ""
+
+#~ msgid "nav.alerts.docs_expiry"
+#~ msgstr ""
+
+#~ msgid "nav.alerts.late_arrival"
+#~ msgstr ""
+
+#~ msgid "nav.license_status"
+#~ msgstr ""
+
+#~ msgid "msg.license_days"
+#~ msgstr ""
+
+#~ msgid "btn.activate_license"
+#~ msgstr ""
+
+#~ msgid "auth.logout"
+#~ msgstr ""
+
+#~ msgid "nav.home"
+#~ msgstr ""
+
+#~ msgid "nav.employees"
+#~ msgstr ""
+
+#~ msgid "nav.salaries"
+#~ msgstr ""
+
+#~ msgid "nav.structure"
+#~ msgstr ""
+
+#~ msgid "nav.add_dept"
+#~ msgstr ""
+
+#~ msgid "nav.add_pos"
+#~ msgstr ""
+
+#~ msgid "nav.leaves"
+#~ msgstr ""
+
+#~ msgid "nav.leave_cancellations"
+#~ msgstr ""
+
+#~ msgid "nav.official_holidays"
+#~ msgstr ""
+
+#~ msgid "nav.leave_settings"
+#~ msgstr ""
+
+#~ msgid "nav.shift_types"
+#~ msgstr ""
+
+#~ msgid "nav.fingerprint"
+#~ msgstr ""
+
+#~ msgid "nav.attendance_excuses"
+#~ msgstr ""
+
+#~ msgid "nav.reports"
+#~ msgstr ""
+
+#~ msgid "nav.documents"
+#~ msgstr ""
+
+#~ msgid "nav.admin"
+#~ msgstr ""
+
+#~ msgid "nav.roles"
+#~ msgstr ""
+
+#~ msgid "nav.users"
+#~ msgstr ""
+
+#~ msgid "nav.settings"
+#~ msgstr ""
+
+#~ msgid "nav.salary_settings_v2"
+#~ msgstr ""
+
+#~ msgid "msg.success"
+#~ msgstr ""
+
+#~ msgid "msg.alert"
+#~ msgstr ""
+
+#~ msgid "btn.ok"
+#~ msgstr ""
+
+#~ msgid "msg.confirm"
+#~ msgstr ""
+
+#~ msgid "footer.rights_reserved"
+#~ msgstr ""
+
+#~ msgid "footer.developed_by"
+#~ msgstr ""
+
+#~ msgid "footer.company"
+#~ msgstr ""
+
+#~ msgid "title.cut_leave"
+#~ msgstr ""
+
+#~ msgid "header.cut_leave"
+#~ msgstr ""
+
+#~ msgid "label.employee"
+#~ msgstr "الموظف"
+
+#~ msgid "btn.back_to_leaves"
+#~ msgstr ""
+
+#~ msgid "header.current_leave_details"
+#~ msgstr ""
+
+#~ msgid "label.start_date"
+#~ msgstr "تاريخ البداية"
+
+#~ msgid "label.end_date"
+#~ msgstr "تاريخ النهاية"
+
+#~ msgid "label.days_count"
+#~ msgstr ""
+
+#~ msgid "unit.day"
+#~ msgstr ""
+
+#~ msgid "label.remaining_days"
+#~ msgstr ""
+
+#~ msgid "label.cut_date"
+#~ msgstr ""
+
+#~ msgid "help.cut_date"
+#~ msgstr ""
+
+#~ msgid "label.cut_reason"
+#~ msgstr ""
+
+#~ msgid "placeholder.cut_reason"
+#~ msgstr ""
+
+#~ msgid "header.cut_summary"
+#~ msgstr ""
+
+#~ msgid "label.cancelled_days"
+#~ msgstr ""
+
+#~ msgid "label.remaining_days_after"
+#~ msgstr ""
+
+#~ msgid "label.saved_balance"
+#~ msgstr ""
+
+#~ msgid "btn.cut_leave"
+#~ msgstr ""
+
+#~ msgid "btn.cancel"
+#~ msgstr "إلغاء"
+
+#~ msgid "warn.cut_leave_full_cancellation"
+#~ msgstr ""
+
+#~ msgid "error.cut_date_invalid"
+#~ msgstr ""
+
+#~ msgid "confirm.cut_leave"
+#~ msgstr ""
+
+#~ msgid "page.title.edit_employee"
+#~ msgstr ""
+
+#~ msgid "page.header.edit_employee"
+#~ msgstr ""
+
+#~ msgid "header.edit_data_for"
+#~ msgstr ""
+
+#~ msgid "help.employee_number_readonly"
+#~ msgstr ""
+
+#~ msgid "label.cost_center"
+#~ msgstr ""
+
+#~ msgid "text.weekly_leave_none_desc"
+#~ msgstr ""
+
+#~ msgid "text.weekly_leave_fri_desc"
+#~ msgstr ""
+
+#~ msgid "text.weekly_leave_sat_sun_desc"
+#~ msgstr ""
+
+#~ msgid "text.weekly_leave_sun_mon_desc"
+#~ msgstr ""
+
+#~ msgid "unit.days_starting"
+#~ msgstr ""
+
+#~ msgid "btn.save_changes"
+#~ msgstr ""
+
+#~ msgid "header.employee_info"
+#~ msgstr ""
+
+#~ msgid "header.quick_links"
+#~ msgstr ""
+
+#~ msgid "btn.view_salaries"
+#~ msgstr ""
+
+#~ msgid "btn.view_leaves"
+#~ msgstr ""
+
+#~ msgid "btn.view_documents"
+#~ msgstr ""
+
+#~ msgid "modal.title.save_confirmation"
+#~ msgstr ""
+
+#~ msgid "modal.body.save_changes_confirm"
+#~ msgstr ""
+
+#~ msgid "btn.yes_save"
+#~ msgstr ""
+
+#~ msgid "title.error"
+#~ msgstr ""
+
+#~ msgid "error.name_too_short"
+#~ msgstr ""
+
+#~ msgid "error.salary_must_be_positive"
+#~ msgstr ""
+
+#~ msgid "page.title.employees"
+#~ msgstr ""
+
+#~ msgid "page.header.employees"
+#~ msgstr ""
+
+#~ msgid "btn.add_new_employee"
+#~ msgstr ""
+
+#~ msgid "btn.import_excel"
+#~ msgstr ""
+
+#~ msgid "btn.delete_all_employees"
+#~ msgstr ""
+
+#~ msgid "placeholder.search_employee"
+#~ msgstr ""
+
+#~ msgid "filter.all_departments"
+#~ msgstr ""
+
+#~ msgid "filter.all_positions"
+#~ msgstr ""
+
+#~ msgid "label.employee_count"
+#~ msgstr ""
+
+#~ msgid "header.employee_list"
+#~ msgstr ""
+
+#~ msgid "th.emp_number"
+#~ msgstr ""
+
+#~ msgid "th.name"
+#~ msgstr ""
+
+#~ msgid "th.cost_center"
+#~ msgstr ""
+
+#~ msgid "th.phone"
+#~ msgstr ""
+
+#~ msgid "th.department"
+#~ msgstr ""
+
+#~ msgid "th.position"
+#~ msgstr ""
+
+#~ msgid "th.hire_date"
+#~ msgstr ""
+
+#~ msgid "th.salary"
+#~ msgstr ""
+
+#~ msgid "th.actions"
+#~ msgstr ""
+
+#~ msgid "msg.loading_employees"
+#~ msgstr ""
+
+#~ msgid "msg.no_employees_found"
+#~ msgstr ""
+
+#~ msgid "msg.start_adding_employees"
+#~ msgstr ""
+
+#~ msgid "btn.add_first_employee"
+#~ msgstr ""
+
+#~ msgid "page.title.import_employees"
+#~ msgstr ""
+
+#~ msgid "header.import_employees"
+#~ msgstr ""
+
+#~ msgid "btn.back_to_employees"
+#~ msgstr ""
+
+#~ msgid "label.excel_file"
+#~ msgstr ""
+
+#~ msgid "help.expected_columns"
+#~ msgstr ""
+
+#~ msgid "label.update_only_dept_pos"
+#~ msgstr ""
+
+#~ msgid "label.update_existing_only"
+#~ msgstr ""
+
+#~ msgid "btn.upload_and_import"
+#~ msgstr ""
+
+#~ msgid "btn.download_template"
+#~ msgstr ""
+
+#~ msgid "header.import_summary"
+#~ msgstr ""
+
+#~ msgid "label.total_rows"
+#~ msgstr ""
+
+#~ msgid "label.inserted"
+#~ msgstr ""
+
+#~ msgid "label.updated"
+#~ msgstr ""
+
+#~ msgid "label.skipped"
+#~ msgstr ""
+
+#~ msgid "label.preview_rows"
+#~ msgstr ""
+
+#~ msgid "label.duplicates_in_file"
+#~ msgstr ""
+
+#~ msgid "label.detected_headers"
+#~ msgstr ""
+
+#~ msgid "label.used_mapping"
+#~ msgstr ""
+
+#~ msgid "label.errors_top_10"
+#~ msgstr ""
+
+#~ msgid "dashboard.title"
+#~ msgstr ""
+
+#~ msgid "dashboard.header"
+#~ msgstr ""
+
+#~ msgid "dashboard.welcome_msg"
+#~ msgstr ""
+
+#~ msgid "alert.docs_expiry.title"
+#~ msgstr ""
+
+#~ msgid "btn.view_all_docs"
+#~ msgstr ""
+
+#~ msgid "btn.upload_new_doc"
+#~ msgstr ""
+
+#~ msgid "stats.total_employees"
+#~ msgstr ""
+
+#~ msgid "stats.total_salaries"
+#~ msgstr ""
+
+#~ msgid "stats.total_salary_amount"
+#~ msgstr ""
+
+#~ msgid "stats.pending_leaves"
+#~ msgstr ""
+
+#~ msgid "stats.total_documents"
+#~ msgstr ""
+
+#~ msgid "dashboard.quick_actions"
+#~ msgstr ""
+
+#~ msgid "btn.add_employee"
+#~ msgstr ""
+
+#~ msgid "btn.manage_salaries"
+#~ msgstr ""
+
+#~ msgid "btn.manage_leaves"
+#~ msgstr ""
+
+#~ msgid "btn.shift_types"
+#~ msgstr ""
+
+#~ msgid "dashboard.recent_activities"
+#~ msgstr ""
+
+#~ msgid "msg.loading"
+#~ msgstr ""
+
+#~ msgid "dashboard.system_info"
+#~ msgstr ""
+
+#~ msgid "dashboard.system_features"
+#~ msgstr ""
+
+#~ msgid "feature.emp_management"
+#~ msgstr ""
+
+#~ msgid "feature.salary_calc"
+#~ msgstr ""
+
+#~ msgid "feature.leave_system"
+#~ msgstr ""
+
+#~ msgid "feature.shift_tracking"
+#~ msgstr ""
+
+#~ msgid "feature.doc_management"
+#~ msgstr ""
+
+#~ msgid "dashboard.company_info"
+#~ msgstr ""
+
+#~ msgid "unit.hours_daily"
+#~ msgstr ""
+
+#~ msgid "activity.new_employee"
+#~ msgstr ""
+
+#~ msgid "activity.leave_request"
+#~ msgstr ""
+
+#~ msgid "activity.salary_month"
+#~ msgstr ""
+
+#~ msgid "activity.net_salary"
+#~ msgstr ""
+
+#~ msgid "msg.no_activities"
+#~ msgstr ""
+
+#~ msgid "msg.error_loading"
+#~ msgstr ""
+
+#~ msgid "unit.days"
+#~ msgstr ""
+
+#~ msgid "title.leave_cancellations"
+#~ msgstr ""
+
+#~ msgid "header.leave_cancellations"
+#~ msgstr ""
+
+#~ msgid "desc.leave_cancellations"
+#~ msgstr ""
+
+#~ msgid "tbl.header.employee"
+#~ msgstr ""
+
+#~ msgid "tbl.header.leave_type"
+#~ msgstr ""
+
+#~ msgid "tbl.header.original_dates"
+#~ msgstr ""
+
+#~ msgid "tbl.header.cancellation_date"
+#~ msgstr ""
+
+#~ msgid "tbl.header.cancelled_days"
+#~ msgstr ""
+
+#~ msgid "tbl.header.reason"
+#~ msgstr ""
+
+#~ msgid "tbl.header.transaction_date"
+#~ msgstr ""
+
+#~ msgid "tbl.header.actions"
+#~ msgstr ""
+
+#~ msgid "label.from"
+#~ msgstr ""
+
+#~ msgid "label.to"
+#~ msgstr ""
+
+#~ msgid "label.original_days"
+#~ msgstr ""
+
+#~ msgid "btn.view_details"
+#~ msgstr ""
+
+#~ msgid "btn.cut_another_leave"
+#~ msgstr ""
+
+#~ msgid "stat.total_cancellations"
+#~ msgstr ""
+
+#~ msgid "stat.total_saved_days"
+#~ msgstr ""
+
+#~ msgid "stat.avg_days_per_cancellation"
+#~ msgstr ""
+
+#~ msgid "stat.cancellations_with_reason"
+#~ msgstr ""
+
+#~ msgid "msg.no_cancellations"
+#~ msgstr ""
+
+#~ msgid "msg.no_cancellations_desc"
+#~ msgstr ""
+
+#~ msgid "title.cancellation_details"
+#~ msgstr ""
+
+#~ msgid "btn.close"
+#~ msgstr "إغلاق"
+
+#~ msgid "header.cancellation_details"
+#~ msgstr ""
+
+#~ msgid "label.transaction_id"
+#~ msgstr ""
+
+#~ msgid "msg.more_details_soon"
+#~ msgstr ""
+
+#~ msgid "header.leave_settings"
+#~ msgstr ""
+
+#~ msgid "btn.add_new_type"
+#~ msgstr ""
+
+#~ msgid "confirm.delete_leave_type_with_tiers"
+#~ msgstr ""
+
+#~ msgid "btn.delete_type"
+#~ msgstr ""
+
+#~ msgid "label.annual_balance_days"
+#~ msgstr ""
+
+#~ msgid "label.service_months_required"
+#~ msgstr ""
+
+#~ msgid "label.properties"
+#~ msgstr ""
+
+#~ msgid "label.is_paid_default"
+#~ msgstr ""
+
+#~ msgid "label.requires_approval"
+#~ msgstr ""
+
+#~ msgid "label.carry_over_balance"
+#~ msgstr ""
+
+#~ msgid "btn.save_settings"
+#~ msgstr ""
+
+#~ msgid "header.payment_tiers"
+#~ msgstr ""
+
+#~ msgid "tbl.header.from_day"
+#~ msgstr ""
+
+#~ msgid "tbl.header.to_day"
+#~ msgstr ""
+
+#~ msgid "tbl.header.payment_percentage"
+#~ msgstr ""
+
+#~ msgid "tbl.header.delete"
+#~ msgstr ""
+
+#~ msgid "confirm.delete_tier"
+#~ msgstr ""
+
+#~ msgid "msg.no_tiers_defined"
+#~ msgstr ""
+
+#~ msgid "placeholder.from"
+#~ msgstr ""
+
+#~ msgid "placeholder.to"
+#~ msgstr ""
+
+#~ msgid "placeholder.percentage"
+#~ msgstr ""
+
+#~ msgid "title.add_new_leave_type"
+#~ msgstr ""
+
+#~ msgid "label.leave_name"
+#~ msgstr ""
+
+#~ msgid "placeholder.leave_name_example"
+#~ msgstr ""
+
+#~ msgid "label.default_annual_balance"
+#~ msgstr ""
+
+#~ msgid "btn.save"
+#~ msgstr "حفظ"
+
+#~ msgid "page.title.leaves"
+#~ msgstr ""
+
+#~ msgid "page.header.leaves"
+#~ msgstr ""
+
+#~ msgid "btn.manage_leave_types"
+#~ msgstr ""
+
+#~ msgid "btn.new_leave_request"
+#~ msgstr ""
+
+#~ msgid "header.leave_requests"
+#~ msgstr ""
+
+#~ msgid "tbl.header.start_date"
+#~ msgstr ""
+
+#~ msgid "tbl.header.end_date"
+#~ msgstr ""
+
+#~ msgid "tbl.header.days_count"
+#~ msgstr ""
+
+#~ msgid "tbl.header.payment_type"
+#~ msgstr ""
+
+#~ msgid "tbl.header.status"
+#~ msgstr ""
+
+#~ msgid "tbl.header.request_date"
+#~ msgstr ""
+
+#~ msgid "status.unpaid"
+#~ msgstr ""
+
+#~ msgid "status.paid"
+#~ msgstr ""
+
+#~ msgid "msg.balance_exceeded"
+#~ msgstr ""
+
+#~ msgid "status.pending"
+#~ msgstr ""
+
+#~ msgid "status.approved"
+#~ msgstr ""
+
+#~ msgid "status.rejected"
+#~ msgstr ""
+
+#~ msgid "btn.approve"
+#~ msgstr ""
+
+#~ msgid "btn.reject"
+#~ msgstr ""
+
+#~ msgid "btn.cancel_leave_early"
+#~ msgstr ""
+
+#~ msgid "status.processed"
+#~ msgstr ""
+
+#~ msgid "msg.no_leave_requests"
+#~ msgstr ""
+
+#~ msgid "btn.add_first_leave"
+#~ msgstr ""
+
+#~ msgid "title.new_leave_request"
+#~ msgstr ""
+
+#~ msgid "label.search_employee"
+#~ msgstr ""
+
+#~ msgid "help.search_employee"
+#~ msgstr ""
+
+#~ msgid "label.leave_type"
+#~ msgstr "نوع الإجازة"
+
+#~ msgid "placeholder.select_leave_type"
+#~ msgstr ""
+
+#~ msgid "unit.day_year"
+#~ msgstr ""
+
+#~ msgid "label.leave_reason"
+#~ msgstr ""
+
+#~ msgid "placeholder.leave_reason"
+#~ msgstr ""
+
+#~ msgid "label.available_balance"
+#~ msgstr ""
+
+#~ msgid "btn.send_request"
+#~ msgstr ""
+
+#~ msgid "error.fetch_employees"
+#~ msgstr ""
+
+#~ msgid "error.connection"
+#~ msgstr ""
+
+#~ msgid "msg.no_results"
+#~ msgstr ""
+
+#~ msgid "msg.results_found"
+#~ msgstr ""
+
+#~ msgid "term.undefined"
+#~ msgstr ""
+
+#~ msgid "unit.days_available"
+#~ msgstr ""
+
+#~ msgid "msg.negative_balance_exceeded"
+#~ msgstr ""
+
+#~ msgid "term.unavailable"
+#~ msgstr ""
+
+#~ msgid "error.load_failed"
+#~ msgstr ""
+
+#~ msgid "alert.warning"
+#~ msgstr ""
+
+#~ msgid "msg.negative_balance_deduction"
+#~ msgstr ""
+
+#~ msgid "status.approved_action"
+#~ msgstr ""
+
+#~ msgid "status.rejected_action"
+#~ msgstr ""
+
+#~ msgid "confirm.update_leave_status"
+#~ msgstr ""
+
+#~ msgid "msg.has_negative_balance"
+#~ msgstr ""
+
+#~ msgid "label.earned_days"
+#~ msgstr ""
+
+#~ msgid "label.used_days"
+#~ msgstr ""
+
+#~ msgid "label.unpaid_leaves"
+#~ msgstr ""
+
+#~ msgid "error.start_date_past"
+#~ msgstr ""
+
+#~ msgid "error.end_date_before_start"
+#~ msgstr ""
+
+#~ msgid "confirm.leave_over_30_days"
+#~ msgstr ""
+
+#~ msgid "warn.negative_balance_increase"
+#~ msgstr ""
+
+#~ msgid "page.title.login"
+#~ msgstr ""
+
+#~ msgid "login.header"
+#~ msgstr ""
+
+#~ msgid "login.welcome"
+#~ msgstr ""
+
+#~ msgid "login.username_placeholder"
+#~ msgstr ""
+
+#~ msgid "login.username_label"
+#~ msgstr ""
+
+#~ msgid "login.password_placeholder"
+#~ msgstr ""
+
+#~ msgid "login.password_label"
+#~ msgstr ""
+
+#~ msgid "login.remember_me"
+#~ msgstr ""
+
+#~ msgid "login.submit"
+#~ msgstr ""
+
+#~ msgid "login.footer_info"
+#~ msgstr ""
+
+#~ msgid "js.hide_alerts_comment"
+#~ msgstr ""
+
+#~ msgid "js.prevent_resubmit_comment"
+#~ msgstr ""
+
+#~ msgid "login.verifying"
+#~ msgstr ""
+
+#~ msgid "page.title.structure"
+#~ msgstr ""
+
+#~ msgid "page.header.structure"
+#~ msgstr ""
+
+#~ msgid "header.departments"
+#~ msgstr ""
+
+#~ msgid "btn.delete_all"
+#~ msgstr ""
+
+#~ msgid "btn.add_department"
+#~ msgstr ""
+
+#~ msgid "header.positions"
+#~ msgstr ""
+
+#~ msgid "btn.add_position"
+#~ msgstr ""
+
+#~ msgid "msg.no_departments"
+#~ msgstr ""
+
+#~ msgid "error.loading_failed"
+#~ msgstr ""
+
+#~ msgid "msg.no_positions"
+#~ msgstr ""
+
+#~ msgid "title.add_department"
+#~ msgstr ""
+
+#~ msgid "label.department_name"
+#~ msgstr ""
+
+#~ msgid "placeholder.department_name"
+#~ msgstr ""
+
+#~ msgid "btn.add"
+#~ msgstr ""
+
+#~ msgid "msg.name_required"
+#~ msgstr ""
+
+#~ msgid "error.prefix"
+#~ msgstr ""
+
+#~ msgid "title.added_success"
+#~ msgstr ""
+
+#~ msgid "title.add_position"
+#~ msgstr ""
+
+#~ msgid "label.position_name"
+#~ msgstr ""
+
+#~ msgid "placeholder.position_name"
+#~ msgstr ""
+
+#~ msgid "confirm.are_you_sure"
+#~ msgstr ""
+
+#~ msgid "confirm.delete_all_departments_warning"
+#~ msgstr ""
+
+#~ msgid "btn.yes_delete_all"
+#~ msgstr ""
+
+#~ msgid "title.deleted"
+#~ msgstr ""
+
+#~ msgid "error.generic"
+#~ msgstr ""
+
+#~ msgid "confirm.delete_all_positions_warning"
+#~ msgstr ""
+
+#~ msgid "page.title.official_holidays"
+#~ msgstr ""
+
+#~ msgid "header.official_holidays"
+#~ msgstr ""
+
+#~ msgid "btn.add_official_holiday"
+#~ msgstr ""
+
+#~ msgid "tbl.header.holiday_name"
+#~ msgstr ""
+
+#~ msgid "tbl.header.date"
+#~ msgstr ""
+
+#~ msgid "tbl.header.type"
+#~ msgstr ""
+
+#~ msgid "type.official"
+#~ msgstr ""
+
+#~ msgid "type.eid"
+#~ msgstr ""
+
+#~ msgid "type.national"
+#~ msgstr ""
+
+#~ msgid "confirm.delete_holiday"
+#~ msgstr ""
+
+#~ msgid "msg.no_official_holidays"
+#~ msgstr ""
+
+#~ msgid "help.add_official_holidays"
+#~ msgstr ""
+
+#~ msgid "title.add_official_holiday"
+#~ msgstr ""
+
+#~ msgid "label.holiday_name"
+#~ msgstr ""
+
+#~ msgid "label.date"
+#~ msgstr "التاريخ"
+
+#~ msgid "label.type"
+#~ msgstr "النوع"
+
+#~ msgid "placeholder.select_type"
+#~ msgstr ""
+
+#~ msgid "label.is_paid_holiday"
+#~ msgstr ""
+
+#~ msgid "title.edit_official_holiday"
+#~ msgstr ""
+
+#~ msgid "attendance.excuses_title"
+#~ msgstr "إدارة الأعذار والاستثناءات"
+
+#~ msgid "attendance.excuses_header"
+#~ msgstr "إدارة الأعذار والاستثناءات"
+
+#~ msgid "btn.add_manual_excuse"
+#~ msgstr "إضافة عذر يدوي"
+
+#~ msgid "search.placeholder_employee"
+#~ msgstr "ابحث باسم الموظف..."
+
+#~ msgid "btn.filter"
+#~ msgstr "تصفية"
+
+#~ msgid "btn.reset_all"
+#~ msgstr "إعادة تعيين الكل"
+
+#~ msgid "attendance.invalid_punches_title"
+#~ msgstr "بصمات غير مكتملة"
+
+#~ msgid "attendance.invalid_punches_desc"
+#~ msgstr "قائمة بالبصمات الفردية (دخول فقط أو خروج فقط) التي تحتاج لمعالجة"
+
+#~ msgid "attendance.employee"
+#~ msgstr "الموظف"
+
+#~ msgid "attendance.punch_status"
+#~ msgstr "حالة البصمة"
+
+#~ msgid "attendance.available_punches"
+#~ msgstr "البصمات المسجلة"
+
+#~ msgid "label.quick_action"
+#~ msgstr "إجراء سريع"
+
+#~ msgid "attendance.incomplete_punch"
+#~ msgstr "بصمة غير مكتملة"
+
+#~ msgid "attendance.mark_as_mission"
+#~ msgstr "اعتبارها مهمة عمل"
+
+#~ msgid "attendance.no_invalid_punches"
+#~ msgstr "لا توجد بصمات غير مكتملة"
+
+#~ msgid "attendance.excuses_history_title"
+#~ msgstr "سجل الأعذار"
+
+#~ msgid "label.reason_notes"
+#~ msgstr "السبب / ملاحظات"
+
+#~ msgid "label.added_date"
+#~ msgstr "تاريخ الإضافة"
+
+#~ msgid "label.actions"
+#~ msgstr "إجراءات"
+
+#~ msgid "leave.mission"
+#~ msgstr "مهمة عمل"
+
+#~ msgid "leave.manual_excuse"
+#~ msgstr "عذر يدوي"
+
+#~ msgid "msg.confirm_delete_excuse"
+#~ msgstr "هل أنت متأكد من حذف هذا العذر؟"
+
+#~ msgid "attendance.no_excuses_records"
+#~ msgstr "لا توجد أعذار مسجلة"
+
+#~ msgid "modal.add_excuse_title"
+#~ msgstr "إضافة عذر / مهمة"
+
+#~ msgid "select.choose_employee"
+#~ msgstr "اختر الموظف"
+
+#~ msgid "leave.mission_full_attendance"
+#~ msgstr "مهمة عمل (احتساب حضور كامل)"
+
+#~ msgid "leave.other_excuse_cancel_deduction"
+#~ msgstr "عذر آخر (إلغاء الخصم)"
+
+#~ msgid "msg.confirm_mission_for"
+#~ msgstr "هل أنت متأكد من تسجيل مهمة عمل للموظف"
+
+#~ msgid "msg.on_date"
+#~ msgstr "بتاريخ"
+
+#~ msgid "msg.mission_explanation"
+#~ msgstr "سيتم احتساب ساعات العمل كاملة لهذا اليوم وإلغاء أي خصم تأخير أو انصراف."
+
+#~ msgid "reason.quick_excuse_auto"
+#~ msgstr "عذر سريع (مهمة عمل) - تسوية بصمة غير مكتملة"
+
+#~ msgid "attendance.summary_title"
+#~ msgstr "ملخص الحضور والانصراف"
+
+#~ msgid "attendance.summary_header"
+#~ msgstr "ملخص الحضور والانصراف"
+
+#~ msgid "search.placeholder_name_num"
+#~ msgstr "ابحث باسم الموظف أو الرقم الوظيفي..."
+
+#~ msgid "attendance.all_departments"
+#~ msgstr "جميع الأقسام"
+
+#~ msgid "month.jan"
+#~ msgstr "يناير"
+
+#~ msgid "month.feb"
+#~ msgstr "فبراير"
+
+#~ msgid "month.mar"
+#~ msgstr "مارس"
+
+#~ msgid "month.apr"
+#~ msgstr "أبريل"
+
+#~ msgid "month.may"
+#~ msgstr "مايو"
+
+#~ msgid "month.jun"
+#~ msgstr "يونيو"
+
+#~ msgid "month.jul"
+#~ msgstr "يوليو"
+
+#~ msgid "month.aug"
+#~ msgstr "أغسطس"
+
+#~ msgid "month.sep"
+#~ msgstr "سبتمبر"
+
+#~ msgid "month.oct"
+#~ msgstr "أكتوبر"
+
+#~ msgid "month.nov"
+#~ msgstr "نوفمبر"
+
+#~ msgid "month.dec"
+#~ msgstr "ديسمبر"
+
+#~ msgid "btn.view"
+#~ msgstr "عرض"
+
+#~ msgid "btn.export_excel"
+#~ msgstr "تصدير Excel"
+
+#~ msgid "btn.export_monthly_report"
+#~ msgstr "تصدير التقرير الشهري"
+
+#~ msgid "attendance.total"
+#~ msgstr "الإجمالي"
+
+#~ msgid "error.unknown"
+#~ msgstr "خطأ غير معروف"
+
+#~ msgid "error.connection_error"
+#~ msgstr "خطأ في الاتصال"
+
+#~ msgid "attendance.no_data"
+#~ msgstr "لا توجد بيانات للعرض"
+
+#~ msgid "attendance.single_punch"
+#~ msgstr "بصمة واحدة"
+
+#~ msgid "attendance.late_after_grace"
+#~ msgstr "تأخير (بعد السماحية)"
+
+#~ msgid "error.no_table_to_export"
+#~ msgstr "لا يوجد جدول لتصديره"
+
+#~ msgid "attendance.summary_sheet"
+#~ msgstr "ورقة الملخص"
+
+#~ msgid "attendance.details_sheet"
+#~ msgstr "ورقة التفاصيل"
+
+#~ msgid "error.export_failed"
+#~ msgstr "فشل التصدير"
+
+#~ msgid "day.sun"
+#~ msgstr "أحد"
+
+#~ msgid "day.mon"
+#~ msgstr "إثنين"
+
+#~ msgid "day.tue"
+#~ msgstr "ثلاثاء"
+
+#~ msgid "day.wed"
+#~ msgstr "أربعاء"
+
+#~ msgid "day.thu"
+#~ msgstr "خميس"
+
+#~ msgid "day.fri"
+#~ msgstr "جمعة"
+
+#~ msgid "day.sat"
+#~ msgstr "سبت"
+
+#~ msgid "msg.leave_request_prepared"
+#~ msgstr "تم تجهيز طلب الإجازة"
+
+#~ msgid "msg.popup_blocked"
+#~ msgstr "تم حظر النافذة المنبثقة. الرجاء السماح بالنوافذ المنبثقة."
+
+#~ msgid "print.leave_receipt"
+#~ msgstr "إيصال إجازة"
+
+#~ msgid "print.employee"
+#~ msgstr "الموظف"
+
+#~ msgid "print.date"
+#~ msgstr "التاريخ"
+
+#~ msgid "print.leave_type"
+#~ msgstr "نوع الإجازة"
+
+#~ msgid "print.note"
+#~ msgstr "ملاحظات"
+
+#~ msgid "print.print_date"
+#~ msgstr "تاريخ الطباعة"
+
+#~ msgid "error.print_failed"
+#~ msgstr "فشل الطباعة"
+
+#~ msgid "error.save_failed"
+#~ msgstr "فشل الحفظ"
+
+#~ msgid "msg.deduction_saved"
+#~ msgstr "تم حفظ الخصم بنجاح"
+
+#~ msgid "attendance.deduction_notice"
+#~ msgstr "إشعار خصم"
+
+#~ msgid "attendance.created"
+#~ msgstr "تم الإنشاء"
+
+#~ msgid "print.deduction_receipt"
+#~ msgstr "إيصال خصم"
+
+#~ msgid "print.amount_minutes"
+#~ msgstr "المبلغ / الدقائق"
+
+#~ msgid "print.reason"
+#~ msgstr "السبب"
+
+#~ msgid "error.deduction_save_failed"
+#~ msgstr "فشل حفظ الخصم"
+
+#~ msgid "menu.add_leave"
+#~ msgstr "إضافة إجازة سريعة"
+
+#~ msgid "menu.add_deduction"
+#~ msgstr "إضافة خصم"
+
+#~ msgid "modal.quick_leave_title"
+#~ msgstr "إضافة إجازة سريعة"
+
+#~ msgid "leave.emergency"
+#~ msgstr "إجازة طارئة"
+
+#~ msgid "leave.annual"
+#~ msgstr "إجازة سنوية"
+
+#~ msgid "leave.sick"
+#~ msgstr "إجازة مرضية"
+
+#~ msgid "label.note_optional"
+#~ msgstr "ملاحظات (اختياري)"
+
+#~ msgid "btn.save_print"
+#~ msgstr "حفظ وطباعة"
+
+#~ msgid "modal.deduction_title"
+#~ msgstr "إضافة خصم تأخير / جزاء"
+
+#~ msgid "label.amount_minutes"
+#~ msgstr "القيمة (مبلغ أو دقائق)"
+
+#~ msgid "placeholder.amount_minutes"
+#~ msgstr "أدخل القيمة..."
+
+#~ msgid "label.reason"
+#~ msgstr "السبب"
+
+#~ msgid "placeholder.reason"
+#~ msgstr "سبب الخصم..."
+
+#~ msgid "btn.send_print"
+#~ msgstr "إرسال وطباعة"
+
+#~ msgid "attendance.fingerprint_logs_title"
+#~ msgstr "سجلات الحضور من البصمة"
+
+#~ msgid "attendance.fingerprint_logs_header"
+#~ msgstr "سجلات الحضور من البصمة"
+
+#~ msgid "label.last_update"
+#~ msgstr "آخر تحديث"
+
+#~ msgid "label.loading"
+#~ msgstr "جاري التحميل..."
+
+#~ msgid "btn.back_to_dashboard"
+#~ msgstr "العودة للوحة التحكم"
+
+#~ msgid "btn.force_refresh"
+#~ msgstr "فرض التحديث"
+
+#~ msgid "label.search_filters"
+#~ msgstr "فلاتر البحث"
+
+#~ msgid "attendance.all_employees"
+#~ msgstr "جميع الموظفين"
+
+#~ msgid "btn.search"
+#~ msgstr "بحث"
+
+#~ msgid "btn.clear"
+#~ msgstr "مسح"
+
+#~ msgid "stat.total_records"
+#~ msgstr "إجمالي السجلات"
+
+#~ msgid "stat.check_in_records"
+#~ msgstr "سجلات دخول"
+
+#~ msgid "stat.check_out_records"
+#~ msgstr "سجلات خروج"
+
+#~ msgid "stat.active_employees"
+#~ msgstr "موظفين نشطين"
+
+#~ msgid "attendance.logs_title"
+#~ msgstr "سجلات الحضور والانصراف"
+
+#~ msgid "label.showing_records"
+#~ msgstr "عرض %(start)s - %(end)s من %(total)s"
+
+#~ msgid "label.datetime"
+#~ msgstr "الوقت والتاريخ"
+
+#~ msgid "attendance.record_type"
+#~ msgstr "نوع السجل [محدث]"
+
+#~ msgid "attendance.device"
+#~ msgstr "الجهاز"
+
+#~ msgid "attendance.additional_details"
+#~ msgstr "تفاصيل إضافية"
+
+#~ msgid "attendance.check_out"
+#~ msgstr "خروج"
+
+#~ msgid "attendance.check_in"
+#~ msgstr "دخول"
+
+#~ msgid "attendance.break_start"
+#~ msgstr "بداية راحة"
+
+#~ msgid "attendance.break_end"
+#~ msgstr "نهاية راحة"
+
+#~ msgid "attendance.overtime_start"
+#~ msgstr "عمل إضافي"
+
+#~ msgid "attendance.overtime_end"
+#~ msgstr "انتهاء عمل إضافي"
+
+#~ msgid "attendance.undefined_type"
+#~ msgstr "غير معرف"
+
+#~ msgid "attendance.unknown_type"
+#~ msgstr "غير معروف"
+
+#~ msgid "attendance.verify_code"
+#~ msgstr "رمز التحقق"
+
+#~ msgid "attendance.sensor"
+#~ msgstr "حساس"
+
+#~ msgid "attendance.work_code"
+#~ msgstr "كود العمل"
+
+#~ msgid "pagination.label"
+#~ msgstr "ترقيم الصفحات"
+
+#~ msgid "attendance.no_records"
+#~ msgstr "لا توجد سجلات حضور"
+
+#~ msgid "attendance.no_records_criteria"
+#~ msgstr "لا توجد سجلات تطابق معايير البحث المحددة"
+
+#~ msgid "attendance.no_records_synced_yet"
+#~ msgstr "لم يتم مزامنة أي سجلات حضور من أجهزة البصمة بعد"
+
+#~ msgid "btn.start_sync"
+#~ msgstr "بدء المزامنة"
+
+#~ msgid "attendance.check_types_meaning"
+#~ msgstr "معاني أنواع البصمة (CHECKTYPE)"
+
+#~ msgid "attendance.desc_check_out"
+#~ msgstr "انتهاء دوام العمل"
+
+#~ msgid "attendance.desc_check_in"
+#~ msgstr "بداية دوام العمل"
+
+#~ msgid "attendance.desc_break_start"
+#~ msgstr "بداية فترة استراحة"
+
+#~ msgid "attendance.desc_break_end"
+#~ msgstr "العودة من الاستراحة"
+
+#~ msgid "attendance.desc_overtime_start"
+#~ msgstr "بداية فترة عمل إضافي"
+
+#~ msgid "attendance.desc_overtime_end"
+#~ msgstr "نهاية فترة عمل إضافي"
+
+#~ msgid "attendance.desc_undefined"
+#~ msgstr "بصمة بدون تعريف محدد"
+
+#~ msgid "attendance.desc_unknown"
+#~ msgstr "أي رقم آخر غير محدد"
+
+#~ msgid "btn.stop_auto_refresh"
+#~ msgstr "إيقاف التحديث التلقائي"
+
+#~ msgid "btn.start_auto_refresh"
+#~ msgstr "تشغيل التحديث التلقائي"
+
+#~ msgid "msg.export_coming_soon"
+#~ msgstr "ميزة التصدير ستكون متوفرة في التحديث القادم"
+
+#~ msgid "fingerprint.dashboard_title"
+#~ msgstr "لوحة تحكم البصمة"
+
+#~ msgid "fingerprint.manage_devices"
+#~ msgstr "إدارة الأجهزة"
+
+#~ msgid "fingerprint.attendance_records"
+#~ msgstr "سجلات الحضور"
+
+#~ msgid "fingerprint.general_reports"
+#~ msgstr "التقارير العامة"
+
+#~ msgid "fingerprint.sync_now"
+#~ msgstr "مزامنة الآن"
+
+#~ msgid "fingerprint.sync_users"
+#~ msgstr "مزامنة المستخدمين"
+
+#~ msgid "fingerprint.upload_users"
+#~ msgstr "رفع المستخدمين"
+
+#~ msgid "fingerprint.total_devices"
+#~ msgstr "إجمالي الأجهزة"
+
+#~ msgid "fingerprint.active_devices"
+#~ msgstr "أجهزة نشطة"
+
+#~ msgid "fingerprint.never_synced"
+#~ msgstr "لم تتم المزامنة"
+
+#~ msgid "fingerprint.last_sync"
+#~ msgstr "آخر مزامنة"
+
+#~ msgid "fingerprint.status_ready"
+#~ msgstr "جاهز"
+
+#~ msgid "fingerprint.status_unavailable"
+#~ msgstr "غير متاح"
+
+#~ msgid "fingerprint.system_status"
+#~ msgstr "حالة النظام"
+
+#~ msgid "fingerprint.devices_list"
+#~ msgstr "قائمة الأجهزة"
+
+#~ msgid "fingerprint.device_name"
+#~ msgstr "اسم الجهاز"
+
+#~ msgid "fingerprint.ip_address"
+#~ msgstr "عنوان IP"
+
+#~ msgid "fingerprint.status"
+#~ msgstr "الحالة"
+
+#~ msgid "fingerprint.actions"
+#~ msgstr "إجراءات"
+
+#~ msgid "fingerprint.active"
+#~ msgstr "نشط"
+
+#~ msgid "fingerprint.inactive"
+#~ msgstr "غير نشط"
+
+#~ msgid "fingerprint.never"
+#~ msgstr "أبداً"
+
+#~ msgid "btn.test"
+#~ msgstr "اختبار"
+
+#~ msgid "msg.confirm_delete"
+#~ msgstr "هل أنت متأكد من الحذف؟"
+
+#~ msgid "fingerprint.no_devices"
+#~ msgstr "لا توجد أجهزة مضافة"
+
+#~ msgid "fingerprint.start_add_device"
+#~ msgstr "ابدأ بإضافة جهاز بصمة جديد"
+
+#~ msgid "fingerprint.add_device"
+#~ msgstr "إضافة جهاز"
+
+#~ msgid "fingerprint.sync_logs"
+#~ msgstr "مزامنة السجلات"
+
+#~ msgid "btn.view_more"
+#~ msgstr "عرض المزيد"
+
+#~ msgid "fingerprint.no_logs"
+#~ msgstr "لا توجد سجلات"
+
+#~ msgid "fingerprint.test_connection_result"
+#~ msgstr "نتيجة اختبار الاتصال"
+
+#~ msgid "status.testing_connection"
+#~ msgstr "جاري اختبار الاتصال..."
+
+#~ msgid "error.invalid_response"
+#~ msgstr "استجابة غير صالحة"
+
+#~ msgid "msg.connection_success"
+#~ msgstr "تم الاتصال بنجاح"
+
+#~ msgid "device.serial"
+#~ msgstr "الرقم التسلسلي"
+
+#~ msgid "device.platform"
+#~ msgstr "المنصة"
+
+#~ msgid "device.firmware"
+#~ msgstr "إصدار النظام"
+
+#~ msgid "device.users_count"
+#~ msgstr "عدد المستخدمين"
+
+#~ msgid "device.attendance_count"
+#~ msgstr "عدد السجلات"
+
+#~ msgid "error.connection_failed"
+#~ msgstr "فشل الاتصال"
+
+#~ msgid "error.details"
+#~ msgstr "التفاصيل"
+
+#~ msgid "status.syncing"
+#~ msgstr "جاري المزامنة..."
+
+#~ msgid "msg.sync_success"
+#~ msgstr "تمت المزامنة بنجاح"
+
+#~ msgid "unit.user"
+#~ msgstr "مستخدم"
+
+#~ msgid "unit.record"
+#~ msgstr "سجل"
+
+#~ msgid "error.sync_failed"
+#~ msgstr "فشل المزامنة"
+
+#~ msgid "error.sync_error"
+#~ msgstr "خطأ في المزامنة"
+
+#~ msgid "msg.confirm_sync_users"
+#~ msgstr "هل أنت متأكد من مزامنة المستخدمين؟"
+
+#~ msgid "status.syncing_users"
+#~ msgstr "جاري مزامنة المستخدمين..."
+
+#~ msgid "msg.success_process"
+#~ msgstr "العملية ناجحة"
+
+#~ msgid "error.sync_users_failed"
+#~ msgstr "فشل مزامنة المستخدمين"
+
+#~ msgid "error.sync_users_error"
+#~ msgstr "خطأ في مزامنة المستخدمين"
+
+#~ msgid "fingerprint.manage_devices_title"
+#~ msgstr "إدارة أجهزة البصمة"
+
+#~ msgid "fingerprint.scan_network"
+#~ msgstr "فحص الشبكة"
+
+#~ msgid "fingerprint.add_new_device"
+#~ msgstr "إضافة جهاز جديد"
+
+#~ msgid "fingerprint.registered_devices"
+#~ msgstr "الأجهزة المسجلة"
+
+#~ msgid "fingerprint.device_id"
+#~ msgstr "معرف الجهاز"
+
+#~ msgid "fingerprint.port"
+#~ msgstr "المنفذ"
+
+#~ msgid "fingerprint.date_added"
+#~ msgstr "تاريخ الإضافة"
+
+#~ msgid "fingerprint.zkteco_device"
+#~ msgstr "جهاز ZKTeco"
+
+#~ msgid "fingerprint.unknown"
+#~ msgstr "غير معروف"
+
+#~ msgid "btn.test_connection"
+#~ msgstr "اختبار الاتصال"
+
+#~ msgid "btn.edit"
+#~ msgstr "تعديل"
+
+#~ msgid "btn.deactivate"
+#~ msgstr "إلغاء التفعيل"
+
+#~ msgid "btn.activate"
+#~ msgstr "تفعيل"
+
+#~ msgid "msg.confirm_delete_device"
+#~ msgstr "هل أنت متأكد من حذف هذا الجهاز؟"
+
+#~ msgid "btn.delete"
+#~ msgstr "حذف"
+
+#~ msgid "fingerprint.start_add_device_msg"
+#~ msgstr "ابدأ بإضافة أول جهاز بصمة للنظام"
+
+#~ msgid "fingerprint.add_first_device"
+#~ msgstr "إضافة أول جهاز"
+
+#~ msgid "fingerprint.device_name_placeholder"
+#~ msgstr "مثال: المدخل الرئيسي"
+
+#~ msgid "fingerprint.device_name_help"
+#~ msgstr "اسم تعريفي للجهاز للرجوع إليه"
+
+#~ msgid "fingerprint.ip_address_help"
+#~ msgstr "عنوان IP الخاص بالجهاز على الشبكة"
+
+#~ msgid "fingerprint.port_help"
+#~ msgstr "المنفذ الافتراضي هو 4370"
+
+#~ msgid "msg.ensure"
+#~ msgstr "تأكد من:"
+
+#~ msgid "msg.device_connected"
+#~ msgstr "الجهاز متصل بالكهرباء والشبكة"
+
+#~ msgid "msg.ip_reachable"
+#~ msgstr "الوصول لعنوان IP من هذا السيرفر"
+
+#~ msgid "msg.firewall_allowed"
+#~ msgstr "السماح بالاتصال عبر الجدار الناري"
+
+#~ msgid "btn.save_device"
+#~ msgstr "حفظ الجهاز"
+
+#~ msgid "fingerprint.edit_device"
+#~ msgstr "تعديل بيانات الجهاز"
+
+#~ msgid "fingerprint.device_active"
+#~ msgstr "الجهاز نشط"
+
+#~ msgid "fingerprint.device_active_help"
+#~ msgstr "تفعيل هذا الخيار لتمكين المزامنة التلقائية"
+
+#~ msgid "msg.warning"
+#~ msgstr "تنبيه"
+
+#~ msgid "msg.edit_device_warning"
+#~ msgstr "تغيير عنوان IP قد يؤدي لفقدان الاتصال بالجهاز"
+
+#~ msgid "fingerprint.network_scan"
+#~ msgstr "فحص الشبكة"
+
+#~ msgid "fingerprint.select_scan_range"
+#~ msgstr "اختر نطاق الفحص"
+
+#~ msgid "fingerprint.scan_local"
+#~ msgstr "فحص الشبكة المحلية"
+
+#~ msgid "fingerprint.scan_local_desc"
+#~ msgstr "البحث في النطاق 192.168.1.1-255"
+
+#~ msgid "fingerprint.scan_wide"
+#~ msgstr "فحص نطاق واسع"
+
+#~ msgid "fingerprint.scan_wide_desc"
+#~ msgstr "البحث في النطاق 10.0.0.1-255"
+
+#~ msgid "btn.start_scan"
+#~ msgstr "بدء الفحص"
+
+#~ msgid "status.scanning"
+#~ msgstr "جاري الفحص..."
+
+#~ msgid "status.searching_zkteco"
+#~ msgstr "جاري البحث عن أجهزة ZKTeco..."
+
+#~ msgid "status.please_wait"
+#~ msgstr "يرجى الانتظار، هذه العملية قد تستغرق دقيقة..."
+
+#~ msgid "fingerprint.found_devices"
+#~ msgstr "الأجهزة المكتشفة"
+
+#~ msgid "fingerprint.mac_address"
+#~ msgstr "عنوان MAC"
+
+#~ msgid "fingerprint.vendor"
+#~ msgstr "الشركة المصنعة"
+
+#~ msgid "fingerprint.confidence"
+#~ msgstr "الدقة"
+
+#~ msgid "btn.new_scan"
+#~ msgstr "فحص جديد"
+
+#~ msgid "btn.add_selected"
+#~ msgstr "إضافة المختار"
+
+#~ msgid "msg.scanning_wide"
+#~ msgstr "جاري فحص النطاق الواسع (قد يستغرق وقتاً أطول)..."
+
+#~ msgid "msg.scanning_local"
+#~ msgstr "جاري فحص الشبكة المحلية..."
+
+#~ msgid "msg.scanning_ranges"
+#~ msgstr "جاري فحص نطاقات الشبكة..."
+
+#~ msgid "msg.scanned_progress"
+#~ msgstr "تم فحص %d من %d عنوان (%d%%)"
+
+#~ msgid "fingerprint.no_devices_found"
+#~ msgstr "لم يتم العثور على أجهزة"
+
+#~ msgid "error.connection_lost"
+#~ msgstr "انقطع الاتصال"
+
+#~ msgid "btn.add_now"
+#~ msgstr ""
+
+#~ msgid "msg.added"
+#~ msgstr ""
+
+#~ msgid "error.add_failed"
+#~ msgstr ""
+
+#~ msgid "error.occurred"
+#~ msgstr ""
+
+#~ msgid "status.adding"
+#~ msgstr ""
+
+#~ msgid "error.cant_add"
+#~ msgstr ""
+

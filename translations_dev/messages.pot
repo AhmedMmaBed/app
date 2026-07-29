@@ -1,0 +1,4644 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-03 00:22+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app.py:110 templates/add_employee.html:44 templates/edit_employee.html:51
+msgid "placeholder.arabic_name"
+msgstr ""
+
+#: routes/admin_routes.py:21
+msgid "error.incorrect_password"
+msgstr ""
+
+#: routes/admin_routes.py:30
+msgid "msg.attendance_cleared"
+msgstr ""
+
+#: routes/admin_routes.py:34
+msgid "msg.logs_cleared"
+msgstr ""
+
+#: routes/admin_routes.py:38
+msgid "msg.fingerprint_users_cleared"
+msgstr ""
+
+#: routes/admin_routes.py:42
+msgid "msg.employees_cleared"
+msgstr ""
+
+#: routes/admin_routes.py:205
+msgid "error.password_required_for_new_user"
+msgstr ""
+
+#: routes/admin_routes.py:229
+msgid "error.cannot_delete_self_account"
+msgstr ""
+
+#: routes/main_routes.py:101
+msgid "msg.settings_saved"
+msgstr ""
+
+#: routes/main_routes.py:111
+msgid "msg.license_activated"
+msgstr ""
+
+#: routes/main_routes.py:114
+msgid "error.license_activation_failed"
+msgstr ""
+
+#: routes/salary_routes.py:54
+msgid "msg.salary_added"
+msgstr ""
+
+#: routes/salary_routes.py:56
+msgid "error.salary_add_failed"
+msgstr ""
+
+#: routes/salary_routes.py:101
+msgid "msg.salary_updated"
+msgstr ""
+
+#: routes/salary_routes.py:109
+msgid "msg.salary_approved"
+msgstr ""
+
+#: routes/salary_routes.py:160
+msgid "error.generic_with_msg"
+msgstr ""
+
+#: templates/add_employee.html:3
+msgid "page.title.add_employee"
+msgstr ""
+
+#: templates/add_employee.html:7
+msgid "page.header.add_employee"
+msgstr ""
+
+#: templates/add_employee.html:11 templates/edit_employee.html:11
+msgid "btn.back_to_list"
+msgstr ""
+
+#: templates/add_employee.html:21
+msgid "header.basic_info"
+msgstr ""
+
+#: templates/add_employee.html:27 templates/documents.html:412
+#: templates/edit_document.html:394 templates/edit_employee.html:33
+#: templates/leaves.html:372 templates/print_salary_report.html:325
+#: templates/salaries.html:284 templates/salary_reports.html:286
+#: templates/salary_reports.html:367
+msgid "label.employee_number"
+msgstr ""
+
+#: templates/add_employee.html:31
+msgid "help.employee_number_unique"
+msgstr ""
+
+#: templates/add_employee.html:34 templates/admin_users.html:90
+#: templates/edit_employee.html:39
+msgid "label.full_name"
+msgstr ""
+
+#: templates/add_employee.html:42 templates/edit_employee.html:48
+msgid "label.arabic_name"
+msgstr ""
+
+#: templates/add_employee.html:50 templates/attendance_excuses.html:142
+#: templates/edit_employee.html:57 templates/edit_employee.html:404
+#: templates/print_salary_report.html:349 templates/salary_reports.html:368
+msgid "label.department"
+msgstr ""
+
+#: templates/add_employee.html:54 templates/edit_employee.html:62
+msgid "option.select_department"
+msgstr ""
+
+#: templates/add_employee.html:57 templates/edit_employee.html:65
+msgid "tooltip.add_new_department"
+msgstr ""
+
+#: templates/add_employee.html:63 templates/edit_employee.html:71
+msgid "label.position"
+msgstr ""
+
+#: templates/add_employee.html:67 templates/edit_employee.html:76
+msgid "option.select_position"
+msgstr ""
+
+#: templates/add_employee.html:70 templates/edit_employee.html:79
+msgid "tooltip.add_new_position"
+msgstr ""
+
+#: templates/add_employee.html:79 templates/edit_employee.html:88
+#: templates/edit_employee.html:408
+msgid "label.hire_date"
+msgstr ""
+
+#: templates/add_employee.html:84 templates/edit_employee.html:94
+#: templates/print_salary_report.html:385 templates/salary_reports.html:629
+msgid "label.basic_salary"
+msgstr ""
+
+#: templates/add_employee.html:99 templates/edit_employee.html:110
+#: templates/salary_reports.html:374
+msgid "label.shift_type"
+msgstr ""
+
+#: templates/add_employee.html:110 templates/edit_employee.html:122
+msgid "help.select_shift"
+msgstr ""
+
+#: templates/add_employee.html:113 templates/edit_employee.html:125
+msgid "label.shift_start"
+msgstr ""
+
+#: templates/add_employee.html:118 templates/edit_employee.html:130
+msgid "label.shift_end"
+msgstr ""
+
+#: templates/add_employee.html:126 templates/edit_employee.html:138
+#: templates/edit_employee.html:413
+msgid "label.phone_number"
+msgstr ""
+
+#: templates/add_employee.html:128 templates/edit_employee.html:140
+msgid "placeholder.phone"
+msgstr ""
+
+#: templates/add_employee.html:131 templates/edit_employee.html:143
+#: templates/edit_employee.html:419 templates/settings.html:132
+msgid "label.email"
+msgstr ""
+
+#: templates/add_employee.html:133 templates/edit_employee.html:145
+msgid "placeholder.email"
+msgstr ""
+
+#: templates/add_employee.html:138 templates/edit_employee.html:150
+msgid "label.address"
+msgstr ""
+
+#: templates/add_employee.html:140 templates/edit_employee.html:152
+msgid "placeholder.address"
+msgstr ""
+
+#: templates/add_employee.html:145 templates/edit_employee.html:157
+msgid "header.fingerprint_data"
+msgstr ""
+
+#: templates/add_employee.html:148 templates/edit_employee.html:160
+msgid "label.card_number"
+msgstr ""
+
+#: templates/add_employee.html:153 templates/edit_employee.html:165
+msgid "label.privilege"
+msgstr ""
+
+#: templates/add_employee.html:155 templates/edit_employee.html:168
+msgid "option.user_normal"
+msgstr ""
+
+#: templates/add_employee.html:156 templates/edit_employee.html:171
+msgid "option.user_admin"
+msgstr ""
+
+#: templates/add_employee.html:160 templates/edit_employee.html:176
+msgid "label.device_password"
+msgstr ""
+
+#: templates/add_employee.html:165 templates/edit_employee.html:181
+msgid "label.group_id"
+msgstr ""
+
+#: templates/add_employee.html:172 templates/edit_employee.html:189
+#: templates/salary_settings.html:161
+msgid "header.weekly_leave_settings"
+msgstr ""
+
+#: templates/add_employee.html:176 templates/edit_employee.html:193
+msgid "label.weekly_leave_type"
+msgstr ""
+
+#: templates/add_employee.html:179 templates/edit_employee.html:196
+msgid "option.weekly_leave_custom"
+msgstr ""
+
+#: templates/add_employee.html:180 templates/edit_employee.html:199
+msgid "option.weekly_leave_fri_sat"
+msgstr ""
+
+#: templates/add_employee.html:181 templates/edit_employee.html:201
+msgid "option.weekly_leave_fri"
+msgstr ""
+
+#: templates/add_employee.html:182 templates/edit_employee.html:205
+msgid "option.weekly_leave_sat_sun"
+msgstr ""
+
+#: templates/add_employee.html:183 templates/edit_employee.html:208
+msgid "option.weekly_leave_sun_mon"
+msgstr ""
+
+#: templates/add_employee.html:184 templates/edit_employee.html:210
+msgid "option.weekly_leave_none"
+msgstr ""
+
+#: templates/add_employee.html:186 templates/edit_employee.html:213
+msgid "help.weekly_leave_type"
+msgstr ""
+
+#: templates/add_employee.html:189 templates/edit_employee.html:216
+msgid "label.weekly_leave_details"
+msgstr ""
+
+#: templates/add_employee.html:194 templates/edit_employee.html:230
+msgid "text.weekly_leave_fri_sat_desc"
+msgstr ""
+
+#: templates/add_employee.html:200 templates/edit_employee.html:252
+msgid "label.weekly_leave_days"
+msgstr ""
+
+#: templates/add_employee.html:207 templates/add_employee.html:274
+#: templates/edit_employee.html:237 templates/edit_employee.html:259
+#: templates/edit_employee.html:327 templates/settings.html:239
+msgid "day.sunday"
+msgstr ""
+
+#: templates/add_employee.html:216 templates/add_employee.html:275
+#: templates/edit_employee.html:238 templates/edit_employee.html:268
+#: templates/edit_employee.html:330
+msgid "day.monday"
+msgstr ""
+
+#: templates/add_employee.html:225 templates/add_employee.html:276
+#: templates/edit_employee.html:239 templates/edit_employee.html:277
+#: templates/edit_employee.html:333
+msgid "day.tuesday"
+msgstr ""
+
+#: templates/add_employee.html:234 templates/add_employee.html:277
+#: templates/edit_employee.html:240 templates/edit_employee.html:286
+#: templates/edit_employee.html:336
+msgid "day.wednesday"
+msgstr ""
+
+#: templates/add_employee.html:243 templates/add_employee.html:278
+#: templates/edit_employee.html:241 templates/edit_employee.html:295
+#: templates/edit_employee.html:339
+msgid "day.thursday"
+msgstr ""
+
+#: templates/add_employee.html:252 templates/add_employee.html:279
+#: templates/edit_employee.html:242 templates/edit_employee.html:244
+#: templates/edit_employee.html:304 templates/edit_employee.html:342
+#: templates/settings.html:235
+msgid "day.friday"
+msgstr ""
+
+#: templates/add_employee.html:261 templates/add_employee.html:280
+#: templates/edit_employee.html:243 templates/edit_employee.html:313
+#: templates/edit_employee.html:344 templates/settings.html:237
+msgid "day.saturday"
+msgstr ""
+
+#: templates/add_employee.html:266 templates/edit_employee.html:318
+msgid "help.select_weekly_leave_days"
+msgstr ""
+
+#: templates/add_employee.html:271 templates/edit_employee.html:323
+msgid "label.weekly_leave_start"
+msgstr ""
+
+#: templates/add_employee.html:282 templates/edit_employee.html:347
+msgid "help.weekly_leave_start_auto"
+msgstr ""
+
+#: templates/add_employee.html:285 templates/edit_employee.html:350
+msgid "label.previous_leave_balance"
+msgstr ""
+
+#: templates/add_employee.html:289 templates/edit_employee.html:355
+msgid "help.previous_leave_balance"
+msgstr ""
+
+#: templates/add_employee.html:300
+msgid "label.add_initial_salary_record"
+msgstr ""
+
+#: templates/add_employee.html:304
+msgid "label.salary_month"
+msgstr ""
+
+#: templates/add_employee.html:306
+msgid "placeholder.month"
+msgstr ""
+
+#: templates/add_employee.html:309
+msgid "label.salary_year"
+msgstr ""
+
+#: templates/add_employee.html:311
+msgid "placeholder.year"
+msgstr ""
+
+#: templates/add_employee.html:314 templates/salaries.html:176
+msgid "label.allowances"
+msgstr ""
+
+#: templates/add_employee.html:318 templates/salaries.html:184
+msgid "label.deductions"
+msgstr ""
+
+#: templates/add_employee.html:327
+msgid "btn.reset"
+msgstr ""
+
+#: templates/add_employee.html:330
+msgid "btn.save_employee"
+msgstr ""
+
+#: templates/admin_cleanup.html:3
+msgid "page.title.cleanup"
+msgstr ""
+
+#: templates/admin_cleanup.html:9
+msgid "header.cleanup_management"
+msgstr ""
+
+#: templates/admin_cleanup.html:14
+msgid "label.warning"
+msgstr ""
+
+#: templates/admin_cleanup.html:14
+msgid "msg.cleanup_warning"
+msgstr ""
+
+#: templates/admin_cleanup.html:19
+msgid "label.admin_password"
+msgstr ""
+
+#: templates/admin_cleanup.html:21
+msgid "placeholder.enter_password"
+msgstr ""
+
+#: templates/admin_cleanup.html:25
+msgid "label.select_to_clear"
+msgstr ""
+
+#: templates/admin_cleanup.html:29
+msgid "option.clear_attendance"
+msgstr ""
+
+#: templates/admin_cleanup.html:35
+msgid "option.clear_logs"
+msgstr ""
+
+#: templates/admin_cleanup.html:41
+msgid "option.clear_fingerprint_users"
+msgstr ""
+
+#: templates/admin_cleanup.html:47
+msgid "option.clear_employees"
+msgstr ""
+
+#: templates/admin_cleanup.html:48
+msgid "msg.clear_employees_warning"
+msgstr ""
+
+#: templates/admin_cleanup.html:55
+msgid "btn.execute_action"
+msgstr ""
+
+#: templates/admin_cleanup.html:77 templates/admin_cleanup.html:105
+#: templates/admin_cleanup.html:109
+msgid "error.title"
+msgstr ""
+
+#: templates/admin_cleanup.html:77
+msgid "error.select_at_least_one"
+msgstr ""
+
+#: templates/admin_cleanup.html:82
+msgid "msg.are_you_sure"
+msgstr ""
+
+#: templates/admin_cleanup.html:83
+msgid "msg.cannot_undo"
+msgstr ""
+
+#: templates/admin_cleanup.html:88
+msgid "btn.yes_delete"
+msgstr ""
+
+#: templates/admin_cleanup.html:89 templates/admin_roles.html:88
+#: templates/admin_users.html:117 templates/attendance_excuses.html:275
+#: templates/attendance_summary.html:929 templates/attendance_summary.html:963
+#: templates/cancel_leave.html:109 templates/documents.html:232
+#: templates/edit_document.html:134 templates/edit_employee.html:361
+#: templates/edit_employee.html:466 templates/fingerprint_devices.html:169
+#: templates/fingerprint_devices.html:219 templates/leave_settings.html:155
+#: templates/leaves.html:237 templates/manage_structure.html:136
+#: templates/manage_structure.html:179 templates/manage_structure.html:223
+#: templates/manage_structure.html:250 templates/official_holidays.html:136
+#: templates/official_holidays.html:187 templates/salaries.html:194
+#: templates/salaries.html:397 templates/settings.html:286
+#: templates/shift_types.html:133 templates/shift_types.html:196
+msgid "btn.cancel"
+msgstr ""
+
+#: templates/admin_cleanup.html:102
+msgid "status.success"
+msgstr ""
+
+#: templates/admin_cleanup.html:109
+msgid "error.system_error"
+msgstr ""
+
+#: templates/admin_role_permissions.html:3
+msgid "page.title.role_permissions"
+msgstr ""
+
+#: templates/admin_role_permissions.html:8
+msgid "header.assign_permissions"
+msgstr ""
+
+#: templates/admin_role_permissions.html:11
+msgid "btn.back_to_roles"
+msgstr ""
+
+#: templates/admin_role_permissions.html:17
+msgid "header.permissions_matrix"
+msgstr ""
+
+#: templates/admin_role_permissions.html:19 templates/edit_document.html:137
+#: templates/edit_employee.html:364 templates/fingerprint_devices.html:222
+#: templates/official_holidays.html:189 templates/shift_types.html:134
+msgid "btn.save_changes"
+msgstr ""
+
+#: templates/admin_role_permissions.html:69
+msgid "msg.permissions_saved"
+msgstr ""
+
+#: templates/admin_role_permissions.html:72 templates/admin_roles.html:111
+#: templates/admin_roles.html:128 templates/admin_users.html:170
+#: templates/admin_users.html:180 templates/manage_structure.html:236
+#: templates/manage_structure.html:263 templates/salary_reports.html:345
+msgid "error.generic"
+msgstr ""
+
+#: templates/admin_roles.html:3
+msgid "page.title.admin_roles"
+msgstr ""
+
+#: templates/admin_roles.html:8
+msgid "header.admin_roles"
+msgstr ""
+
+#: templates/admin_roles.html:10
+msgid "btn.new_role"
+msgstr ""
+
+#: templates/admin_roles.html:16
+msgid "header.roles_list"
+msgstr ""
+
+#: templates/admin_roles.html:23
+msgid "tbl.header.role_name"
+msgstr ""
+
+#: templates/admin_roles.html:24 templates/shift_types.html:32
+msgid "tbl.header.description"
+msgstr ""
+
+#: templates/admin_roles.html:25
+msgid "tbl.header.users_count"
+msgstr ""
+
+#: templates/admin_roles.html:26
+msgid "tbl.header.permissions_count"
+msgstr ""
+
+#: templates/admin_roles.html:27 templates/shift_types.html:34
+msgid "tbl.header.created_at"
+msgstr ""
+
+#: templates/admin_roles.html:28 templates/admin_users.html:27
+#: templates/documents.html:51 templates/leave_cancellations.html:42
+#: templates/leaves.html:44 templates/official_holidays.html:36
+#: templates/shift_types.html:35
+msgid "tbl.header.actions"
+msgstr ""
+
+#: templates/admin_roles.html:37
+msgid "status.system_role"
+msgstr ""
+
+#: templates/admin_roles.html:46
+msgid "tooltip.manage_permissions"
+msgstr ""
+
+#: templates/admin_roles.html:51 templates/documents.html:125
+msgid "tooltip.delete"
+msgstr ""
+
+#: templates/admin_roles.html:70
+msgid "modal.title.new_role"
+msgstr ""
+
+#: templates/admin_roles.html:78
+msgid "label.role_name"
+msgstr ""
+
+#: templates/admin_roles.html:82 templates/shift_types.html:190
+msgid "label.description"
+msgstr ""
+
+#: templates/admin_roles.html:89 templates/admin_roles.html:112
+#: templates/admin_roles.html:117 templates/admin_users.html:118
+#: templates/attendance_excuses.html:277 templates/leave_settings.html:156
+#: templates/shift_types.html:200
+msgid "btn.save"
+msgstr ""
+
+#: templates/admin_roles.html:104
+msgid "status.saving"
+msgstr ""
+
+#: templates/admin_roles.html:116 templates/leaves.html:283
+msgid "error.connection"
+msgstr ""
+
+#: templates/admin_roles.html:124
+msgid "msg.confirm_delete_role"
+msgstr ""
+
+#: templates/admin_users.html:3
+msgid "page.title.admin_users"
+msgstr ""
+
+#: templates/admin_users.html:8
+msgid "header.admin_users"
+msgstr ""
+
+#: templates/admin_users.html:10
+msgid "btn.new_user"
+msgstr ""
+
+#: templates/admin_users.html:16
+msgid "header.users_list"
+msgstr ""
+
+#: templates/admin_users.html:23
+msgid "tbl.header.username"
+msgstr ""
+
+#: templates/admin_users.html:24
+msgid "tbl.header.full_name"
+msgstr ""
+
+#: templates/admin_users.html:25
+msgid "tbl.header.roles"
+msgstr ""
+
+#: templates/admin_users.html:26 templates/leaves.html:42
+#: templates/official_holidays.html:35 templates/salary_reports.html:529
+#: templates/shift_types.html:33
+msgid "tbl.header.status"
+msgstr ""
+
+#: templates/admin_users.html:41
+msgid "status.no_roles"
+msgstr ""
+
+#: templates/admin_users.html:46 templates/shift_types.html:60
+msgid "status.active"
+msgstr ""
+
+#: templates/admin_users.html:48 templates/shift_types.html:62
+msgid "status.inactive"
+msgstr ""
+
+#: templates/admin_users.html:75 templates/admin_users.html:129
+msgid "modal.title.new_user"
+msgstr ""
+
+#: templates/admin_users.html:85
+msgid "label.username"
+msgstr ""
+
+#: templates/admin_users.html:95
+msgid "label.password"
+msgstr ""
+
+#: templates/admin_users.html:96
+msgid "help.password_change_hint"
+msgstr ""
+
+#: templates/admin_users.html:101
+msgid "label.assign_roles"
+msgstr ""
+
+#: templates/admin_users.html:142
+msgid "modal.title.edit_user"
+msgstr ""
+
+#: templates/admin_users.html:177
+msgid "msg.confirm_delete_user"
+msgstr ""
+
+#: templates/attendance_excuses.html:3
+msgid "attendance.excuses_title"
+msgstr ""
+
+#: templates/attendance_excuses.html:13
+msgid "attendance.excuses_header"
+msgstr ""
+
+#: templates/attendance_excuses.html:17
+msgid "btn.add_manual_excuse"
+msgstr ""
+
+#: templates/attendance_excuses.html:27 templates/cancel_leave.html:35
+#: templates/fingerprint_attendance.html:50 templates/leaves.html:206
+msgid "label.start_date"
+msgstr ""
+
+#: templates/attendance_excuses.html:32 templates/cancel_leave.html:39
+#: templates/fingerprint_attendance.html:55 templates/leaves.html:211
+msgid "label.end_date"
+msgstr ""
+
+#: templates/attendance_excuses.html:37 templates/cancel_leave.html:18
+#: templates/edit_document.html:29 templates/edit_document.html:162
+#: templates/fingerprint_attendance.html:38 templates/salaries.html:118
+#: templates/salaries.html:214
+msgid "label.employee"
+msgstr ""
+
+#: templates/attendance_excuses.html:39
+msgid "search.placeholder_employee"
+msgstr ""
+
+#: templates/attendance_excuses.html:51
+msgid "btn.filter"
+msgstr ""
+
+#: templates/attendance_excuses.html:55
+msgid "btn.reset_all"
+msgstr ""
+
+#: templates/attendance_excuses.html:132
+msgid "attendance.invalid_punches_title"
+msgstr ""
+
+#: templates/attendance_excuses.html:133
+msgid "attendance.invalid_punches_desc"
+msgstr ""
+
+#: templates/attendance_excuses.html:140 templates/attendance_excuses.html:190
+#: templates/attendance_excuses.html:259 templates/attendance_summary.html:911
+#: templates/attendance_summary.html:947 templates/official_holidays.html:111
+#: templates/official_holidays.html:163
+msgid "label.date"
+msgstr ""
+
+#: templates/attendance_excuses.html:141 templates/attendance_excuses.html:191
+#: templates/attendance_excuses.html:250 templates/attendance_summary.html:63
+#: templates/fingerprint_attendance.html:130
+msgid "attendance.employee"
+msgstr ""
+
+#: templates/attendance_excuses.html:143
+msgid "attendance.punch_status"
+msgstr ""
+
+#: templates/attendance_excuses.html:144
+msgid "attendance.available_punches"
+msgstr ""
+
+#: templates/attendance_excuses.html:145
+msgid "label.quick_action"
+msgstr ""
+
+#: templates/attendance_excuses.html:158
+msgid "attendance.incomplete_punch"
+msgstr ""
+
+#: templates/attendance_excuses.html:165
+msgid "attendance.mark_as_mission"
+msgstr ""
+
+#: templates/attendance_excuses.html:172
+msgid "attendance.no_invalid_punches"
+msgstr ""
+
+#: templates/attendance_excuses.html:184
+msgid "attendance.excuses_history_title"
+msgstr ""
+
+#: templates/attendance_excuses.html:192 templates/attendance_excuses.html:263
+#: templates/official_holidays.html:116 templates/official_holidays.html:168
+msgid "label.type"
+msgstr ""
+
+#: templates/attendance_excuses.html:193 templates/attendance_excuses.html:270
+msgid "label.reason_notes"
+msgstr ""
+
+#: templates/attendance_excuses.html:194
+msgid "label.added_date"
+msgstr ""
+
+#: templates/attendance_excuses.html:195
+msgid "label.actions"
+msgstr ""
+
+#: templates/attendance_excuses.html:206
+msgid "leave.mission"
+msgstr ""
+
+#: templates/attendance_excuses.html:208
+msgid "leave.manual_excuse"
+msgstr ""
+
+#: templates/attendance_excuses.html:215
+msgid "msg.confirm_delete_excuse"
+msgstr ""
+
+#: templates/attendance_excuses.html:226
+msgid "attendance.no_excuses_records"
+msgstr ""
+
+#: templates/attendance_excuses.html:245
+msgid "modal.add_excuse_title"
+msgstr ""
+
+#: templates/attendance_excuses.html:252 templates/salaries.html:121
+#: templates/salaries.html:217
+msgid "select.choose_employee"
+msgstr ""
+
+#: templates/attendance_excuses.html:265
+msgid "leave.mission_full_attendance"
+msgstr ""
+
+#: templates/attendance_excuses.html:266
+msgid "leave.other_excuse_cancel_deduction"
+msgstr ""
+
+#: templates/attendance_excuses.html:287
+msgid "msg.confirm_mission_for"
+msgstr ""
+
+#: templates/attendance_excuses.html:287
+msgid "msg.on_date"
+msgstr ""
+
+#: templates/attendance_excuses.html:287
+msgid "msg.mission_explanation"
+msgstr ""
+
+#: templates/attendance_excuses.html:297
+msgid "reason.quick_excuse_auto"
+msgstr ""
+
+#: templates/attendance_summary.html:3
+msgid "attendance.summary_title"
+msgstr ""
+
+#: templates/attendance_summary.html:10
+msgid "attendance.summary_header"
+msgstr ""
+
+#: templates/attendance_summary.html:16
+msgid "search.placeholder_name_num"
+msgstr ""
+
+#: templates/attendance_summary.html:20
+msgid "attendance.all_departments"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:135
+#: templates/salaries.html:231 templates/salary_reports.html:44
+msgid "month.jan"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:136
+#: templates/salaries.html:232 templates/salary_reports.html:45
+msgid "month.feb"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:137
+#: templates/salaries.html:233 templates/salary_reports.html:46
+msgid "month.mar"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:138
+#: templates/salaries.html:234 templates/salary_reports.html:47
+msgid "month.apr"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:139
+#: templates/salaries.html:235 templates/salary_reports.html:48
+msgid "month.may"
+msgstr ""
+
+#: templates/attendance_summary.html:33 templates/salaries.html:140
+#: templates/salaries.html:236 templates/salary_reports.html:49
+msgid "month.jun"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:141
+#: templates/salaries.html:237 templates/salary_reports.html:50
+msgid "month.jul"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:142
+#: templates/salaries.html:238 templates/salary_reports.html:51
+msgid "month.aug"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:143
+#: templates/salaries.html:239 templates/salary_reports.html:52
+msgid "month.sep"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:144
+#: templates/salaries.html:240 templates/salary_reports.html:53
+msgid "month.oct"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:145
+#: templates/salaries.html:241 templates/salary_reports.html:54
+msgid "month.nov"
+msgstr ""
+
+#: templates/attendance_summary.html:34 templates/salaries.html:146
+#: templates/salaries.html:242 templates/salary_reports.html:55
+msgid "month.dec"
+msgstr ""
+
+#: templates/attendance_summary.html:42
+msgid "btn.view"
+msgstr ""
+
+#: templates/attendance_summary.html:54
+msgid "btn.export_excel"
+msgstr ""
+
+#: templates/attendance_summary.html:56
+msgid "btn.export_monthly_report"
+msgstr ""
+
+#: templates/attendance_summary.html:70
+msgid "attendance.total"
+msgstr ""
+
+#: templates/attendance_summary.html:227
+msgid "error.unknown"
+msgstr ""
+
+#: templates/attendance_summary.html:230
+#: templates/fingerprint_dashboard.html:303
+#: templates/fingerprint_devices.html:599 templates/salaries.html:475
+#: templates/salary_reports.html:351
+msgid "error.connection_error"
+msgstr ""
+
+#: templates/attendance_summary.html:240
+msgid "attendance.no_data"
+msgstr ""
+
+#: templates/attendance_summary.html:251
+msgid "attendance.single_punch"
+msgstr ""
+
+#: templates/attendance_summary.html:253
+msgid "attendance.late_after_grace"
+msgstr ""
+
+#: templates/attendance_summary.html:367
+msgid "error.no_table_to_export"
+msgstr ""
+
+#: templates/attendance_summary.html:369
+msgid "attendance.summary_sheet"
+msgstr ""
+
+#: templates/attendance_summary.html:418
+msgid "attendance.details_sheet"
+msgstr ""
+
+#: templates/attendance_summary.html:421 templates/attendance_summary.html:507
+msgid "error.export_failed"
+msgstr ""
+
+#: templates/attendance_summary.html:515 templates/salary_settings.html:193
+msgid "day.sun"
+msgstr ""
+
+#: templates/attendance_summary.html:515 templates/salary_settings.html:195
+msgid "day.mon"
+msgstr ""
+
+#: templates/attendance_summary.html:515 templates/salary_settings.html:197
+msgid "day.tue"
+msgstr ""
+
+#: templates/attendance_summary.html:516 templates/salary_settings.html:199
+msgid "day.wed"
+msgstr ""
+
+#: templates/attendance_summary.html:516 templates/salary_settings.html:201
+msgid "day.thu"
+msgstr ""
+
+#: templates/attendance_summary.html:516 templates/salary_settings.html:189
+msgid "day.fri"
+msgstr ""
+
+#: templates/attendance_summary.html:516 templates/salary_settings.html:191
+msgid "day.sat"
+msgstr ""
+
+#: templates/attendance_summary.html:676 templates/attendance_summary.html:799
+msgid "msg.leave_request_prepared"
+msgstr ""
+
+#: templates/attendance_summary.html:684 templates/attendance_summary.html:738
+#: templates/attendance_summary.html:806
+msgid "msg.popup_blocked"
+msgstr ""
+
+#: templates/attendance_summary.html:687 templates/attendance_summary.html:690
+#: templates/attendance_summary.html:809 templates/attendance_summary.html:812
+msgid "print.leave_receipt"
+msgstr ""
+
+#: templates/attendance_summary.html:691 templates/attendance_summary.html:745
+msgid "print.employee"
+msgstr ""
+
+#: templates/attendance_summary.html:692 templates/attendance_summary.html:746
+msgid "print.date"
+msgstr ""
+
+#: templates/attendance_summary.html:693
+msgid "print.leave_type"
+msgstr ""
+
+#: templates/attendance_summary.html:694
+msgid "print.note"
+msgstr ""
+
+#: templates/attendance_summary.html:695 templates/attendance_summary.html:749
+msgid "print.print_date"
+msgstr ""
+
+#: templates/attendance_summary.html:701 templates/attendance_summary.html:755
+msgid "error.print_failed"
+msgstr ""
+
+#: templates/attendance_summary.html:719
+msgid "error.save_failed"
+msgstr ""
+
+#: templates/attendance_summary.html:720
+msgid "msg.deduction_saved"
+msgstr ""
+
+#: templates/attendance_summary.html:726 templates/attendance_summary.html:727
+msgid "attendance.deduction_notice"
+msgstr ""
+
+#: templates/attendance_summary.html:726
+msgid "attendance.created"
+msgstr ""
+
+#: templates/attendance_summary.html:741 templates/attendance_summary.html:744
+msgid "print.deduction_receipt"
+msgstr ""
+
+#: templates/attendance_summary.html:747
+msgid "print.amount_minutes"
+msgstr ""
+
+#: templates/attendance_summary.html:748
+msgid "print.reason"
+msgstr ""
+
+#: templates/attendance_summary.html:758
+msgid "error.deduction_save_failed"
+msgstr ""
+
+#: templates/attendance_summary.html:887
+msgid "menu.add_leave"
+msgstr ""
+
+#: templates/attendance_summary.html:891
+msgid "menu.add_deduction"
+msgstr ""
+
+#: templates/attendance_summary.html:905
+msgid "modal.quick_leave_title"
+msgstr ""
+
+#: templates/attendance_summary.html:915 templates/leaves.html:191
+msgid "label.leave_type"
+msgstr ""
+
+#: templates/attendance_summary.html:917
+msgid "leave.emergency"
+msgstr ""
+
+#: templates/attendance_summary.html:918
+msgid "leave.annual"
+msgstr ""
+
+#: templates/attendance_summary.html:919
+msgid "leave.sick"
+msgstr ""
+
+#: templates/attendance_summary.html:923
+msgid "label.note_optional"
+msgstr ""
+
+#: templates/attendance_summary.html:930
+msgid "btn.save_print"
+msgstr ""
+
+#: templates/attendance_summary.html:941
+msgid "modal.deduction_title"
+msgstr ""
+
+#: templates/attendance_summary.html:951
+msgid "label.amount_minutes"
+msgstr ""
+
+#: templates/attendance_summary.html:953
+msgid "placeholder.amount_minutes"
+msgstr ""
+
+#: templates/attendance_summary.html:956 templates/edit_document.html:235
+msgid "label.reason"
+msgstr ""
+
+#: templates/attendance_summary.html:958
+msgid "placeholder.reason"
+msgstr ""
+
+#: templates/attendance_summary.html:964
+msgid "btn.send_print"
+msgstr ""
+
+#: templates/base.html:8 templates/base.html:168 templates/base.html:170
+#: templates/salaries.html:3
+msgid "app.name"
+msgstr ""
+
+#: templates/base.html:183
+msgid "nav.alerts.docs_expiry"
+msgstr ""
+
+#: templates/base.html:195
+msgid "nav.alerts.late_arrival"
+msgstr ""
+
+#: templates/base.html:203
+msgid "nav.license_status"
+msgstr ""
+
+#: templates/base.html:206 templates/base.html:207 templates/base.html:210
+msgid "msg.license_days"
+msgstr ""
+
+#: templates/base.html:214
+msgid "btn.activate_license"
+msgstr ""
+
+#: templates/base.html:245
+msgid "auth.logout"
+msgstr ""
+
+#: templates/base.html:264
+msgid "nav.home"
+msgstr ""
+
+#: templates/base.html:272
+msgid "nav.employees"
+msgstr ""
+
+#: templates/base.html:281
+msgid "nav.salaries"
+msgstr ""
+
+#: templates/base.html:290
+msgid "nav.structure"
+msgstr ""
+
+#: templates/base.html:297
+msgid "nav.add_dept"
+msgstr ""
+
+#: templates/base.html:303
+msgid "nav.add_pos"
+msgstr ""
+
+#: templates/base.html:317
+msgid "nav.leaves"
+msgstr ""
+
+#: templates/base.html:326
+msgid "nav.leave_cancellations"
+msgstr ""
+
+#: templates/base.html:335
+msgid "nav.official_holidays"
+msgstr ""
+
+#: templates/base.html:344
+msgid "nav.leave_settings"
+msgstr ""
+
+#: templates/base.html:353
+msgid "nav.shift_types"
+msgstr ""
+
+#: templates/base.html:363
+msgid "nav.fingerprint"
+msgstr ""
+
+#: templates/base.html:372
+msgid "nav.attendance_excuses"
+msgstr ""
+
+#: templates/base.html:381
+msgid "nav.reports"
+msgstr ""
+
+#: templates/base.html:391
+msgid "nav.documents"
+msgstr ""
+
+#: templates/base.html:403
+msgid "nav.admin"
+msgstr ""
+
+#: templates/base.html:411
+msgid "nav.roles"
+msgstr ""
+
+#: templates/base.html:418
+msgid "nav.users"
+msgstr ""
+
+#: templates/base.html:432
+msgid "nav.settings"
+msgstr ""
+
+#: templates/base.html:441
+msgid "nav.salary_settings_v2"
+msgstr ""
+
+#: templates/base.html:462
+msgid "msg.success"
+msgstr ""
+
+#: templates/base.html:462
+msgid "msg.alert"
+msgstr ""
+
+#: templates/base.html:477
+msgid "msg.confirm"
+msgstr ""
+
+#: templates/base.html:489
+msgid "footer.rights_reserved"
+msgstr ""
+
+#: templates/base.html:493
+msgid "footer.developed_by"
+msgstr ""
+
+#: templates/base.html:494
+msgid "footer.company"
+msgstr ""
+
+#: templates/cancel_leave.html:3
+msgid "title.cut_leave"
+msgstr ""
+
+#: templates/cancel_leave.html:15
+msgid "header.cut_leave"
+msgstr ""
+
+#: templates/cancel_leave.html:24 templates/leave_cancellations.html:24
+msgid "btn.back_to_leaves"
+msgstr ""
+
+#: templates/cancel_leave.html:32
+msgid "header.current_leave_details"
+msgstr ""
+
+#: templates/cancel_leave.html:43 templates/leaves.html:226
+msgid "label.days_count"
+msgstr ""
+
+#: templates/cancel_leave.html:44 templates/cancel_leave.html:48
+#: templates/cancel_leave.html:88 templates/cancel_leave.html:92
+#: templates/cancel_leave.html:96 templates/cancel_leave.html:156
+#: templates/cancel_leave.html:157 templates/cancel_leave.html:158
+#: templates/leave_cancellations.html:68 templates/leaves.html:71
+#: templates/leaves.html:227 templates/leaves.html:427
+#: templates/leaves.html:429 templates/leaves.html:558
+#: templates/leaves.html:562 templates/salary_reports.html:601
+#: templates/salary_reports.html:657
+msgid "unit.day"
+msgstr ""
+
+#: templates/cancel_leave.html:47
+msgid "label.remaining_days"
+msgstr ""
+
+#: templates/cancel_leave.html:60
+msgid "label.cut_date"
+msgstr ""
+
+#: templates/cancel_leave.html:66
+msgid "help.cut_date"
+msgstr ""
+
+#: templates/cancel_leave.html:74
+msgid "label.cut_reason"
+msgstr ""
+
+#: templates/cancel_leave.html:77
+msgid "placeholder.cut_reason"
+msgstr ""
+
+#: templates/cancel_leave.html:84
+msgid "header.cut_summary"
+msgstr ""
+
+#: templates/cancel_leave.html:87
+msgid "label.cancelled_days"
+msgstr ""
+
+#: templates/cancel_leave.html:91
+msgid "label.remaining_days_after"
+msgstr ""
+
+#: templates/cancel_leave.html:95
+msgid "label.saved_balance"
+msgstr ""
+
+#: templates/cancel_leave.html:105 templates/leave_cancellations.html:143
+msgid "btn.cut_leave"
+msgstr ""
+
+#: templates/cancel_leave.html:165
+msgid "warn.cut_leave_full_cancellation"
+msgstr ""
+
+#: templates/cancel_leave.html:181
+msgid "error.cut_date_invalid"
+msgstr ""
+
+#: templates/cancel_leave.html:185
+msgid "confirm.cut_leave"
+msgstr ""
+
+#: templates/documents.html:3
+msgid "page.title.documents"
+msgstr ""
+
+#: templates/documents.html:7
+msgid "header.documents_management"
+msgstr ""
+
+#: templates/documents.html:11
+msgid "btn.upload_new_document"
+msgstr ""
+
+#: templates/documents.html:22
+msgid "header.expiry_alerts"
+msgstr ""
+
+#: templates/documents.html:38
+msgid "header.documents_list"
+msgstr ""
+
+#: templates/documents.html:45 templates/leave_cancellations.html:35
+#: templates/leaves.html:35 templates/salaries.html:30
+msgid "tbl.header.employee"
+msgstr ""
+
+#: templates/documents.html:46
+msgid "tbl.header.document_type"
+msgstr ""
+
+#: templates/documents.html:47
+msgid "tbl.header.file_name"
+msgstr ""
+
+#: templates/documents.html:48
+msgid "tbl.header.upload_date"
+msgstr ""
+
+#: templates/documents.html:49
+msgid "tbl.header.expiry_date"
+msgstr ""
+
+#: templates/documents.html:50
+msgid "tbl.header.expiry_status"
+msgstr ""
+
+#: templates/documents.html:86
+msgid "status.none"
+msgstr ""
+
+#: templates/documents.html:92
+msgid "status.expired"
+msgstr ""
+
+#: templates/documents.html:97
+msgid "status.expiring_in_days"
+msgstr ""
+
+#: templates/documents.html:101
+msgid "status.valid"
+msgstr ""
+
+#: templates/documents.html:112
+msgid "tooltip.download"
+msgstr ""
+
+#: templates/documents.html:116
+msgid "tooltip.view"
+msgstr ""
+
+#: templates/documents.html:120
+msgid "tooltip.edit"
+msgstr ""
+
+#: templates/documents.html:135
+msgid "msg.no_documents_uploaded"
+msgstr ""
+
+#: templates/documents.html:138
+msgid "btn.upload_first_document"
+msgstr ""
+
+#: templates/documents.html:154
+msgid "modal.title.upload_document"
+msgstr ""
+
+#: templates/documents.html:162 templates/leaves.html:168
+#: templates/salary_reports.html:21
+msgid "label.search_employee"
+msgstr ""
+
+#: templates/documents.html:170 templates/edit_document.html:37
+#: templates/employees.html:35 templates/leaves.html:176
+#: templates/salary_reports.html:29
+msgid "placeholder.search_employee"
+msgstr ""
+
+#: templates/documents.html:179 templates/leaves.html:187
+msgid "help.search_employee"
+msgstr ""
+
+#: templates/documents.html:183 templates/edit_document.html:52
+#: templates/edit_document.html:172
+msgid "label.document_type"
+msgstr ""
+
+#: templates/documents.html:186 templates/edit_document.html:55
+msgid "option.select_document_type"
+msgstr ""
+
+#: templates/documents.html:187 templates/edit_document.html:57
+msgid "doc_type.contract"
+msgstr ""
+
+#: templates/documents.html:188 templates/edit_document.html:59
+msgid "doc_type.education"
+msgstr ""
+
+#: templates/documents.html:189 templates/edit_document.html:61
+msgid "doc_type.experience"
+msgstr ""
+
+#: templates/documents.html:190 templates/edit_document.html:63
+msgid "doc_type.id_card"
+msgstr ""
+
+#: templates/documents.html:191 templates/edit_document.html:65
+msgid "doc_type.passport"
+msgstr ""
+
+#: templates/documents.html:192 templates/edit_document.html:67
+msgid "doc_type.medical"
+msgstr ""
+
+#: templates/documents.html:193 templates/edit_document.html:69
+msgid "doc_type.photo"
+msgstr ""
+
+#: templates/documents.html:194 templates/edit_document.html:71
+msgid "doc_type.other"
+msgstr ""
+
+#: templates/documents.html:201
+msgid "label.file"
+msgstr ""
+
+#: templates/documents.html:206
+msgid "help.allowed_files"
+msgstr ""
+
+#: templates/documents.html:210 templates/edit_document.html:78
+#: templates/edit_document.html:167
+msgid "label.expiry_date"
+msgstr ""
+
+#: templates/documents.html:213 templates/edit_document.html:82
+msgid "help.expiry_date"
+msgstr ""
+
+#: templates/documents.html:221 templates/edit_document.html:154
+msgid "label.file_name"
+msgstr ""
+
+#: templates/documents.html:222 templates/documents.html:260
+#: templates/documents.html:264
+msgid "msg.no_file_selected"
+msgstr ""
+
+#: templates/documents.html:225 templates/edit_document.html:126
+msgid "label.file_size"
+msgstr ""
+
+#: templates/documents.html:235
+msgid "btn.upload_document"
+msgstr ""
+
+#: templates/documents.html:254 templates/edit_document.html:310
+msgid "unit.mb"
+msgstr ""
+
+#: templates/documents.html:258 templates/documents.html:325
+#: templates/edit_document.html:314 templates/edit_document.html:481
+msgid "error.file_too_large"
+msgstr ""
+
+#: templates/documents.html:279
+msgid "msg.confirm_delete_document"
+msgstr ""
+
+#: templates/documents.html:298
+msgid "error.select_file"
+msgstr ""
+
+#: templates/documents.html:304
+msgid "error.select_employee_search"
+msgstr ""
+
+#: templates/documents.html:310 templates/edit_document.html:466
+msgid "error.select_document_type"
+msgstr ""
+
+#: templates/documents.html:318 templates/edit_document.html:475
+msgid "error.file_type_not_allowed"
+msgstr ""
+
+#: templates/documents.html:337
+msgid "msg.image_preview"
+msgstr ""
+
+#: templates/documents.html:366 templates/edit_document.html:348
+msgid "status.searching"
+msgstr ""
+
+#: templates/documents.html:385 templates/edit_document.html:367
+#: templates/leaves.html:354
+msgid "msg.no_results"
+msgstr ""
+
+#: templates/documents.html:391 templates/edit_document.html:373
+msgid "error.search_error"
+msgstr ""
+
+#: templates/edit_document.html:3
+msgid "page.title.edit_document"
+msgstr ""
+
+#: templates/edit_document.html:8
+msgid "header.edit_document"
+msgstr ""
+
+#: templates/edit_document.html:12
+msgid "btn.back_to_documents"
+msgstr ""
+
+#: templates/edit_document.html:22
+msgid "header.edit_document_data"
+msgstr ""
+
+#: templates/edit_document.html:48
+msgid "help.employee_edit_disabled"
+msgstr ""
+
+#: templates/edit_document.html:86
+msgid "label.change_reason"
+msgstr ""
+
+#: templates/edit_document.html:88
+msgid "placeholder.change_reason"
+msgstr ""
+
+#: templates/edit_document.html:90
+msgid "help.change_reason"
+msgstr ""
+
+#: templates/edit_document.html:97
+msgid "label.current_file"
+msgstr ""
+
+#: templates/edit_document.html:105
+msgid "help.current_file"
+msgstr ""
+
+#: templates/edit_document.html:109
+msgid "label.new_document"
+msgstr ""
+
+#: templates/edit_document.html:113
+msgid "help.new_document"
+msgstr ""
+
+#: templates/edit_document.html:122
+msgid "label.new_file_name"
+msgstr ""
+
+#: templates/edit_document.html:149
+msgid "header.document_info"
+msgstr ""
+
+#: templates/edit_document.html:158
+msgid "label.upload_date"
+msgstr ""
+
+#: templates/edit_document.html:183
+msgid "header.change_history"
+msgstr ""
+
+#: templates/edit_document.html:206
+msgid "action.document_created"
+msgstr ""
+
+#: templates/edit_document.html:208
+msgid "action.data_updated"
+msgstr ""
+
+#: templates/edit_document.html:210
+msgid "action.file_changed"
+msgstr ""
+
+#: templates/edit_document.html:212
+msgid "action.document_deleted"
+msgstr ""
+
+#: templates/edit_document.html:222
+msgid "label.old_file"
+msgstr ""
+
+#: templates/edit_document.html:226
+msgid "label.new_file"
+msgstr ""
+
+#: templates/edit_document.html:460
+msgid "error.select_employee"
+msgstr ""
+
+#: templates/edit_employee.html:3
+msgid "page.title.edit_employee"
+msgstr ""
+
+#: templates/edit_employee.html:7
+msgid "page.header.edit_employee"
+msgstr ""
+
+#: templates/edit_employee.html:23
+msgid "header.edit_data_for"
+msgstr ""
+
+#: templates/edit_employee.html:36
+msgid "help.employee_number_readonly"
+msgstr ""
+
+#: templates/edit_employee.html:102
+msgid "label.cost_center"
+msgstr ""
+
+#: templates/edit_employee.html:226
+msgid "text.weekly_leave_none_desc"
+msgstr ""
+
+#: templates/edit_employee.html:228
+msgid "text.weekly_leave_fri_desc"
+msgstr ""
+
+#: templates/edit_employee.html:232
+msgid "text.weekly_leave_sat_sun_desc"
+msgstr ""
+
+#: templates/edit_employee.html:234
+msgid "text.weekly_leave_sun_mon_desc"
+msgstr ""
+
+#: templates/edit_employee.html:236
+msgid "unit.days_starting"
+msgstr ""
+
+#: templates/edit_employee.html:376 templates/salaries.html:277
+#: templates/salary_reports.html:110
+msgid "header.employee_info"
+msgstr ""
+
+#: templates/edit_employee.html:429
+msgid "header.quick_links"
+msgstr ""
+
+#: templates/edit_employee.html:435
+msgid "btn.view_salaries"
+msgstr ""
+
+#: templates/edit_employee.html:439
+msgid "btn.view_leaves"
+msgstr ""
+
+#: templates/edit_employee.html:444
+msgid "btn.view_documents"
+msgstr ""
+
+#: templates/edit_employee.html:458
+msgid "modal.title.save_confirmation"
+msgstr ""
+
+#: templates/edit_employee.html:463
+msgid "modal.body.save_changes_confirm"
+msgstr ""
+
+#: templates/edit_employee.html:467
+msgid "btn.yes_save"
+msgstr ""
+
+#: templates/edit_employee.html:487 templates/edit_employee.html:498
+#: templates/manage_structure.html:233 templates/manage_structure.html:236
+#: templates/manage_structure.html:260 templates/manage_structure.html:263
+msgid "title.error"
+msgstr ""
+
+#: templates/edit_employee.html:488
+msgid "error.name_too_short"
+msgstr ""
+
+#: templates/edit_employee.html:490 templates/edit_employee.html:501
+msgid "btn.ok"
+msgstr ""
+
+#: templates/edit_employee.html:499
+msgid "error.salary_must_be_positive"
+msgstr ""
+
+#: templates/employees.html:3
+msgid "page.title.employees"
+msgstr ""
+
+#: templates/employees.html:7
+msgid "page.header.employees"
+msgstr ""
+
+#: templates/employees.html:11
+msgid "btn.add_new_employee"
+msgstr ""
+
+#: templates/employees.html:14
+msgid "btn.import_excel"
+msgstr ""
+
+#: templates/employees.html:20
+msgid "btn.delete_all_employees"
+msgstr ""
+
+#: templates/employees.html:39
+msgid "filter.all_departments"
+msgstr ""
+
+#: templates/employees.html:44
+msgid "filter.all_positions"
+msgstr ""
+
+#: templates/employees.html:49
+msgid "label.employee_count"
+msgstr ""
+
+#: templates/employees.html:61
+msgid "header.employee_list"
+msgstr ""
+
+#: templates/employees.html:69
+msgid "th.emp_number"
+msgstr ""
+
+#: templates/employees.html:70
+msgid "th.name"
+msgstr ""
+
+#: templates/employees.html:71
+msgid "th.cost_center"
+msgstr ""
+
+#: templates/employees.html:72
+msgid "th.phone"
+msgstr ""
+
+#: templates/employees.html:73
+msgid "th.department"
+msgstr ""
+
+#: templates/employees.html:74
+msgid "th.position"
+msgstr ""
+
+#: templates/employees.html:75
+msgid "th.hire_date"
+msgstr ""
+
+#: templates/employees.html:76
+msgid "th.salary"
+msgstr ""
+
+#: templates/employees.html:77
+msgid "th.actions"
+msgstr ""
+
+#: templates/employees.html:86
+msgid "msg.loading_employees"
+msgstr ""
+
+#: templates/employees.html:97
+msgid "msg.no_employees_found"
+msgstr ""
+
+#: templates/employees.html:98
+msgid "msg.start_adding_employees"
+msgstr ""
+
+#: templates/employees.html:100
+msgid "btn.add_first_employee"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:3
+msgid "attendance.fingerprint_logs_title"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:13
+msgid "attendance.fingerprint_logs_header"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:14
+msgid "label.last_update"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:15
+msgid "label.loading"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:20
+#: templates/fingerprint_devices.html:11
+msgid "btn.back_to_dashboard"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:23
+msgid "btn.force_refresh"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:32
+msgid "label.search_filters"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:40
+msgid "attendance.all_employees"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:63
+msgid "btn.search"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:66
+msgid "btn.clear"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:82
+msgid "stat.total_records"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:90
+msgid "stat.check_in_records"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:98
+msgid "stat.check_out_records"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:106
+msgid "stat.active_employees"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:116
+msgid "attendance.logs_title"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:119
+msgid "label.showing_records"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:131
+msgid "label.datetime"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:132
+msgid "attendance.record_type"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:133
+#: templates/fingerprint_attendance.html:210
+msgid "attendance.device"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:134
+msgid "attendance.additional_details"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:163
+#: templates/fingerprint_attendance.html:311
+msgid "attendance.check_out"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:168
+#: templates/fingerprint_attendance.html:315
+msgid "attendance.check_in"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:173
+#: templates/fingerprint_attendance.html:320
+msgid "attendance.break_start"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:178
+#: templates/fingerprint_attendance.html:323
+msgid "attendance.break_end"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:183
+#: templates/fingerprint_attendance.html:331
+msgid "attendance.overtime_start"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:188
+#: templates/fingerprint_attendance.html:335
+msgid "attendance.overtime_end"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:193
+#: templates/fingerprint_attendance.html:340
+msgid "attendance.undefined_type"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:198
+#: templates/fingerprint_attendance.html:344
+msgid "attendance.unknown_type"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:218
+msgid "attendance.verify_code"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:222
+msgid "attendance.sensor"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:226
+msgid "attendance.work_code"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:239
+msgid "pagination.label"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:282
+msgid "attendance.no_records"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:286
+msgid "attendance.no_records_criteria"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:288
+msgid "attendance.no_records_synced_yet"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:292
+msgid "btn.start_sync"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:304
+msgid "attendance.check_types_meaning"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:312
+msgid "attendance.desc_check_out"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:316
+msgid "attendance.desc_check_in"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:320
+msgid "attendance.desc_break_start"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:324
+msgid "attendance.desc_break_end"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:332
+msgid "attendance.desc_overtime_start"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:336
+msgid "attendance.desc_overtime_end"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:340
+msgid "attendance.desc_undefined"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:344
+msgid "attendance.desc_unknown"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:379
+msgid "btn.stop_auto_refresh"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:383
+msgid "btn.start_auto_refresh"
+msgstr ""
+
+#: templates/fingerprint_attendance.html:407
+msgid "msg.export_coming_soon"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:7
+msgid "fingerprint.dashboard_title"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:11
+msgid "fingerprint.manage_devices"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:14
+msgid "fingerprint.attendance_records"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:17
+msgid "fingerprint.general_reports"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:22
+msgid "fingerprint.sync_now"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:25
+msgid "fingerprint.sync_users"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:28
+msgid "fingerprint.upload_users"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:42
+msgid "fingerprint.total_devices"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:59
+msgid "fingerprint.active_devices"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:79
+msgid "fingerprint.never_synced"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:82
+#: templates/fingerprint_dashboard.html:131
+#: templates/fingerprint_devices.html:39
+msgid "fingerprint.last_sync"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:98
+msgid "fingerprint.status_ready"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:100
+msgid "fingerprint.status_unavailable"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:103
+msgid "fingerprint.system_status"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:120
+msgid "fingerprint.devices_list"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:128
+#: templates/fingerprint_devices.html:35 templates/fingerprint_devices.html:141
+#: templates/fingerprint_devices.html:191
+#: templates/fingerprint_devices.html:330
+#: templates/fingerprint_devices.html:495
+msgid "fingerprint.device_name"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:129
+#: templates/fingerprint_devices.html:36 templates/fingerprint_devices.html:147
+#: templates/fingerprint_devices.html:195
+#: templates/fingerprint_devices.html:329
+msgid "fingerprint.ip_address"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:130
+#: templates/fingerprint_devices.html:38
+msgid "fingerprint.status"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:132
+#: templates/fingerprint_devices.html:41 templates/fingerprint_devices.html:334
+msgid "fingerprint.actions"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:146
+#: templates/fingerprint_devices.html:65
+msgid "fingerprint.active"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:148
+#: templates/fingerprint_devices.html:68
+msgid "fingerprint.inactive"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:155
+#: templates/fingerprint_devices.html:78
+msgid "fingerprint.never"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:161
+msgid "btn.test"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:165
+msgid "msg.confirm_delete"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:178
+#: templates/fingerprint_devices.html:120
+msgid "fingerprint.no_devices"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:179
+msgid "fingerprint.start_add_device"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:181
+msgid "fingerprint.add_device"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:193
+msgid "fingerprint.sync_logs"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:195
+msgid "btn.view_more"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:219
+msgid "fingerprint.no_logs"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:233
+#: templates/fingerprint_devices.html:236
+msgid "fingerprint.test_connection_result"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:240
+#: templates/fingerprint_devices.html:243
+#: templates/fingerprint_devices.html:360
+#: templates/leave_cancellations.html:165
+msgid "btn.close"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:254
+msgid "status.testing_connection"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:269
+msgid "error.invalid_response"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:276
+msgid "msg.connection_success"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:279
+msgid "device.serial"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:281
+msgid "device.platform"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:283
+msgid "device.firmware"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:285
+msgid "device.users_count"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:287
+msgid "device.attendance_count"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:294
+msgid "error.connection_failed"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:304
+msgid "error.details"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:316
+msgid "status.syncing"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:327
+msgid "msg.sync_success"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:327
+msgid "unit.user"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:327
+msgid "unit.record"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:331
+msgid "error.sync_failed"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:335
+msgid "error.sync_error"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:348
+msgid "msg.confirm_sync_users"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:353
+msgid "status.syncing_users"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:370
+msgid "msg.success_process"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:383
+msgid "error.sync_users_failed"
+msgstr ""
+
+#: templates/fingerprint_dashboard.html:387
+msgid "error.sync_users_error"
+msgstr ""
+
+#: templates/fingerprint_devices.html:3 templates/fingerprint_devices.html:7
+msgid "fingerprint.manage_devices_title"
+msgstr ""
+
+#: templates/fingerprint_devices.html:15
+msgid "fingerprint.scan_network"
+msgstr ""
+
+#: templates/fingerprint_devices.html:18 templates/fingerprint_devices.html:136
+msgid "fingerprint.add_new_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:26
+msgid "fingerprint.registered_devices"
+msgstr ""
+
+#: templates/fingerprint_devices.html:34
+msgid "fingerprint.device_id"
+msgstr ""
+
+#: templates/fingerprint_devices.html:37 templates/fingerprint_devices.html:153
+#: templates/fingerprint_devices.html:200
+msgid "fingerprint.port"
+msgstr ""
+
+#: templates/fingerprint_devices.html:40
+msgid "fingerprint.date_added"
+msgstr ""
+
+#: templates/fingerprint_devices.html:56
+msgid "fingerprint.zkteco_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:83
+msgid "fingerprint.unknown"
+msgstr ""
+
+#: templates/fingerprint_devices.html:92
+msgid "btn.test_connection"
+msgstr ""
+
+#: templates/fingerprint_devices.html:96
+msgid "btn.edit"
+msgstr ""
+
+#: templates/fingerprint_devices.html:101
+msgid "btn.deactivate"
+msgstr ""
+
+#: templates/fingerprint_devices.html:101
+msgid "btn.activate"
+msgstr ""
+
+#: templates/fingerprint_devices.html:106
+msgid "msg.confirm_delete_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:107
+msgid "btn.delete"
+msgstr ""
+
+#: templates/fingerprint_devices.html:121
+msgid "fingerprint.start_add_device_msg"
+msgstr ""
+
+#: templates/fingerprint_devices.html:123
+msgid "fingerprint.add_first_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:143
+msgid "fingerprint.device_name_placeholder"
+msgstr ""
+
+#: templates/fingerprint_devices.html:144
+msgid "fingerprint.device_name_help"
+msgstr ""
+
+#: templates/fingerprint_devices.html:150
+msgid "fingerprint.ip_address_help"
+msgstr ""
+
+#: templates/fingerprint_devices.html:156
+msgid "fingerprint.port_help"
+msgstr ""
+
+#: templates/fingerprint_devices.html:160
+msgid "msg.ensure"
+msgstr ""
+
+#: templates/fingerprint_devices.html:162
+msgid "msg.device_connected"
+msgstr ""
+
+#: templates/fingerprint_devices.html:163
+msgid "msg.ip_reachable"
+msgstr ""
+
+#: templates/fingerprint_devices.html:164
+msgid "msg.firewall_allowed"
+msgstr ""
+
+#: templates/fingerprint_devices.html:172
+msgid "btn.save_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:186
+msgid "fingerprint.edit_device"
+msgstr ""
+
+#: templates/fingerprint_devices.html:208
+msgid "fingerprint.device_active"
+msgstr ""
+
+#: templates/fingerprint_devices.html:211
+msgid "fingerprint.device_active_help"
+msgstr ""
+
+#: templates/fingerprint_devices.html:215
+msgid "msg.warning"
+msgstr ""
+
+#: templates/fingerprint_devices.html:215
+msgid "msg.edit_device_warning"
+msgstr ""
+
+#: templates/fingerprint_devices.html:253
+msgid "fingerprint.network_scan"
+msgstr ""
+
+#: templates/fingerprint_devices.html:259
+msgid "fingerprint.select_scan_range"
+msgstr ""
+
+#: templates/fingerprint_devices.html:271
+msgid "fingerprint.scan_local"
+msgstr ""
+
+#: templates/fingerprint_devices.html:273
+msgid "fingerprint.scan_local_desc"
+msgstr ""
+
+#: templates/fingerprint_devices.html:285
+msgid "fingerprint.scan_wide"
+msgstr ""
+
+#: templates/fingerprint_devices.html:287
+msgid "fingerprint.scan_wide_desc"
+msgstr ""
+
+#: templates/fingerprint_devices.html:296
+msgid "btn.start_scan"
+msgstr ""
+
+#: templates/fingerprint_devices.html:302
+msgid "status.scanning"
+msgstr ""
+
+#: templates/fingerprint_devices.html:309
+msgid "status.searching_zkteco"
+msgstr ""
+
+#: templates/fingerprint_devices.html:310
+msgid "status.please_wait"
+msgstr ""
+
+#: templates/fingerprint_devices.html:317
+msgid "fingerprint.found_devices"
+msgstr ""
+
+#: templates/fingerprint_devices.html:331
+msgid "fingerprint.mac_address"
+msgstr ""
+
+#: templates/fingerprint_devices.html:332
+msgid "fingerprint.vendor"
+msgstr ""
+
+#: templates/fingerprint_devices.html:333
+msgid "fingerprint.confidence"
+msgstr ""
+
+#: templates/fingerprint_devices.html:344
+msgid "btn.new_scan"
+msgstr ""
+
+#: templates/fingerprint_devices.html:347
+msgid "btn.add_selected"
+msgstr ""
+
+#: templates/fingerprint_devices.html:406
+msgid "msg.scanning_wide"
+msgstr ""
+
+#: templates/fingerprint_devices.html:410
+msgid "msg.scanning_local"
+msgstr ""
+
+#: templates/fingerprint_devices.html:437
+msgid "msg.scanning_ranges"
+msgstr ""
+
+#: templates/fingerprint_devices.html:442
+msgid "msg.scanned_progress"
+msgstr ""
+
+#: templates/fingerprint_devices.html:465
+msgid "fingerprint.no_devices_found"
+msgstr ""
+
+#: templates/fingerprint_devices.html:475
+msgid "error.connection_lost"
+msgstr ""
+
+#: templates/fingerprint_devices.html:501
+msgid "btn.add_now"
+msgstr ""
+
+#: templates/fingerprint_devices.html:531
+msgid "msg.added"
+msgstr ""
+
+#: templates/fingerprint_devices.html:537
+msgid "error.add_failed"
+msgstr ""
+
+#: templates/fingerprint_devices.html:543
+#: templates/fingerprint_devices.html:593
+msgid "error.occurred"
+msgstr ""
+
+#: templates/fingerprint_devices.html:576
+msgid "status.adding"
+msgstr ""
+
+#: templates/fingerprint_devices.html:587
+msgid "error.cant_add"
+msgstr ""
+
+#: templates/general_reports.html:3
+msgid "page.title.general_reports"
+msgstr ""
+
+#: templates/general_reports.html:11
+msgid "header.general_reports"
+msgstr ""
+
+#: templates/general_reports.html:12
+msgid "desc.general_reports"
+msgstr ""
+
+#: templates/general_reports.html:20
+msgid "report.smart_reports"
+msgstr ""
+
+#: templates/general_reports.html:24
+msgid "report.late_employees"
+msgstr ""
+
+#: templates/general_reports.html:28
+msgid "report.employee_detailed"
+msgstr ""
+
+#: templates/general_reports.html:32
+msgid "report.smart_daily"
+msgstr ""
+
+#: templates/general_reports.html:36
+msgid "report.salary_detailed_old"
+msgstr ""
+
+#: templates/general_reports.html:40
+msgid "report.salary_deductions_new"
+msgstr ""
+
+#: templates/general_reports.html:44
+msgid "report.official_holidays"
+msgstr ""
+
+#: templates/general_reports.html:48
+msgid "report.salary_settings_enhanced"
+msgstr ""
+
+#: templates/general_reports.html:52
+msgid "report.network_attendance_old"
+msgstr ""
+
+#: templates/general_reports.html:57
+msgid "report.monthly_comprehensive_new"
+msgstr ""
+
+#: templates/general_reports.html:64
+msgid "msg.suggest_reports"
+msgstr ""
+
+#: templates/import_employees.html:3
+msgid "page.title.import_employees"
+msgstr ""
+
+#: templates/import_employees.html:11
+msgid "header.import_employees"
+msgstr ""
+
+#: templates/import_employees.html:13
+msgid "btn.back_to_employees"
+msgstr ""
+
+#: templates/import_employees.html:19
+msgid "label.excel_file"
+msgstr ""
+
+#: templates/import_employees.html:21
+msgid "help.expected_columns"
+msgstr ""
+
+#: templates/import_employees.html:28
+msgid "label.update_only_dept_pos"
+msgstr ""
+
+#: templates/import_employees.html:35
+msgid "label.update_existing_only"
+msgstr ""
+
+#: templates/import_employees.html:41
+msgid "btn.upload_and_import"
+msgstr ""
+
+#: templates/import_employees.html:43
+msgid "btn.download_template"
+msgstr ""
+
+#: templates/import_employees.html:50
+msgid "header.import_summary"
+msgstr ""
+
+#: templates/import_employees.html:52
+msgid "label.total_rows"
+msgstr ""
+
+#: templates/import_employees.html:53
+msgid "label.inserted"
+msgstr ""
+
+#: templates/import_employees.html:54
+msgid "label.updated"
+msgstr ""
+
+#: templates/import_employees.html:55
+msgid "label.skipped"
+msgstr ""
+
+#: templates/import_employees.html:56
+msgid "label.preview_rows"
+msgstr ""
+
+#: templates/import_employees.html:57
+msgid "label.duplicates_in_file"
+msgstr ""
+
+#: templates/import_employees.html:61
+msgid "label.detected_headers"
+msgstr ""
+
+#: templates/import_employees.html:63
+msgid "label.used_mapping"
+msgstr ""
+
+#: templates/import_employees.html:69
+msgid "label.errors_top_10"
+msgstr ""
+
+#: templates/index.html:3
+msgid "dashboard.title"
+msgstr ""
+
+#: templates/index.html:7
+msgid "dashboard.header"
+msgstr ""
+
+#: templates/index.html:10
+msgid "dashboard.welcome_msg"
+msgstr ""
+
+#: templates/index.html:25
+msgid "alert.docs_expiry.title"
+msgstr ""
+
+#: templates/index.html:47
+msgid "btn.view_all_docs"
+msgstr ""
+
+#: templates/index.html:50
+msgid "btn.upload_new_doc"
+msgstr ""
+
+#: templates/index.html:64
+msgid "stats.total_employees"
+msgstr ""
+
+#: templates/index.html:71
+msgid "stats.total_salaries"
+msgstr ""
+
+#: templates/index.html:78
+msgid "stats.total_salary_amount"
+msgstr ""
+
+#: templates/index.html:85
+msgid "stats.pending_leaves"
+msgstr ""
+
+#: templates/index.html:92
+msgid "stats.total_documents"
+msgstr ""
+
+#: templates/index.html:103
+msgid "dashboard.quick_actions"
+msgstr ""
+
+#: templates/index.html:108
+msgid "btn.add_employee"
+msgstr ""
+
+#: templates/index.html:111
+msgid "btn.manage_salaries"
+msgstr ""
+
+#: templates/index.html:114
+msgid "btn.manage_leaves"
+msgstr ""
+
+#: templates/index.html:117
+msgid "btn.shift_types"
+msgstr ""
+
+#: templates/index.html:127
+msgid "dashboard.recent_activities"
+msgstr ""
+
+#: templates/index.html:133
+msgid "msg.loading"
+msgstr ""
+
+#: templates/index.html:146
+msgid "dashboard.system_info"
+msgstr ""
+
+#: templates/index.html:151
+msgid "dashboard.system_features"
+msgstr ""
+
+#: templates/index.html:153
+msgid "feature.emp_management"
+msgstr ""
+
+#: templates/index.html:154
+msgid "feature.salary_calc"
+msgstr ""
+
+#: templates/index.html:155
+msgid "feature.leave_system"
+msgstr ""
+
+#: templates/index.html:156
+msgid "feature.shift_tracking"
+msgstr ""
+
+#: templates/index.html:157
+msgid "feature.doc_management"
+msgstr ""
+
+#: templates/index.html:161
+msgid "dashboard.company_info"
+msgstr ""
+
+#: templates/index.html:175
+msgid "unit.hours_daily"
+msgstr ""
+
+#: templates/index.html:215
+msgid "activity.new_employee"
+msgstr ""
+
+#: templates/index.html:216
+msgid "activity.leave_request"
+msgstr ""
+
+#: templates/index.html:217
+msgid "activity.salary_month"
+msgstr ""
+
+#: templates/index.html:218
+msgid "activity.net_salary"
+msgstr ""
+
+#: templates/index.html:219
+msgid "msg.no_activities"
+msgstr ""
+
+#: templates/index.html:220
+msgid "msg.error_loading"
+msgstr ""
+
+#: templates/index.html:259
+msgid "unit.days"
+msgstr ""
+
+#: templates/leave_cancellations.html:3
+msgid "title.leave_cancellations"
+msgstr ""
+
+#: templates/leave_cancellations.html:15
+msgid "header.leave_cancellations"
+msgstr ""
+
+#: templates/leave_cancellations.html:18
+msgid "desc.leave_cancellations"
+msgstr ""
+
+#: templates/leave_cancellations.html:36 templates/leaves.html:36
+#: templates/salary_reports.html:530
+msgid "tbl.header.leave_type"
+msgstr ""
+
+#: templates/leave_cancellations.html:37
+msgid "tbl.header.original_dates"
+msgstr ""
+
+#: templates/leave_cancellations.html:38
+msgid "tbl.header.cancellation_date"
+msgstr ""
+
+#: templates/leave_cancellations.html:39
+msgid "tbl.header.cancelled_days"
+msgstr ""
+
+#: templates/leave_cancellations.html:40 templates/leaves.html:41
+msgid "tbl.header.reason"
+msgstr ""
+
+#: templates/leave_cancellations.html:41
+msgid "tbl.header.transaction_date"
+msgstr ""
+
+#: templates/leave_cancellations.html:56 templates/salary_reports.html:375
+#: templates/salary_reports.html:604
+msgid "label.from"
+msgstr ""
+
+#: templates/leave_cancellations.html:58 templates/salary_reports.html:376
+#: templates/salary_reports.html:604
+msgid "label.to"
+msgstr ""
+
+#: templates/leave_cancellations.html:60
+msgid "label.original_days"
+msgstr ""
+
+#: templates/leave_cancellations.html:84 templates/leaves.html:129
+msgid "btn.view_details"
+msgstr ""
+
+#: templates/leave_cancellations.html:89
+msgid "btn.cut_another_leave"
+msgstr ""
+
+#: templates/leave_cancellations.html:105
+msgid "stat.total_cancellations"
+msgstr ""
+
+#: templates/leave_cancellations.html:113
+msgid "stat.total_saved_days"
+msgstr ""
+
+#: templates/leave_cancellations.html:122
+msgid "stat.avg_days_per_cancellation"
+msgstr ""
+
+#: templates/leave_cancellations.html:130
+msgid "stat.cancellations_with_reason"
+msgstr ""
+
+#: templates/leave_cancellations.html:139
+msgid "msg.no_cancellations"
+msgstr ""
+
+#: templates/leave_cancellations.html:140
+msgid "msg.no_cancellations_desc"
+msgstr ""
+
+#: templates/leave_cancellations.html:158
+msgid "title.cancellation_details"
+msgstr ""
+
+#: templates/leave_cancellations.html:180
+msgid "header.cancellation_details"
+msgstr ""
+
+#: templates/leave_cancellations.html:181
+msgid "label.transaction_id"
+msgstr ""
+
+#: templates/leave_cancellations.html:182
+msgid "msg.more_details_soon"
+msgstr ""
+
+#: templates/leave_settings.html:6
+msgid "header.leave_settings"
+msgstr ""
+
+#: templates/leave_settings.html:8
+msgid "btn.add_new_type"
+msgstr ""
+
+#: templates/leave_settings.html:21
+msgid "confirm.delete_leave_type_with_tiers"
+msgstr ""
+
+#: templates/leave_settings.html:23
+msgid "btn.delete_type"
+msgstr ""
+
+#: templates/leave_settings.html:35
+msgid "label.annual_balance_days"
+msgstr ""
+
+#: templates/leave_settings.html:43
+msgid "label.service_months_required"
+msgstr ""
+
+#: templates/leave_settings.html:51
+msgid "label.properties"
+msgstr ""
+
+#: templates/leave_settings.html:57
+msgid "label.is_paid_default"
+msgstr ""
+
+#: templates/leave_settings.html:64
+msgid "label.requires_approval"
+msgstr ""
+
+#: templates/leave_settings.html:71
+msgid "label.carry_over_balance"
+msgstr ""
+
+#: templates/leave_settings.html:76 templates/salary_settings.html:224
+#: templates/salary_settings_v2.html:377 templates/settings.html:289
+msgid "btn.save_settings"
+msgstr ""
+
+#: templates/leave_settings.html:82
+msgid "header.payment_tiers"
+msgstr ""
+
+#: templates/leave_settings.html:88
+msgid "tbl.header.from_day"
+msgstr ""
+
+#: templates/leave_settings.html:89
+msgid "tbl.header.to_day"
+msgstr ""
+
+#: templates/leave_settings.html:90
+msgid "tbl.header.payment_percentage"
+msgstr ""
+
+#: templates/leave_settings.html:91
+msgid "tbl.header.delete"
+msgstr ""
+
+#: templates/leave_settings.html:104
+msgid "confirm.delete_tier"
+msgstr ""
+
+#: templates/leave_settings.html:112
+msgid "msg.no_tiers_defined"
+msgstr ""
+
+#: templates/leave_settings.html:119
+msgid "placeholder.from"
+msgstr ""
+
+#: templates/leave_settings.html:121
+msgid "placeholder.to"
+msgstr ""
+
+#: templates/leave_settings.html:123
+msgid "placeholder.percentage"
+msgstr ""
+
+#: templates/leave_settings.html:139
+msgid "title.add_new_leave_type"
+msgstr ""
+
+#: templates/leave_settings.html:145
+msgid "label.leave_name"
+msgstr ""
+
+#: templates/leave_settings.html:147
+msgid "placeholder.leave_name_example"
+msgstr ""
+
+#: templates/leave_settings.html:150
+msgid "label.default_annual_balance"
+msgstr ""
+
+#: templates/leaves.html:3
+msgid "page.title.leaves"
+msgstr ""
+
+#: templates/leaves.html:12
+msgid "page.header.leaves"
+msgstr ""
+
+#: templates/leaves.html:16
+msgid "btn.manage_leave_types"
+msgstr ""
+
+#: templates/leaves.html:19
+msgid "btn.new_leave_request"
+msgstr ""
+
+#: templates/leaves.html:28
+msgid "header.leave_requests"
+msgstr ""
+
+#: templates/leaves.html:37
+msgid "tbl.header.start_date"
+msgstr ""
+
+#: templates/leaves.html:38
+msgid "tbl.header.end_date"
+msgstr ""
+
+#: templates/leaves.html:39
+msgid "tbl.header.days_count"
+msgstr ""
+
+#: templates/leaves.html:40
+msgid "tbl.header.payment_type"
+msgstr ""
+
+#: templates/leaves.html:43
+msgid "tbl.header.request_date"
+msgstr ""
+
+#: templates/leaves.html:73 templates/leaves.html:80
+#: templates/official_holidays.html:60
+msgid "status.unpaid"
+msgstr ""
+
+#: templates/leaves.html:78 templates/official_holidays.html:58
+msgid "status.paid"
+msgstr ""
+
+#: templates/leaves.html:82
+msgid "msg.balance_exceeded"
+msgstr ""
+
+#: templates/leaves.html:98
+msgid "status.pending"
+msgstr ""
+
+#: templates/leaves.html:100
+msgid "status.approved"
+msgstr ""
+
+#: templates/leaves.html:102
+msgid "status.rejected"
+msgstr ""
+
+#: templates/leaves.html:113
+msgid "btn.approve"
+msgstr ""
+
+#: templates/leaves.html:118
+msgid "btn.reject"
+msgstr ""
+
+#: templates/leaves.html:125
+msgid "btn.cancel_leave_early"
+msgstr ""
+
+#: templates/leaves.html:134
+msgid "status.processed"
+msgstr ""
+
+#: templates/leaves.html:142
+msgid "msg.no_leave_requests"
+msgstr ""
+
+#: templates/leaves.html:145
+msgid "btn.add_first_leave"
+msgstr ""
+
+#: templates/leaves.html:161
+msgid "title.new_leave_request"
+msgstr ""
+
+#: templates/leaves.html:194
+msgid "placeholder.select_leave_type"
+msgstr ""
+
+#: templates/leaves.html:197
+msgid "unit.day_year"
+msgstr ""
+
+#: templates/leaves.html:218
+msgid "label.leave_reason"
+msgstr ""
+
+#: templates/leaves.html:220
+msgid "placeholder.leave_reason"
+msgstr ""
+
+#: templates/leaves.html:230
+msgid "label.available_balance"
+msgstr ""
+
+#: templates/leaves.html:239
+msgid "btn.send_request"
+msgstr ""
+
+#: templates/leaves.html:278
+msgid "error.fetch_employees"
+msgstr ""
+
+#: templates/leaves.html:357
+msgid "msg.results_found"
+msgstr ""
+
+#: templates/leaves.html:369 templates/leaves.html:372
+#: templates/leaves.html:390
+msgid "term.undefined"
+msgstr ""
+
+#: templates/leaves.html:453 templates/leaves.html:461
+msgid "unit.days_available"
+msgstr ""
+
+#: templates/leaves.html:454
+msgid "msg.negative_balance_exceeded"
+msgstr ""
+
+#: templates/leaves.html:468
+msgid "term.unavailable"
+msgstr ""
+
+#: templates/leaves.html:472
+msgid "error.load_failed"
+msgstr ""
+
+#: templates/leaves.html:491 templates/leaves.html:557
+msgid "alert.warning"
+msgstr ""
+
+#: templates/leaves.html:491
+msgid "msg.negative_balance_deduction"
+msgstr ""
+
+#: templates/leaves.html:518
+msgid "status.approved_action"
+msgstr ""
+
+#: templates/leaves.html:519
+msgid "status.rejected_action"
+msgstr ""
+
+#: templates/leaves.html:523
+msgid "confirm.update_leave_status"
+msgstr ""
+
+#: templates/leaves.html:558
+msgid "msg.has_negative_balance"
+msgstr ""
+
+#: templates/leaves.html:560
+msgid "label.earned_days"
+msgstr ""
+
+#: templates/leaves.html:561
+msgid "label.used_days"
+msgstr ""
+
+#: templates/leaves.html:562
+msgid "label.unpaid_leaves"
+msgstr ""
+
+#: templates/leaves.html:584
+msgid "error.start_date_past"
+msgstr ""
+
+#: templates/leaves.html:590
+msgid "error.end_date_before_start"
+msgstr ""
+
+#: templates/leaves.html:598
+msgid "confirm.leave_over_30_days"
+msgstr ""
+
+#: templates/leaves.html:617
+msgid "warn.negative_balance_increase"
+msgstr ""
+
+#: templates/login.html:7
+msgid "page.title.login"
+msgstr ""
+
+#: templates/login.html:123
+msgid "login.header"
+msgstr ""
+
+#: templates/login.html:124
+msgid "login.welcome"
+msgstr ""
+
+#: templates/login.html:143
+msgid "login.username_placeholder"
+msgstr ""
+
+#: templates/login.html:145
+msgid "login.username_label"
+msgstr ""
+
+#: templates/login.html:151
+msgid "login.password_placeholder"
+msgstr ""
+
+#: templates/login.html:153
+msgid "login.password_label"
+msgstr ""
+
+#: templates/login.html:160
+msgid "login.remember_me"
+msgstr ""
+
+#: templates/login.html:165
+msgid "login.submit"
+msgstr ""
+
+#: templates/login.html:172
+msgid "login.footer_info"
+msgstr ""
+
+#: templates/login.html:180
+msgid "js.hide_alerts_comment"
+msgstr ""
+
+#: templates/login.html:189
+msgid "js.prevent_resubmit_comment"
+msgstr ""
+
+#: templates/login.html:193
+msgid "login.verifying"
+msgstr ""
+
+#: templates/manage_structure.html:3
+msgid "page.title.structure"
+msgstr ""
+
+#: templates/manage_structure.html:7
+msgid "page.header.structure"
+msgstr ""
+
+#: templates/manage_structure.html:15
+msgid "header.departments"
+msgstr ""
+
+#: templates/manage_structure.html:18 templates/manage_structure.html:40
+msgid "btn.delete_all"
+msgstr ""
+
+#: templates/manage_structure.html:21
+msgid "btn.add_department"
+msgstr ""
+
+#: templates/manage_structure.html:37
+msgid "header.positions"
+msgstr ""
+
+#: templates/manage_structure.html:43
+msgid "btn.add_position"
+msgstr ""
+
+#: templates/manage_structure.html:81
+msgid "msg.no_departments"
+msgstr ""
+
+#: templates/manage_structure.html:97 templates/manage_structure.html:124
+msgid "error.loading_failed"
+msgstr ""
+
+#: templates/manage_structure.html:108
+msgid "msg.no_positions"
+msgstr ""
+
+#: templates/manage_structure.html:130
+msgid "title.add_department"
+msgstr ""
+
+#: templates/manage_structure.html:132
+msgid "label.department_name"
+msgstr ""
+
+#: templates/manage_structure.html:133
+msgid "placeholder.department_name"
+msgstr ""
+
+#: templates/manage_structure.html:135 templates/manage_structure.html:178
+#: templates/official_holidays.html:138
+msgid "btn.add"
+msgstr ""
+
+#: templates/manage_structure.html:140 templates/manage_structure.html:183
+msgid "msg.name_required"
+msgstr ""
+
+#: templates/manage_structure.html:154 templates/manage_structure.html:197
+msgid "error.prefix"
+msgstr ""
+
+#: templates/manage_structure.html:160 templates/manage_structure.html:203
+msgid "title.added_success"
+msgstr ""
+
+#: templates/manage_structure.html:173
+msgid "title.add_position"
+msgstr ""
+
+#: templates/manage_structure.html:175
+msgid "label.position_name"
+msgstr ""
+
+#: templates/manage_structure.html:176
+msgid "placeholder.position_name"
+msgstr ""
+
+#: templates/manage_structure.html:216 templates/manage_structure.html:243
+msgid "confirm.are_you_sure"
+msgstr ""
+
+#: templates/manage_structure.html:217
+msgid "confirm.delete_all_departments_warning"
+msgstr ""
+
+#: templates/manage_structure.html:222 templates/manage_structure.html:249
+msgid "btn.yes_delete_all"
+msgstr ""
+
+#: templates/manage_structure.html:230 templates/manage_structure.html:257
+msgid "title.deleted"
+msgstr ""
+
+#: templates/manage_structure.html:244
+msgid "confirm.delete_all_positions_warning"
+msgstr ""
+
+#: templates/official_holidays.html:3
+msgid "page.title.official_holidays"
+msgstr ""
+
+#: templates/official_holidays.html:13
+msgid "header.official_holidays"
+msgstr ""
+
+#: templates/official_holidays.html:22
+msgid "btn.add_official_holiday"
+msgstr ""
+
+#: templates/official_holidays.html:32
+msgid "tbl.header.holiday_name"
+msgstr ""
+
+#: templates/official_holidays.html:33 templates/salary_reports.html:524
+msgid "tbl.header.date"
+msgstr ""
+
+#: templates/official_holidays.html:34 templates/print_salary_report.html:376
+#: templates/print_salary_report.html:425
+msgid "tbl.header.type"
+msgstr ""
+
+#: templates/official_holidays.html:47 templates/official_holidays.html:120
+#: templates/official_holidays.html:172
+msgid "type.official"
+msgstr ""
+
+#: templates/official_holidays.html:49 templates/official_holidays.html:121
+#: templates/official_holidays.html:173
+msgid "type.eid"
+msgstr ""
+
+#: templates/official_holidays.html:51 templates/official_holidays.html:122
+#: templates/official_holidays.html:174
+msgid "type.national"
+msgstr ""
+
+#: templates/official_holidays.html:70
+msgid "confirm.delete_holiday"
+msgstr ""
+
+#: templates/official_holidays.html:83
+msgid "msg.no_official_holidays"
+msgstr ""
+
+#: templates/official_holidays.html:84
+msgid "help.add_official_holidays"
+msgstr ""
+
+#: templates/official_holidays.html:99
+msgid "title.add_official_holiday"
+msgstr ""
+
+#: templates/official_holidays.html:106 templates/official_holidays.html:158
+msgid "label.holiday_name"
+msgstr ""
+
+#: templates/official_holidays.html:119 templates/official_holidays.html:171
+msgid "placeholder.select_type"
+msgstr ""
+
+#: templates/official_holidays.html:130 templates/official_holidays.html:181
+msgid "label.is_paid_holiday"
+msgstr ""
+
+#: templates/official_holidays.html:151
+msgid "title.edit_official_holiday"
+msgstr ""
+
+#: templates/print_salary_report.html:7
+msgid "page.title.salary_slip"
+msgstr ""
+
+#: templates/print_salary_report.html:308
+msgid "btn.print"
+msgstr ""
+
+#: templates/print_salary_report.html:315
+msgid "company.name_formatted"
+msgstr ""
+
+#: templates/print_salary_report.html:317
+msgid "header.monthly_salary_slip"
+msgstr ""
+
+#: templates/print_salary_report.html:319
+msgid "label.print_date"
+msgstr ""
+
+#: templates/print_salary_report.html:329
+msgid "label.employee_name"
+msgstr ""
+
+#: templates/print_salary_report.html:333 templates/salary_reports.html:369
+msgid "label.job_title"
+msgstr ""
+
+#: templates/print_salary_report.html:337
+msgid "label.join_date"
+msgstr ""
+
+#: templates/print_salary_report.html:341
+msgid "label.bank_name"
+msgstr ""
+
+#: templates/print_salary_report.html:345
+msgid "label.bank_account"
+msgstr ""
+
+#: templates/print_salary_report.html:353
+msgid "label.grade"
+msgstr ""
+
+#: templates/print_salary_report.html:357
+msgid "label.job_position"
+msgstr ""
+
+#: templates/print_salary_report.html:361
+msgid "label.compensation_start_date"
+msgstr ""
+
+#: templates/print_salary_report.html:365
+msgid "label.passport_expiry"
+msgstr ""
+
+#: templates/print_salary_report.html:372
+msgid "header.earnings"
+msgstr ""
+
+#: templates/print_salary_report.html:377
+#: templates/print_salary_report.html:426
+msgid "tbl.header.count"
+msgstr ""
+
+#: templates/print_salary_report.html:378
+#: templates/print_salary_report.html:427
+msgid "tbl.header.rate"
+msgstr ""
+
+#: templates/print_salary_report.html:379
+#: templates/print_salary_report.html:428
+msgid "tbl.header.amount"
+msgstr ""
+
+#: templates/print_salary_report.html:392
+msgid "label.attendance_allowance"
+msgstr ""
+
+#: templates/print_salary_report.html:400
+msgid "label.paid_annual_leave"
+msgstr ""
+
+#: templates/print_salary_report.html:408
+msgid "label.total_earnings"
+msgstr ""
+
+#: templates/print_salary_report.html:421 templates/salary_reports.html:647
+msgid "header.deductions"
+msgstr ""
+
+#: templates/print_salary_report.html:436
+msgid "label.deduction_type"
+msgstr ""
+
+#: templates/print_salary_report.html:445
+msgid "label.loan_deduction"
+msgstr ""
+
+#: templates/print_salary_report.html:451 templates/salaries.html:382
+#: templates/salaries.html:528
+msgid "label.total_deductions"
+msgstr ""
+
+#: templates/print_salary_report.html:462
+msgid "label.net_salary_paid"
+msgstr ""
+
+#: templates/print_salary_report.html:471
+msgid "header.leave_summary"
+msgstr ""
+
+#: templates/print_salary_report.html:473
+msgid "label.paid_annual_leave_days"
+msgstr ""
+
+#: templates/print_salary_report.html:477
+msgid "label.unpaid_leave_days"
+msgstr ""
+
+#: templates/print_salary_report.html:483
+msgid "label.days_earned_month"
+msgstr ""
+
+#: templates/print_salary_report.html:487
+msgid "label.opening_balance"
+msgstr ""
+
+#: templates/print_salary_report.html:491
+msgid "label.closing_balance"
+msgstr ""
+
+#: templates/print_salary_report.html:498
+msgid "header.indemnity_summary"
+msgstr ""
+
+#: templates/print_salary_report.html:500
+msgid "label.indemnity_days"
+msgstr ""
+
+#: templates/print_salary_report.html:504
+msgid "label.indemnity_balance"
+msgstr ""
+
+#: templates/print_salary_report.html:511
+msgid "header.work_days_summary"
+msgstr ""
+
+#: templates/print_salary_report.html:513
+msgid "label.official_holidays"
+msgstr ""
+
+#: templates/print_salary_report.html:517
+msgid "label.weekly_leaves"
+msgstr ""
+
+#: templates/print_salary_report.html:521
+msgid "label.rest_days"
+msgstr ""
+
+#: templates/print_salary_report.html:525
+msgid "label.active_days"
+msgstr ""
+
+#: templates/print_salary_report.html:529
+msgid "label.attendance_days"
+msgstr ""
+
+#: templates/print_salary_report.html:539
+msgid "label.approved_by"
+msgstr ""
+
+#: templates/print_salary_report.html:541
+#: templates/print_salary_report.html:546
+msgid "label.signature_name"
+msgstr ""
+
+#: templates/print_salary_report.html:544
+msgid "label.reviewed_by"
+msgstr ""
+
+#: templates/print_salary_report.html:553 templates/shift_types.html:128
+msgid "label.notes"
+msgstr ""
+
+#: templates/print_salary_report.html:555
+msgid "label.additional_notes"
+msgstr ""
+
+#: templates/print_salary_report.html:561
+msgid "footer.user"
+msgstr ""
+
+#: templates/print_salary_report.html:561
+msgid "footer.date_time"
+msgstr ""
+
+#: templates/print_salary_report.html:563
+msgid "footer.generated_by"
+msgstr ""
+
+#: templates/salaries.html:3
+msgid "page.title.salary_management"
+msgstr ""
+
+#: templates/salaries.html:7
+msgid "header.salary_management"
+msgstr ""
+
+#: templates/salaries.html:11
+msgid "btn.add_new_salary"
+msgstr ""
+
+#: templates/salaries.html:14
+msgid "btn.auto_calculate_salary"
+msgstr ""
+
+#: templates/salaries.html:23
+msgid "header.salaries_list"
+msgstr ""
+
+#: templates/salaries.html:31
+msgid "tbl.header.month_year"
+msgstr ""
+
+#: templates/salaries.html:32
+msgid "tbl.header.base_salary"
+msgstr ""
+
+#: templates/salaries.html:33
+msgid "tbl.header.allowances"
+msgstr ""
+
+#: templates/salaries.html:34
+msgid "tbl.header.deductions"
+msgstr ""
+
+#: templates/salaries.html:35
+msgid "tbl.header.net_salary"
+msgstr ""
+
+#: templates/salaries.html:36
+msgid "tbl.header.payment_date"
+msgstr ""
+
+#: templates/salaries.html:84
+msgid "status.not_paid"
+msgstr ""
+
+#: templates/salaries.html:92
+msgid "msg.no_salaries_recorded"
+msgstr ""
+
+#: templates/salaries.html:95
+msgid "btn.add_first_salary"
+msgstr ""
+
+#: templates/salaries.html:111
+msgid "modal.add_salary_title"
+msgstr ""
+
+#: templates/salaries.html:131 templates/salaries.html:227
+#: templates/salary_reports.html:42
+msgid "label.month"
+msgstr ""
+
+#: templates/salaries.html:134 templates/salaries.html:230
+msgid "select.choose_month"
+msgstr ""
+
+#: templates/salaries.html:153 templates/salaries.html:246
+#: templates/salary_reports.html:59
+msgid "label.year"
+msgstr ""
+
+#: templates/salaries.html:156 templates/salaries.html:249
+msgid "select.choose_year"
+msgstr ""
+
+#: templates/salaries.html:164 templates/salaries.html:288
+#: templates/salaries.html:358 templates/salaries.html:526
+msgid "label.base_salary"
+msgstr ""
+
+#: templates/salaries.html:196
+msgid "btn.save_salary"
+msgstr ""
+
+#: templates/salaries.html:208
+msgid "modal.auto_calculate_title"
+msgstr ""
+
+#: templates/salaries.html:260 templates/salaries.html:479
+msgid "btn.preview_calculation"
+msgstr ""
+
+#: templates/salaries.html:263 templates/salaries.html:481
+msgid "btn.recalculate"
+msgstr ""
+
+#: templates/salaries.html:271
+msgid "header.calculation_results"
+msgstr ""
+
+#: templates/salaries.html:280
+msgid "label.name"
+msgstr ""
+
+#: templates/salaries.html:292
+msgid "label.official_hours"
+msgstr ""
+
+#: templates/salaries.html:298
+msgid "header.attendance_stats"
+msgstr ""
+
+#: templates/salaries.html:301
+msgid "label.work_days_in_month"
+msgstr ""
+
+#: templates/salaries.html:305
+msgid "label.actual_work_days"
+msgstr ""
+
+#: templates/salaries.html:309
+msgid "label.approved_leaves"
+msgstr ""
+
+#: templates/salaries.html:313
+msgid "label.absent_days"
+msgstr ""
+
+#: templates/salaries.html:317
+msgid "label.attendance_rate"
+msgstr ""
+
+#: templates/salaries.html:326
+msgid "header.work_hours"
+msgstr ""
+
+#: templates/salaries.html:329
+msgid "label.total_actual_hours"
+msgstr ""
+
+#: templates/salaries.html:333
+msgid "label.total_official_hours"
+msgstr ""
+
+#: templates/salaries.html:337 templates/salary_reports.html:641
+msgid "label.overtime_hours"
+msgstr ""
+
+#: templates/salaries.html:341
+msgid "label.late_minutes"
+msgstr ""
+
+#: templates/salaries.html:345
+msgid "label.early_leave_minutes"
+msgstr ""
+
+#: templates/salaries.html:349
+msgid "label.work_efficiency"
+msgstr ""
+
+#: templates/salaries.html:355 templates/salary_reports.html:625
+msgid "header.salary_details"
+msgstr ""
+
+#: templates/salaries.html:362
+msgid "label.overtime_allowance"
+msgstr ""
+
+#: templates/salaries.html:366 templates/salary_reports.html:657
+msgid "label.absence_deduction"
+msgstr ""
+
+#: templates/salaries.html:370 templates/salary_reports.html:649
+msgid "label.late_deduction"
+msgstr ""
+
+#: templates/salaries.html:374 templates/salary_reports.html:653
+msgid "label.early_leave_deduction"
+msgstr ""
+
+#: templates/salaries.html:378
+msgid "label.other_deductions"
+msgstr ""
+
+#: templates/salaries.html:386 templates/salaries.html:529
+#: templates/salary_reports.html:664
+msgid "label.net_salary"
+msgstr ""
+
+#: templates/salaries.html:399
+msgid "btn.save_calculated_salary"
+msgstr ""
+
+#: templates/salaries.html:444
+msgid "error.fill_all_fields"
+msgstr ""
+
+#: templates/salaries.html:452 templates/salaries.html:454
+msgid "status.calculating"
+msgstr ""
+
+#: templates/salaries.html:470
+msgid "error.calculation_failed"
+msgstr ""
+
+#: templates/salaries.html:499 templates/salaries.html:500
+#: templates/salaries.html:501 templates/shift_types.html:51
+msgid "unit.hour"
+msgstr ""
+
+#: templates/salaries.html:502 templates/salaries.html:503
+#: templates/salary_reports.html:641 templates/salary_reports.html:649
+#: templates/salary_reports.html:653
+msgid "unit.minute"
+msgstr ""
+
+#: templates/salaries.html:525
+msgid "header.calculation_summary"
+msgstr ""
+
+#: templates/salaries.html:527
+msgid "label.total_additions"
+msgstr ""
+
+#: templates/salaries.html:530
+msgid "label.min_salary_threshold"
+msgstr ""
+
+#: templates/salary_reports.html:3
+msgid "page.title.salary_reports"
+msgstr ""
+
+#: templates/salary_reports.html:13
+msgid "header.detailed_salary_report"
+msgstr ""
+
+#: templates/salary_reports.html:38
+msgid "help.search_min_chars"
+msgstr ""
+
+#: templates/salary_reports.html:68
+msgid "btn.view_report"
+msgstr ""
+
+#: templates/salary_reports.html:74
+msgid "btn.settings"
+msgstr ""
+
+#: templates/salary_reports.html:85
+msgid "header.print_options"
+msgstr ""
+
+#: templates/salary_reports.html:89
+msgid "btn.print_direct"
+msgstr ""
+
+#: templates/salary_reports.html:92
+msgid "btn.export_pdf"
+msgstr ""
+
+#: templates/salary_reports.html:95
+msgid "btn.salary_slip"
+msgstr ""
+
+#: templates/salary_reports.html:118
+msgid "header.shift_info"
+msgstr ""
+
+#: templates/salary_reports.html:131
+msgid "label.days_worked"
+msgstr ""
+
+#: templates/salary_reports.html:139
+msgid "label.days_on_leave"
+msgstr ""
+
+#: templates/salary_reports.html:147
+msgid "label.days_absent"
+msgstr ""
+
+#: templates/salary_reports.html:155
+msgid "label.total_work_hours"
+msgstr ""
+
+#: templates/salary_reports.html:167
+msgid "header.daily_attendance_details"
+msgstr ""
+
+#: templates/salary_reports.html:181
+msgid "header.monthly_leaves"
+msgstr ""
+
+#: templates/salary_reports.html:195
+msgid "header.salary_calculation"
+msgstr ""
+
+#: templates/salary_reports.html:210
+msgid "status.loading"
+msgstr ""
+
+#: templates/salary_reports.html:212
+msgid "status.preparing_report"
+msgstr ""
+
+#: templates/salary_reports.html:218
+msgid "msg.no_data_to_display"
+msgstr ""
+
+#: templates/salary_reports.html:219
+msgid "desc.select_employee_report"
+msgstr ""
+
+#: templates/salary_reports.html:293
+msgid "msg.no_search_results"
+msgstr ""
+
+#: templates/salary_reports.html:327
+msgid "error.select_employee_result"
+msgstr ""
+
+#: templates/salary_reports.html:374 templates/salary_reports.html:375
+#: templates/salary_reports.html:376 templates/shift_types.html:68
+msgid "status.undefined"
+msgstr ""
+
+#: templates/salary_reports.html:377
+msgid "label.hours"
+msgstr ""
+
+#: templates/salary_reports.html:377
+msgid "unit.hour_day"
+msgstr ""
+
+#: templates/salary_reports.html:420
+msgid "status.loading_daily_data"
+msgstr ""
+
+#: templates/salary_reports.html:447 templates/salary_reports.html:544
+#: templates/salary_reports.html:545
+msgid "status.present"
+msgstr ""
+
+#: templates/salary_reports.html:456 templates/salary_reports.html:475
+#: templates/salary_reports.html:552 templates/salary_reports.html:553
+msgid "status.absent"
+msgstr ""
+
+#: templates/salary_reports.html:499 templates/salary_reports.html:546
+#: templates/salary_reports.html:547
+msgid "status.on_leave"
+msgstr ""
+
+#: templates/salary_reports.html:516
+msgid "msg.no_attendance_data"
+msgstr ""
+
+#: templates/salary_reports.html:525
+msgid "tbl.header.day"
+msgstr ""
+
+#: templates/salary_reports.html:526
+msgid "tbl.header.check_in"
+msgstr ""
+
+#: templates/salary_reports.html:527
+msgid "tbl.header.check_out"
+msgstr ""
+
+#: templates/salary_reports.html:528
+msgid "tbl.header.hours"
+msgstr ""
+
+#: templates/salary_reports.html:549
+msgid "status.checkin_only"
+msgstr ""
+
+#: templates/salary_reports.html:551
+msgid "status.weekend"
+msgstr ""
+
+#: templates/salary_reports.html:576
+msgid "unit.hour_short"
+msgstr ""
+
+#: templates/salary_reports.html:591
+msgid "msg.no_leaves_in_month"
+msgstr ""
+
+#: templates/salary_reports.html:617
+msgid "currency.default"
+msgstr ""
+
+#: templates/salary_reports.html:633
+msgid "label.daily_salary"
+msgstr ""
+
+#: templates/salary_reports.html:639
+msgid "header.allowances_overtime"
+msgstr ""
+
+#: templates/salary_reports.html:671
+msgid "label.present_days"
+msgstr ""
+
+#: templates/salary_reports.html:672
+msgid "label.leave_days"
+msgstr ""
+
+#: templates/salary_reports.html:673
+msgid "label.holidays"
+msgstr ""
+
+#: templates/salary_reports.html:674
+msgid "label.invalid_days"
+msgstr ""
+
+#: templates/salary_reports.html:681
+msgid "btn.pay_salary"
+msgstr ""
+
+#: templates/salary_reports.html:703
+msgid "error.popup_blocked"
+msgstr ""
+
+#: templates/salary_reports.html:706
+msgid "error.select_employee_first"
+msgstr ""
+
+#: templates/salary_reports.html:714
+msgid "status.loading_pdf_lib"
+msgstr ""
+
+#: templates/salary_reports.html:765
+msgid "error.pdf_creation_error"
+msgstr ""
+
+#: templates/salary_settings.html:3
+msgid "page.title.salary_settings"
+msgstr ""
+
+#: templates/salary_settings.html:13
+msgid "header.salary_and_allowance_settings"
+msgstr ""
+
+#: templates/salary_settings.html:24
+msgid "header.allowance_settings"
+msgstr ""
+
+#: templates/salary_settings.html:29 templates/salary_settings_v2.html:327
+msgid "label.early_arrival_bonus"
+msgstr ""
+
+#: templates/salary_settings.html:35
+msgid "help.early_arrival_bonus"
+msgstr ""
+
+#: templates/salary_settings.html:39 templates/salary_settings_v2.html:336
+msgid "label.late_departure_bonus"
+msgstr ""
+
+#: templates/salary_settings.html:45
+msgid "help.late_departure_bonus"
+msgstr ""
+
+#: templates/salary_settings.html:49
+msgid "label.overtime_hour_rate"
+msgstr ""
+
+#: templates/salary_settings.html:55
+msgid "help.overtime_hour_rate"
+msgstr ""
+
+#: templates/salary_settings.html:64
+msgid "header.deduction_settings"
+msgstr ""
+
+#: templates/salary_settings.html:74
+msgid "label.deduct_late_arrival"
+msgstr ""
+
+#: templates/salary_settings.html:76
+msgid "help.deduct_late_arrival"
+msgstr ""
+
+#: templates/salary_settings.html:87
+msgid "label.deduct_early_leave"
+msgstr ""
+
+#: templates/salary_settings.html:89
+msgid "help.deduct_early_leave"
+msgstr ""
+
+#: templates/salary_settings.html:100
+msgid "header.basic_leave_settings"
+msgstr ""
+
+#: templates/salary_settings.html:102
+msgid "help.basic_leave_settings"
+msgstr ""
+
+#: templates/salary_settings.html:111
+msgid "label.annual_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:113
+msgid "help.annual_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:124
+msgid "label.sick_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:126
+msgid "help.sick_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:136
+msgid "label.emergency_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:138
+msgid "help.emergency_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:149
+msgid "label.other_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:151
+msgid "help.other_leave_paid"
+msgstr ""
+
+#: templates/salary_settings.html:163
+msgid "help.weekly_leave_settings"
+msgstr ""
+
+#: templates/salary_settings.html:168
+msgid "label.default_weekly_leave_days"
+msgstr ""
+
+#: templates/salary_settings.html:172
+msgid "option.zero_days"
+msgstr ""
+
+#: templates/salary_settings.html:174
+msgid "option.one_day"
+msgstr ""
+
+#: templates/salary_settings.html:176
+msgid "option.two_days"
+msgstr ""
+
+#: templates/salary_settings.html:178
+msgid "option.three_days"
+msgstr ""
+
+#: templates/salary_settings.html:180
+msgid "help.default_weekly_leave_days"
+msgstr ""
+
+#: templates/salary_settings.html:185
+msgid "label.default_weekly_leave_start"
+msgstr ""
+
+#: templates/salary_settings.html:203
+msgid "help.default_weekly_leave_start"
+msgstr ""
+
+#: templates/salary_settings.html:212
+msgid "note.title"
+msgstr ""
+
+#: templates/salary_settings.html:212
+msgid "note.currency_settings_moved"
+msgstr ""
+
+#: templates/salary_settings.html:214
+msgid "link.general_settings"
+msgstr ""
+
+#: templates/salary_settings.html:228
+msgid "btn.back_to_salary_reports"
+msgstr ""
+
+#: templates/salary_settings_v2.html:3
+msgid "page.title.enhanced_salary_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:13
+msgid "header.enhanced_salary_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:15
+msgid "desc.enhanced_salary_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:24 templates/settings.html:44
+#: templates/settings.html:168
+msgid "header.currency_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:28 templates/settings.html:175
+msgid "label.currency_symbol"
+msgstr ""
+
+#: templates/salary_settings_v2.html:31
+msgid "help.currency_symbol"
+msgstr ""
+
+#: templates/salary_settings_v2.html:34 templates/settings.html:56
+#: templates/settings.html:185
+msgid "label.currency_position"
+msgstr ""
+
+#: templates/salary_settings_v2.html:38
+msgid "option.right_of_amount"
+msgstr ""
+
+#: templates/salary_settings_v2.html:40
+msgid "option.left_of_amount"
+msgstr ""
+
+#: templates/salary_settings_v2.html:50
+msgid "header.calculation_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:55
+msgid "label.rounding_internal_decimals"
+msgstr ""
+
+#: templates/salary_settings_v2.html:62
+msgid "label.rounding_display_decimals"
+msgstr ""
+
+#: templates/salary_settings_v2.html:74
+msgid "header.attendance_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:79
+msgid "label.attendance_grace_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:86
+msgid "label.late_arrival_policy"
+msgstr ""
+
+#: templates/salary_settings_v2.html:91 templates/salary_settings_v2.html:219
+msgid "option.warning_only"
+msgstr ""
+
+#: templates/salary_settings_v2.html:95 templates/salary_settings_v2.html:224
+msgid "option.deduct_actual_time"
+msgstr ""
+
+#: templates/salary_settings_v2.html:99 templates/salary_settings_v2.html:228
+msgid "option.deduct_quarter_day"
+msgstr ""
+
+#: templates/salary_settings_v2.html:103 templates/salary_settings_v2.html:232
+msgid "option.deduct_half_day"
+msgstr ""
+
+#: templates/salary_settings_v2.html:107 templates/salary_settings_v2.html:236
+msgid "option.deduct_full_day"
+msgstr ""
+
+#: templates/salary_settings_v2.html:112
+msgid "label.grace_early_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:117
+msgid "help.grace_early_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:126
+msgid "header.missing_punch_policy"
+msgstr ""
+
+#: templates/salary_settings_v2.html:131
+msgid "label.missing_punch_policy"
+msgstr ""
+
+#: templates/salary_settings_v2.html:135
+msgid "option.mark_as_invalid"
+msgstr ""
+
+#: templates/salary_settings_v2.html:139
+msgid "option.zero_work_hours"
+msgstr ""
+
+#: templates/salary_settings_v2.html:143
+msgid "option.tiered_penalty_system"
+msgstr ""
+
+#: templates/salary_settings_v2.html:153
+msgid "label.penalty_first_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:157
+msgid "help.penalty_first_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:161
+msgid "label.penalty_second_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:166
+msgid "help.penalty_second_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:170
+msgid "label.penalty_third_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:174
+msgid "help.penalty_third_offense"
+msgstr ""
+
+#: templates/salary_settings_v2.html:202
+msgid "header.early_departure_policy"
+msgstr ""
+
+#: templates/salary_settings_v2.html:207
+msgid "label.early_departure_grace_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:211
+msgid "help.early_departure_grace_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:215
+msgid "label.early_departure_policy"
+msgstr ""
+
+#: templates/salary_settings_v2.html:247
+msgid "header.overtime_settings"
+msgstr ""
+
+#: templates/salary_settings_v2.html:252
+msgid "label.overtime_round_to_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:256
+msgid "option.5_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:258
+msgid "option.10_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:260
+msgid "option.15_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:262
+msgid "option.30_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:264
+msgid "option.60_minutes"
+msgstr ""
+
+#: templates/salary_settings_v2.html:269
+msgid "label.overtime_cap_daily_hours"
+msgstr ""
+
+#: templates/salary_settings_v2.html:277
+msgid "label.overtime_cap_monthly_hours"
+msgstr ""
+
+#: templates/salary_settings_v2.html:287
+msgid "header.overtime_multipliers"
+msgstr ""
+
+#: templates/salary_settings_v2.html:291
+msgid "label.weekday_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:296
+msgid "help.weekday_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:300
+msgid "label.weekend_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:305
+msgid "help.weekend_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:309
+msgid "label.holiday_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:314
+msgid "help.holiday_ot_multiplier"
+msgstr ""
+
+#: templates/salary_settings_v2.html:323
+msgid "header.attendance_allowances"
+msgstr ""
+
+#: templates/salary_settings_v2.html:333
+msgid "help.early_arrival_bonus_text"
+msgstr ""
+
+#: templates/salary_settings_v2.html:343
+msgid "help.late_departure_bonus_text"
+msgstr ""
+
+#: templates/salary_settings_v2.html:352
+msgid "header.leave_settings_basic"
+msgstr ""
+
+#: templates/salary_settings_v2.html:357
+msgid "label.leave_earned_per_month"
+msgstr ""
+
+#: templates/salary_settings_v2.html:365
+msgid "label.max_negative_leave_balance"
+msgstr ""
+
+#: templates/salary_settings_v2.html:369
+msgid "help.max_negative_leave_balance"
+msgstr ""
+
+#: templates/salary_settings_v2.html:381
+msgid "btn.back_to_home"
+msgstr ""
+
+#: templates/settings.html:3
+msgid "page.title.settings"
+msgstr ""
+
+#: templates/settings.html:7
+msgid "header.system_settings"
+msgstr ""
+
+#: templates/settings.html:10
+msgid "btn.edit_settings"
+msgstr ""
+
+#: templates/settings.html:21 templates/settings.html:153
+msgid "header.app_info"
+msgstr ""
+
+#: templates/settings.html:25 templates/settings.html:155
+msgid "label.app_name"
+msgstr ""
+
+#: templates/settings.html:29
+msgid "label.app_version"
+msgstr ""
+
+#: templates/settings.html:33 templates/settings.html:160
+msgid "label.company_name"
+msgstr ""
+
+#: templates/settings.html:48
+msgid "label.base_currency"
+msgstr ""
+
+#: templates/settings.html:52
+msgid "label.currency_code"
+msgstr ""
+
+#: templates/settings.html:59 templates/settings.html:189
+msgid "option.after_number"
+msgstr ""
+
+#: templates/settings.html:61 templates/settings.html:191
+msgid "option.before_number"
+msgstr ""
+
+#: templates/settings.html:76 templates/settings.html:200
+msgid "header.general_settings"
+msgstr ""
+
+#: templates/settings.html:80 templates/settings.html:209
+msgid "label.default_language"
+msgstr ""
+
+#: templates/settings.html:83 templates/settings.html:213
+msgid "lang.arabic"
+msgstr ""
+
+#: templates/settings.html:90 templates/settings.html:219
+msgid "label.timezone"
+msgstr ""
+
+#: templates/settings.html:93 templates/settings.html:222
+msgid "timezone.riyadh"
+msgstr ""
+
+#: templates/settings.html:100 templates/settings.html:202
+msgid "label.working_hours"
+msgstr ""
+
+#: templates/settings.html:101
+msgid "unit.work_hours"
+msgstr ""
+
+#: templates/settings.html:104 templates/settings.html:232
+msgid "label.weekend_days"
+msgstr ""
+
+#: templates/settings.html:108
+msgid "label.official_work_time"
+msgstr ""
+
+#: templates/settings.html:120 templates/settings.html:261
+msgid "header.contact_info"
+msgstr ""
+
+#: templates/settings.html:124 templates/settings.html:278
+msgid "label.company_address"
+msgstr ""
+
+#: templates/settings.html:125 templates/settings.html:129
+#: templates/settings.html:133
+msgid "status.not_specified"
+msgstr ""
+
+#: templates/settings.html:128
+msgid "label.phone"
+msgstr ""
+
+#: templates/settings.html:145
+msgid "modal.title.edit_settings"
+msgstr ""
+
+#: templates/settings.html:170
+msgid "label.currency_name"
+msgstr ""
+
+#: templates/settings.html:180
+msgid "label.currency_iso_code"
+msgstr ""
+
+#: templates/settings.html:224
+msgid "timezone.dubai"
+msgstr ""
+
+#: templates/settings.html:226
+msgid "timezone.kuwait"
+msgstr ""
+
+#: templates/settings.html:228
+msgid "timezone.qatar"
+msgstr ""
+
+#: templates/settings.html:242
+msgid "days.fri_sat"
+msgstr ""
+
+#: templates/settings.html:244
+msgid "days.sat_sun"
+msgstr ""
+
+#: templates/settings.html:248
+msgid "label.work_start_time"
+msgstr ""
+
+#: templates/settings.html:253
+msgid "label.work_end_time"
+msgstr ""
+
+#: templates/settings.html:263
+msgid "label.company_phone"
+msgstr ""
+
+#: templates/settings.html:268
+msgid "label.company_email"
+msgstr ""
+
+#: templates/shift_types.html:3
+msgid "page.title.manage_shift_types"
+msgstr ""
+
+#: templates/shift_types.html:13
+msgid "header.manage_basic_shift_types"
+msgstr ""
+
+#: templates/shift_types.html:18
+msgid "btn.add_new_shift_type"
+msgstr ""
+
+#: templates/shift_types.html:28
+msgid "tbl.header.shift_name"
+msgstr ""
+
+#: templates/shift_types.html:29
+msgid "tbl.header.start_time"
+msgstr ""
+
+#: templates/shift_types.html:30
+msgid "tbl.header.end_time"
+msgstr ""
+
+#: templates/shift_types.html:31
+msgid "tbl.header.daily_hours"
+msgstr ""
+
+#: templates/shift_types.html:55
+msgid "msg.no_description"
+msgstr ""
+
+#: templates/shift_types.html:85
+msgid "msg.no_shift_types_registered"
+msgstr ""
+
+#: templates/shift_types.html:86
+msgid "desc.start_adding_shift_types"
+msgstr ""
+
+#: templates/shift_types.html:100
+msgid "modal.edit_shift_type"
+msgstr ""
+
+#: templates/shift_types.html:107 templates/shift_types.html:164
+msgid "label.shift_name"
+msgstr ""
+
+#: templates/shift_types.html:113 templates/shift_types.html:172
+msgid "label.start_time"
+msgstr ""
+
+#: templates/shift_types.html:117 templates/shift_types.html:177
+msgid "label.end_time"
+msgstr ""
+
+#: templates/shift_types.html:123
+msgid "label.hours_count_optional"
+msgstr ""
+
+#: templates/shift_types.html:158
+msgid "modal.add_shift_type"
+msgstr ""
+
+#: templates/shift_types.html:167
+msgid "placeholder.shift_name_example"
+msgstr ""
+
+#: templates/shift_types.html:184
+msgid "label.hours_per_day"
+msgstr ""
+
+#: templates/shift_types.html:192
+msgid "placeholder.shift_desc"
+msgstr ""
+
+#: templates/shift_types.html:219
+msgid "error.enter_shift_name"
+msgstr ""
+
+#: templates/shift_types.html:225
+msgid "error.enter_start_end_time"
+msgstr ""
+

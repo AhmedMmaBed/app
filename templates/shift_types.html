@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.manage_shift_types') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        {{ _('header.manage_basic_shift_types') }}
+                    </h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#addShiftTypeModal">
+                        <i class="fas fa-plus me-2"></i>
+                        {{ _('btn.add_new_shift_type') }}
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    {% if shift_types %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{{ _('tbl.header.shift_name') }}</th>
+                                    <th>{{ _('tbl.header.start_time') }}</th>
+                                    <th>{{ _('tbl.header.end_time') }}</th>
+                                    <th>{{ _('tbl.header.daily_hours') }}</th>
+                                    <th>{{ _('tbl.header.description') }}</th>
+                                    <th>{{ _('tbl.header.status') }}</th>
+                                    <th>{{ _('tbl.header.created_at') }}</th>
+                                    <th>{{ _('tbl.header.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shift in shift_types %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ shift.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ shift.start_time }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ shift.end_time }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ shift.hours_per_day }} {{ _('unit.hour')
+                                            }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ shift.description or _('msg.no_description')
+                                            }}</small>
+                                    </td>
+                                    <td>
+                                        {% if shift.is_active %}
+                                        <span class="badge bg-success">{{ _('status.active') }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ _('status.inactive') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ shift.created_at.split(' ')[0] if shift.created_at else
+                                            _('status.undefined') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary"
+                                            onclick='openEditModal({{ shift|tojson|safe }})'>
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">{{ _('msg.no_shift_types_registered') }}</h5>
+                        <p class="text-muted">{{ _('desc.start_adding_shift_types') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shift Modal -->
+<div class="modal fade" id="editShiftModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('salary.edit_shift_type') }}">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('modal.edit_shift_type') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="shift_id" id="edit_shift_id">
+
+                <div class="mb-3">
+                    <label class="form-label">{{ _('label.shift_name') }}</label>
+                    <input type="text" class="form-control" name="name" id="edit_name" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ _('label.start_time') }}</label>
+                        <input type="time" class="form-control" name="start_time" id="edit_start_time" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ _('label.end_time') }}</label>
+                        <input type="time" class="form-control" name="end_time" id="edit_end_time" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ _('label.hours_count_optional') }}</label>
+                    <input type="number" step="0.01" class="form-control" name="hours_per_day" id="edit_hours_per_day">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ _('label.notes') }}</label>
+                    <textarea class="form-control" name="description" id="edit_description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ _('btn.save_changes') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(shift) {
+        document.getElementById('edit_shift_id').value = shift.id;
+        document.getElementById('edit_name').value = shift.name;
+        document.getElementById('edit_start_time').value = shift.start_time;
+        document.getElementById('edit_end_time').value = shift.end_time;
+        document.getElementById('edit_hours_per_day').value = shift.hours_per_day;
+        document.getElementById('edit_description').value = shift.description || '';
+
+        new bootstrap.Modal(document.getElementById('editShiftModal')).show();
+    }
+</script>
+
+<!-- Modal إضافة نوع شفت جديد -->
+<div class="modal fade" id="addShiftTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('modal.add_shift_type') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('salary.add_shift_type') }}" id="addShiftTypeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ _('label.shift_name') }} <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                            placeholder="{{ _('placeholder.shift_name_example') }}">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_time" class="form-label">{{ _('label.start_time') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_time" class="form-label">{{ _('label.end_time') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="hours_per_day" class="form-label">{{ _('label.hours_per_day') }}</label>
+                        <input type="number" class="form-control" id="hours_per_day" name="hours_per_day" step="0.5"
+                            min="1" max="24" value="8.0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">{{ _('label.description') }}</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                            placeholder="{{ _('placeholder.shift_desc') }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('btn.cancel')
+                        }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        {{ _('btn.save') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تأكيد صحة البيانات
+    document.getElementById('addShiftTypeForm').addEventListener('submit', function (e) {
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+        const name = document.getElementById('name').value.trim();
+
+        if (!name) {
+            e.preventDefault();
+            alert('{{ _('error.enter_shift_name') }}');
+            return;
+        }
+
+        if (!startTime || !endTime) {
+            e.preventDefault();
+            alert('{{ _('error.enter_start_end_time') }}');
+            return;
+        }
+    });
+
+    // تحديث عدد الساعات تلقائياً
+    function updateHours() {
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+
+        if (startTime && endTime) {
+            const start = new Date('2000-01-01 ' + startTime);
+            let end = new Date('2000-01-01 ' + endTime);
+
+            // إذا كان وقت النهاية قبل البداية، فهو في اليوم التالي
+            if (end <= start) {
+                end.setDate(end.getDate() + 1);
+            }
+
+            const diffMs = end - start;
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            document.getElementById('hours_per_day').value = diffHours.toFixed(1);
+        }
+    }
+
+    document.getElementById('start_time').addEventListener('change', updateHours);
+    document.getElementById('end_time').addEventListener('change', updateHours);
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% from "components/table_filter.html" import table_filter, table_filter_assets %}
+{% from "components/employee_picker.html" import employee_picker, employee_picker_assets %}
+
+{% block title %}{{ _('x.payroll_loans') }}{% endblock %}
+
+{% block content %}
+{% set L = get_locale()|string %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2"><i class="fas fa-hand-holding-usd me-2"></i>{{ _('x.payroll_loans') }}</h1>
+            <div class="report-desc">{{ _('x.rdesc_payroll_loans') }}</div>
+        </div>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addLoanModal">
+            <i class="fas fa-plus me-2"></i>{{ _('x.add_loan') }}
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            {{ table_filter('loansTable') }}
+            <table id="loansTable" class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ _('tbl.header.employee') }}</th>
+                        <th>{{ _('x.principal') }}</th>
+                        <th>{{ _('x.installment') }}</th>
+                        <th>{{ _('x.start_from') }}</th>
+                        <th>{{ _('x.paid_amount') }}</th>
+                        <th>{{ _('x.remaining') }}</th>
+                        <th>{{ _('x.p_status') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    {% set remaining = r.principal - r.paid %}
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">{{ r.arabic_name or r.employee_name }}</span>
+                            <span class="text-muted small">#{{ r.employee_number }}</span>
+                            {% if r.reason %}<div class="small text-muted">{{ r.reason }}</div>{% endif %}
+                        </td>
+                        <td class="fw-bold">{{ format_currency(r.principal) }}</td>
+                        <td>{{ format_currency(r.monthly_installment) }}</td>
+                        <td class="small">{{ '%02d'|format(r.start_month) }}/{{ r.start_year }}</td>
+                        <td class="text-success">{{ format_currency(r.paid) }}</td>
+                        <td class="fw-bold {{ '' if remaining <= 0 else '' }}" style="color: var(--debit);">{{ format_currency(remaining) }}</td>
+                        <td>
+                            {% if r.status == 'active' %}
+                            <span class="badge bg-success">{{ _('x.loan_status_active') }}</span>
+                            {% elif r.status == 'paused' %}
+                            <span class="badge bg-warning text-dark">{{ _('x.loan_status_paused') }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ _('x.loan_status_settled') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if r.status != 'settled' %}
+                            <button class="btn btn-sm btn-outline-success" title="{{ _('x.pay_manual') }}"
+                                onclick="openPayModal({{ r.id }}, {{ '%.3f'|format(remaining) }})">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('payroll.set_loan_status', loan_id=r.id) }}" class="d-inline">
+                                {% if r.status == 'active' %}
+                                <input type="hidden" name="status" value="paused">
+                                <button class="btn btn-sm btn-outline-warning" title="{{ _('x.loan_status_paused') }}"><i class="fas fa-pause"></i></button>
+                                {% else %}
+                                <input type="hidden" name="status" value="active">
+                                <button class="btn btn-sm btn-outline-success" title="{{ _('x.loan_status_active') }}"><i class="fas fa-play"></i></button>
+                                {% endif %}
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">{{ _('x.no_items') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addLoanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('payroll.add_loan') }}">
+                <div class="modal-header" style="background: var(--ledger);">
+                    <h5 class="modal-title text-white">{{ _('x.add_loan') }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('tbl.header.employee') }}</label>
+                        {{ employee_picker('employee_id', scope='active', required=true) }}
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('x.principal') }}</label>
+                            <input type="number" step="0.001" min="0.001" class="form-control" name="principal" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">{{ _('x.installment') }}</label>
+                            <input type="number" step="0.001" min="0.001" class="form-control" name="monthly_installment" required>
+                        </div>
+                    </div>
+                    <label class="form-label">{{ _('x.start_from') }}</label>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <select class="form-select" name="start_month">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}" {% if m == now.month %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <input type="number" class="form-control" name="start_year" value="{{ now.year }}">
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ _('x.p_reason') }}</label>
+                        <input type="text" class="form-control" name="reason">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-success">{{ _('x.save_data') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="payModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form method="POST" id="payForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ _('x.pay_manual') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2 small text-muted">{{ _('x.remaining') }}: <span id="payRemaining" class="fw-bold"></span></div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('x.p_amount') }}</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control" name="amount" id="payAmount" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <select class="form-select" name="month">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}" {% if m == now.month %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control" name="year" value="{{ now.year }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('x.cancel') }}</button>
+                    <button type="submit" class="btn btn-success">{{ _('x.save_data') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const PAY_URL = {{ url_for('payroll.add_loan_payment', loan_id=0)|tojson }};
+    function openPayModal(loanId, remaining) {
+        document.getElementById('payForm').action = PAY_URL.replace('/0', '/' + loanId);
+        document.getElementById('payRemaining').textContent = remaining;
+        document.getElementById('payAmount').max = remaining;
+        document.getElementById('payAmount').value = '';
+        new bootstrap.Modal(document.getElementById('payModal')).show();
+    }
+</script>
+{{ employee_picker_assets() }}
+{{ table_filter_assets() }}
+{% endblock %}

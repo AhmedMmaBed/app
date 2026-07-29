@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('page.title.admin_roles') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ _('header.admin_roles') }}</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+            <i class="fas fa-plus fa-sm"></i> {{ _('btn.new_role') }}
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{{ _('header.roles_list') }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="rolesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>{{ _('tbl.header.role_name') }}</th>
+                            <th>{{ _('tbl.header.description') }}</th>
+                            <th>{{ _('tbl.header.users_count') }}</th>
+                            <th>{{ _('tbl.header.permissions_count') }}</th>
+                            <th>{{ _('tbl.header.created_at') }}</th>
+                            <th>{{ _('tbl.header.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                        <tr>
+                            <td>
+                                <strong>{{ role.name }}</strong>
+                                {% if role.name == 'Super Admin' %}
+                                <span class="badge badge-danger ml-2">{{ _('status.system_role') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ role.description }}</td>
+                            <td><span class="badge badge-info">{{ role.user_count }}</span></td>
+                            <td><span class="badge badge-secondary">{{ role.perm_count }}</span></td>
+                            <td>-</td>
+                            <td>
+                                <a href="{{ url_for('admin.role_permissions', role_id=role.id) }}"
+                                    class="btn btn-sm btn-warning" title="{{ _('tooltip.manage_permissions') }}">
+                                    <i class="fas fa-key"></i>
+                                </a>
+                                {% if role.name != 'Super Admin' %}
+                                <button class="btn btn-sm btn-danger delete-role" data-id="{{ role.id }}"
+                                    title="{{ _('tooltip.delete') }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('modal.title.new_role') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addRoleForm">
+                    <div class="form-group">
+                        <label>{{ _('label.role_name') }}</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ _('label.description') }}</label>
+                        <textarea class="form-control" name="description"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('btn.cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="saveRoleBtn">{{ _('btn.save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var saveBtn = document.getElementById('saveRoleBtn');
+        if (saveBtn) saveBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var btn = this;
+            btn.disabled = true; btn.textContent = {{ _("status.saving")|tojson }};
+            fetch({{ url_for('admin.create_role')|tojson }}, {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(document.getElementById('addRoleForm')))
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) { location.reload(); }
+                    else {
+                        alert({{ _("error.generic")|tojson }} + ': ' + res.message);
+                        btn.disabled = false; btn.textContent = {{ _("btn.save")|tojson }};
+                    }
+                })
+                .catch(function (err) {
+                    alert({{ _("error.connection")|tojson }} + ': ' + err);
+                    btn.disabled = false; btn.textContent = {{ _("btn.save")|tojson }};
+                });
+        });
+
+        document.querySelectorAll('.delete-role').forEach(function (el) {
+            el.addEventListener('click', function () {
+                if (!confirm({{ _("msg.confirm_delete_role")|tojson }})) return;
+                fetch('/admin/roles/delete/' + this.dataset.id, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        if (res.success) location.reload();
+                        else alert({{ _("error.generic")|tojson }} + ': ' + res.message);
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}
